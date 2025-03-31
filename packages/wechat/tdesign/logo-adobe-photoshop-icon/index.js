@@ -1,0 +1,8 @@
+var useIcon = require("../../common/use-icon");
+
+Component({
+  behaviors: [useIcon],
+  data: {
+    svgContent: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g><path d="M3 3L21 3L21 21L3 21L3 3Z" fill="{{fillColor1 || 'transparent'}}" /><path d="M3 3L21 3L21 21L3 21L3 3Z" stroke="{{strokeColor1 || 'currentColor'}}" stroke-width="{{strokeWidth}}" /><path d="M7 17L7 12M7 12L7 7L9.5 7C10.8807 7 12 8.11929 12 9.5C12 10.8807 10.8807 12 9.5 12H7ZM17 11H15.9528C15.1505 11 14.5 11.6505 14.5 12.4528C14.5 13.0782 14.9002 13.6334 15.4934 13.8311L16.5066 14.1689C17.0998 14.3666 17.5 14.9218 17.5 15.5472C17.5 16.3495 16.8495 17 16.0472 17H14.5" stroke="{{strokeColor2 || 'currentColor'}}" stroke-width="{{strokeWidth}}" stroke-linecap="square" /></g></svg>`,
+  },
+});

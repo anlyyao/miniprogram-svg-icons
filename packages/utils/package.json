@@ -1,0 +1,52 @@
+{
+  "name": "@mp-svg-icons/utils",
+  "version": "0.0.1",
+  "description": "小程序 SVG 图标工具集 - 支持微信、支付宝、快手等多平台小程序",
+  "main": "clear/index.js",
+  "types": "clear/index.d.ts",
+  "bin": {
+    "mp-svg-icons-clear": "./clear/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./clear/index.d.ts",
+      "default": "./clear/index.js"
+    },
+    "./clear": {
+      "types": "./clear/index.d.ts",
+      "default": "./clear/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc && cp README.md ../../dist/utils/ && cp package.json ../../dist/utils/"
+  },
+  "files": [
+    "clear"
+  ],
+  "keywords": [
+    "miniprogram",
+    "svg",
+    "icon",
+    "clear",
+    "tree-shaking",
+    "wechat",
+    "alipay",
+    "kuaishou",
+    "cli",
+    "utils"
+  ],
+  "author": "anlyyao",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anlyyao/miniprogram-svg-icons.git",
+    "directory": "packages/utils"
+  },
+  "bugs": {
+    "url": "https://github.com/anlyyao/miniprogram-svg-icons/issues"
+  },
+  "homepage": "https://github.com/anlyyao/miniprogram-svg-icons#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

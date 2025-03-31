@@ -1,0 +1,8 @@
+var useIcon = require("../../common/use-icon");
+
+Component({
+  behaviors: [useIcon],
+  data: {
+    svgContent: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22.5 2V18H6.87574L1.5 22.7038V2H22.5ZM13 11V6H11V11H13ZM13.0039 12H11V14.0039H13.0039V12Z" fill="{{fillColor1 || 'currentColor'}}" /></svg>`,
+  },
+});

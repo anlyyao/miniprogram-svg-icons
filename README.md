@@ -176,8 +176,8 @@ pnpm run release
 // 页面或组件的 JSON 配置
 {
   "usingComponents": {
-    "add-icon": "@mp-svg-icons/wechat/add-icon",
-    "close-icon": "@mp-svg-icons/wechat/close-icon"
+    "add-icon": "@mp-svg-icons/wechat/tdesign/add-icon",
+    "close-icon": "@mp-svg-icons/wechat/tdesign/close-icon"
   }
 }
 ```

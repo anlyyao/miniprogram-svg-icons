@@ -39,7 +39,7 @@ npx mp-svg-icons-clear --pkg-dir <path> [--scan <dirs...>] [--icons <names>] [--
 
 ```bash
 npx mp-svg-icons-clear \
-  --pkg-dir ./miniprogram_npm/tdesign-icon-wechat \
+  --pkg-dir ./miniprogram_npm/@mp-svg-icons/wechat \
   --scan ./pages ./components
 ```
 
@@ -47,7 +47,7 @@ npx mp-svg-icons-clear \
 
 ```bash
 npx mp-svg-icons-clear \
-  --pkg-dir ./miniprogram_npm/tdesign-icon-wechat \
+  --pkg-dir ./miniprogram_npm/@mp-svg-icons/wechat \
   --scan ./pages ./components \
   --icons loading,play
 ```
@@ -56,7 +56,7 @@ npx mp-svg-icons-clear \
 
 ```bash
 npx mp-svg-icons-clear \
-  --pkg-dir ./miniprogram_npm/tdesign-icon-wechat \
+  --pkg-dir ./miniprogram_npm/@mp-svg-icons/wechat \
   --icons add,close,check-circle,delete
 ```
 
@@ -64,7 +64,7 @@ npx mp-svg-icons-clear \
 
 ```bash
 npx mp-svg-icons-clear \
-  --pkg-dir ./miniprogram_npm/tdesign-icon-wechat \
+  --pkg-dir ./miniprogram_npm/@mp-svg-icons/wechat \
   --scan ./pages ./components \
   --dry-run
 ```

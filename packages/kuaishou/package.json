@@ -1,14 +1,15 @@
 {
   "name": "@mp-svg-icons/kuaishou",
   "version": "0.0.1",
-  "description": "TDesign SVG 图标 - 快手小程序组件",
+  "description": "SVG 多色图标 - 快手小程序组件库",
   "miniprogram": "./",
   "keywords": [
-    "tdesign",
     "miniprogram",
     "kuaishou",
     "svg",
-    "icon"
+    "icon",
+    "multicolor",
+    "tdesign"
   ],
   "author": "anlyyao",
   "license": "MIT",
@@ -16,5 +17,9 @@
     "type": "git",
     "url": "git+https://github.com/anlyyao/miniprogram-svg-icons.git",
     "directory": "packages/kuaishou"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/anlyyao/miniprogram-svg-icons/issues"
+  },
+  "homepage": "https://github.com/anlyyao/miniprogram-svg-icons#readme"
 }

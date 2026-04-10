@@ -1,13 +1,11 @@
 name: pkg-pr-new
 on:
-  push:
-    branches: [develop]
   pull_request:
     branches: [develop]
 
 jobs:
   build:
-    if: ${{ github.repository == 'anlyyao/miniprogram-svg-icon' && !startsWith(github.head_ref, 'release/') }}
+    if: ${{ github.repository == 'anlyyao/miniprogram-svg-icons' && !startsWith(github.head_ref, 'release/') }}
     runs-on: ubuntu-latest
 
     steps:

@@ -1,12 +1,13 @@
 # @mp-svg-icons/alipay
 
-支付宝小程序 SVG 多色图标组件库。
+支付宝小程序 SVG 多色图标组件库，支持多品牌图标源（如 TDesign）。
 
 ## 特性
 
 - ✅ **完整色彩支持** — 单色、双色、多色图标完美渲染
 - ✅ **运行时颜色控制** — 通过属性动态修改 `fill` / `stroke` 颜色
 - ✅ **零依赖运行** — Data URI 方案，无需额外资源加载
+- ✅ **多品牌支持** — 支持 TDesign 等多种图标品牌
 - ✅ **按需裁剪** — 配合 `@mp-svg-icons/utils` 工具，移除未使用图标减小包体积
 
 ## 安装
@@ -15,6 +16,25 @@
 npm install @mp-svg-icons/alipay
 # 或
 pnpm add @mp-svg-icons/alipay
+```
+
+## 目录结构
+
+```
+@mp-svg-icons/alipay/
+├── common/                    # 公共 Mixin
+│   └── use-icon.js
+├── icon/                      # 通用 icon 组件（全量图标）
+│   ├── index.js
+│   ├── index.json
+│   ├── index.axml
+│   └── icons.js               # 全量图标 SVG 映射表
+└── tdesign/                   # TDesign 品牌图标
+    ├── {name}-icon/           # 单图标组件目录
+    │   ├── index.js
+    │   ├── index.json
+    │   └── index.axml
+    └── ...
 ```
 
 ## 使用方式
@@ -46,7 +66,7 @@ pnpm add @mp-svg-icons/alipay
 ```json
 {
   "usingComponents": {
-    "t-icon": "@mp-svg-icons/alipay/tdesign/icon"
+    "t-icon": "@mp-svg-icons/alipay/icon"
   }
 }
 ```

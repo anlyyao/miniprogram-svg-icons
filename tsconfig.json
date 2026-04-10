@@ -12,5 +12,5 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": ["packages/scripts/**/*.ts"],
-  "exclude": ["node_modules", "dist", "packages/tdesign-icons"]
+  "exclude": ["node_modules", "dist"]
 }

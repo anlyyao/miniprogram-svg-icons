@@ -58,8 +58,8 @@ body:
         - 目前无法动态加载特定品牌的图标，需要一个按需加载 API
         - 不支持自定义图标映射，难以集成第三方图标库
         - 希望支持图标预加载以提升性能
-      validations:
-        required: true
+    validations:
+      required: true
 
   - type: textarea
     id: solution
@@ -69,8 +69,8 @@ body:
       placeholder: |
         例如：
         - 支持传递自定义 SVG 数据给 icon 组件
-      validations:
-        required: true
+    validations:
+      required: true
 
   - type: textarea
     id: alternatives

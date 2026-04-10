@@ -1,0 +1,113 @@
+name: 反馈新功能
+description: 通过 GitHub 模板进行新功能反馈。
+title: '[功能] 功能需求简述'
+labels: [💪🏻 enhancement, 🧐 unconfirmed]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # 欢迎你的功能建议
+        miniprogram-svg-icons 是一个小程序多色图标解决方案库，支持微信、支付宝、快手等多平台小程序。
+
+        在提交新功能需求前，请确保：
+        - 你已检查了 [Issue 列表](https://github.com/anlyyao/miniprogram-svg-icons/issues) 和 [Discussions](https://github.com/anlyyao/miniprogram-svg-icons/discussions)
+        - 这个功能确实不存在或没有更好的替代方案
+        - 这个功能足够通用，对大多数用户有价值
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: 功能类别
+      description: 请选择功能所属的类别
+      options:
+        - 图标资源
+        - SVG 转换引擎
+        - 组件功能
+        - 图标裁剪工具
+        - 构建脚本
+        - 新平台支持
+        - 文档/示例
+        - 性能优化
+        - 其他
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: 涉及的平台（可选）
+      description: 如果功能与特定平台相关，请选择
+      multiple: true
+      options:
+        - 微信小程序
+        - 支付宝小程序
+        - 快手小程序
+        - 全平台
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 这个功能解决了什么问题
+      description: |
+        详细描述功能需求和使用场景：
+        - 当前的限制是什么
+        - 这个功能会带来什么优势
+        - 典型的应用场景
+      placeholder: |
+        例如：
+        - 目前无法动态加载特定品牌的图标，需要一个按需加载 API
+        - 不支持自定义图标映射，难以集成第三方图标库
+        - 希望支持图标预加载以提升性能
+      validations:
+        required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: 建议的解决方案
+      description: 你认为应该如何实现这个功能，尽可能详细
+      placeholder: |
+        例如：
+        - 支持传递自定义 SVG 数据给 icon 组件
+      validations:
+        required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 其他可能的解决方案
+      description: 你考虑过的其他方案，以及为什么不采用它们
+      placeholder: |
+        例如：
+        - 方案 A: 全量打包，缺点是包体积大
+        - 方案 B: 分离加载，缺点是网络请求增多
+
+  - type: textarea
+    id: code
+    attributes:
+      label: 代码示例（可选）
+      description: 展示你期望的 API 使用方式
+      placeholder: |
+        ```json
+        {
+          "usingComponents": {
+            "t-icon": "@mp-svg-icons/wechat/icon"
+          }
+        }
+        ```
+
+        ```xml
+        <!-- 期望的用法 -->
+        <t-icon name="add" size="{{48}}" fill-color="#0052D9" />
+        ```
+      render: markdown
+
+  - type: textarea
+    id: context
+    attributes:
+      label: 补充说明
+      description: 任何其他相关信息
+      placeholder: |
+        - 该功能的优先级
+        - 是否有类似的开源项目实现了此功能
+        - 其他参考资料或链接

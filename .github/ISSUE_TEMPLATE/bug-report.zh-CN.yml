@@ -1,0 +1,120 @@
+name: 反馈 Bug
+description: 通过 GitHub 模板进行 Bug 反馈。
+title: '[组件库/平台] 简要描述问题'
+labels: [🐞 bug, 🧐 unconfirmed]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # 欢迎你的参与
+        miniprogram-svg-icons 是一个小程序多色图标解决方案库，支持微信、支付宝、快手等多平台小程序。
+
+        在发布 Bug 报告前，请确保：
+        - 你已检查了 [更新日志](https://github.com/anlyyao/miniprogram-svg-icons/releases) 中的最新版本
+        - 你已搜索了 [已有的 Issue](https://github.com/anlyyao/miniprogram-svg-icons/issues)（你的问题可能已有人提出）
+        - 如果在已关闭的 Issue 中发现相同问题，请创建新的 Issue 并引用旧 Issue
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: 平台
+      description: 请选择出现问题的小程序平台
+      options:
+        - 微信小程序
+        - 支付宝小程序
+        - 快手小程序
+        - 其他平台
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: NPM 包版本
+      description: 请查看 package.json 中的版本号，建议使用最新版本重现问题
+      placeholder: 例如：0.0.1
+    validations:
+      required: true
+
+  - type: dropdown
+    id: usageType
+    attributes:
+      label: 使用方式
+      description: 请选择你的使用方式
+      options:
+        - 单图标组件（如 add-icon）
+        - 通用 icon 组件（icon 组件）
+        - 自定义集成
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述
+      description: 清楚地描述你遇到的 Bug，包括：发生了什么、预期应该发生什么
+      placeholder: |
+        例如：
+        - 图标在特定场景下显示异常（如图标颜色不生效、尺寸错误等）
+        - SVG Data URI 生成出错
+        - 组件属性不生效
+      validations:
+        required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 重现步骤
+      description: 提供清晰的步骤来重现此 Bug
+      placeholder: |
+        1. 导入组件 XXX
+        2. 设置属性 YYY
+        3. 观察结果
+      validations:
+        required: true
+
+  - type: textarea
+    id: code
+    attributes:
+      label: 代码示例
+      description: 提供最小化的代码示例来重现问题，包括 WXML/AXML 和 JS 配置
+      placeholder: |
+        JSON:
+        ```json
+        {
+          "usingComponents": {
+            "t-icon": "@mp-svg-icons/wechat/icon"
+          }
+        }
+        ```
+
+        WXML:
+        ```xml
+        <t-icon name="add" size="{{48}}" fill-color="#0052D9" />
+        ```
+      render: markdown
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: 截图或视频（可选）
+      description: 如有错误现象，请上传截图或录制短视频帮助我们理解
+      placeholder: 拖动图片或视频文件到此处
+
+  - type: textarea
+    id: env
+    attributes:
+      label: 环境信息
+      description: 请提供相关的环境信息
+      placeholder: |
+        - 操作系统：macOS / Windows / Linux
+        - Node 版本：16.x / 18.x / 20.x
+        - pnpm 版本：8.x / 10.x
+        - 小程序开发工具版本：1.0.x
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 补充说明
+      description: 任何其他有助于我们诊断问题的信息
+      placeholder: 例如：此 Bug 是否影响生产环境、是否存在临时解决方案等

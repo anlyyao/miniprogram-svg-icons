@@ -27,8 +27,8 @@
 
 | 包名 | 平台 | 图标类型 | 状态 |
 |------|------|----------|------|
-| `tdesign-icon-wechat` | 微信小程序 | SVG 多色图标 | ✅ 可用 |
-| `tdesign-icons-alipay` | 支付宝小程序 | SVG 多色图标 | ❌ 未发布|
+| `@mp-svg-icons/wechat` | 微信小程序 | SVG 多色图标 | ✅ 可用 |
+| `@mp-svg-icons/alipay` | 支付宝小程序 | SVG 多色图标 | ❌ 未发布|
 | - | - | - | - |
 
 ## ✨ 核心特性
@@ -176,8 +176,8 @@ pnpm run release
 // 页面或组件的 JSON 配置
 {
   "usingComponents": {
-    "add-icon": "tdesign-icon-wechat/add-icon",
-    "close-icon": "tdesign-icon-wechat/close-icon"
+    "add-icon": "@mp-svg-icons/wechat/add-icon",
+    "close-icon": "@mp-svg-icons/wechat/close-icon"
   }
 }
 ```
@@ -195,7 +195,7 @@ pnpm run release
 ```json
 {
   "usingComponents": {
-    "t-icon": "tdesign-icon-wechat/icon"
+    "t-icon": "@mp-svg-icons/wechat/icon"
   }
 }
 ```
@@ -243,7 +243,7 @@ npx mp-svg-icons-clear --pkg-dir <path> [--scan <dirs...>] [--icons <names>] [--
 
 ```bash
 npx mp-svg-icons-clear \
-  --pkg-dir ./miniprogram_npm/tdesign-icon-wechat \
+  --pkg-dir ./miniprogram_npm/@mp-svg-icons/wechat \
   --scan ./pages ./components
 ```
 
@@ -251,7 +251,7 @@ npx mp-svg-icons-clear \
 
 ```bash
 npx mp-svg-icons-clear \
-  --pkg-dir ./miniprogram_npm/tdesign-icon-wechat \
+  --pkg-dir ./miniprogram_npm/@mp-svg-icons/wechat \
   --scan ./pages ./components \
   --icons loading,play
 ```
@@ -260,7 +260,7 @@ npx mp-svg-icons-clear \
 
 ```bash
 npx mp-svg-icons-clear \
-  --pkg-dir ./miniprogram_npm/tdesign-icon-wechat \
+  --pkg-dir ./miniprogram_npm/@mp-svg-icons/wechat \
   --icons add,close,check-circle,delete
 ```
 
@@ -268,7 +268,7 @@ npx mp-svg-icons-clear \
 
 ```bash
 npx mp-svg-icons-clear \
-  --pkg-dir ./miniprogram_npm/tdesign-icon-wechat \
+  --pkg-dir ./miniprogram_npm/@mp-svg-icons/wechat \
   --scan ./pages ./components \
   --dry-run
 ```

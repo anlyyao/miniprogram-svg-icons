@@ -79,7 +79,7 @@ import { clear } from '@mp-svg-icons/utils/clear';
 const result = clear({
   scanDirs: ['./pages', './components'],
   includeIcons: ['loading'],
-  pkgDir: './miniprogram_npm/tdesign-icons-wechat',
+  pkgDir: './miniprogram_npm/@mp-svg-icons/wechat',
   dryRun: false,
 });
 

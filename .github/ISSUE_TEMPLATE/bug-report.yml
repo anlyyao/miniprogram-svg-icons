@@ -58,8 +58,8 @@ body:
         - 图标在特定场景下显示异常（如图标颜色不生效、尺寸错误等）
         - SVG Data URI 生成出错
         - 组件属性不生效
-      validations:
-        required: true
+    validations:
+      required: true
 
   - type: textarea
     id: reproduce
@@ -70,8 +70,8 @@ body:
         1. 导入组件 XXX
         2. 设置属性 YYY
         3. 观察结果
-      validations:
-        required: true
+    validations:
+      required: true
 
   - type: textarea
     id: code

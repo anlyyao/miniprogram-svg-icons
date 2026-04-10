@@ -402,7 +402,7 @@ async function main(): Promise<void> {
       console.log('\n📌 创建 release 分支、提交版本号变更并打 Git Tag...\n');
 
       // 基于 develop 创建 release 分支
-      const branchName = `release/tdesign-icons-${targetFramework}@${newVersion}`;
+      const branchName = `release/@mp-svg-icons/${targetFramework}@${newVersion}`;
       run(`git checkout -b ${branchName}`);
 
       // 暂存 package.json 变更
@@ -429,7 +429,7 @@ async function main(): Promise<void> {
     if (!isDryRun) {
       console.log(`  - ${pkgJson.name}@${newVersion} (tag: ${distTag})`);
       console.log(`  - Git Tag: ${pkgJson.name}@${newVersion}`);
-      const branchName = `release/tdesign-icons-${targetFramework}@${newVersion}`;
+      const branchName = `release/@mp-svg-icons/${targetFramework}@${newVersion}`;
       console.log(`  - Git 分支: ${branchName}`);
       console.log('');
     }

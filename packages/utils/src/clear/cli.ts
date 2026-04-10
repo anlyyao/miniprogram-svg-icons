@@ -3,9 +3,9 @@
  * @mp-svg-icons/utils— CLI 入口
  *
  * 用法:
- *   npx mp-svg-icons-clear --pkg-dir ./miniprogram_npm/tdesign-icons-wechat --scan ./pages ./components
- *   npx mp-svg-icons-clear --pkg-dir ./miniprogram_npm/tdesign-icons-alipay --icons add,close,check-circle
- *   npx mp-svg-icons-clear --pkg-dir ./miniprogram_npm/tdesign-icons-kuaishou --scan ./pages --icons loading --dry-run
+ *   npx mp-svg-icons-clear --pkg-dir ./miniprogram_npm/@mp-svg-icons/wechat --scan ./pages ./components
+ *   npx mp-svg-icons-clear --pkg-dir ./miniprogram_npm/@mp-svg-icons/alipay --icons add,close,check-circle
+ *   npx mp-svg-icons-clear --pkg-dir ./miniprogram_npm/@mp-svg-icons/kuaishou --scan ./pages --icons loading --dry-run
  *
  * 参数:
  *   --pkg-dir <path>     (必填) 构建产物中图标包所在目录
@@ -61,9 +61,9 @@ mp-svg-icons-clear — 小程序图标组件裁剪 CLI 工具
   防止图标包自身被误识别为"已使用图标"。
 
 示例:
-  npx ${CLI_BIN_NAME} --pkg-dir ./miniprogram_npm/tdesign-icons-wechat --scan ./pages ./components
-  npx ${CLI_BIN_NAME} --pkg-dir ./miniprogram_npm/tdesign-icons-alipay --icons add,close,check-circle
-  npx ${CLI_BIN_NAME} --pkg-dir ./miniprogram_npm/tdesign-icons-kuaishou --scan ./pages --icons loading --dry-run
+  npx ${CLI_BIN_NAME} --pkg-dir ./miniprogram_npm/@mp-svg-icons/wechat --scan ./pages ./components
+  npx ${CLI_BIN_NAME} --pkg-dir ./miniprogram_npm/@mp-svg-icons/alipay --icons add,close,check-circle
+  npx ${CLI_BIN_NAME} --pkg-dir ./miniprogram_npm/@mp-svg-icons/kuaishou --scan ./pages --icons loading --dry-run
 `);
 }
 

@@ -1,0 +1,104 @@
+name: preview-site-publish
+
+on:
+  pull_request:
+    branches: [develop]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  actions: read
+
+jobs:
+  preview-context:
+    runs-on: ubuntu-latest
+    outputs:
+      pr_id: ${{ github.event.number }}
+      svg_icons_domain: ${{ steps.miniprogram-svg-icons-domain.outputs.svg_icons_domain }}
+    steps:
+      - name: miniprogram-svg-icons-domain
+        id: miniprogram-svg-icons-domain
+        run: echo "svg_icons_domain=https://preview-pr-${{ github.event.number }}-miniprogram-svg-icons.surge.sh" >> $GITHUB_OUTPUT
+
+  miniprogram-svg-icons:
+    runs-on: ubuntu-latest
+    needs: preview-context
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - run: pnpm install
+
+      - run: pnpm run generate
+
+      - run: pnpm -C web run build
+
+      - run: |
+          export DEPLOY_DOMAIN=${{ needs.preview-context.outputs.svg_icons_domain }}
+          npx surge --project ./dist/web --domain $DEPLOY_DOMAIN --token ${{ secrets.SURGE_TOKEN }}
+
+  preview-comment:
+    if: always()
+    needs:
+      - preview-context
+      - miniprogram-svg-icons
+    runs-on: ubuntu-latest
+    steps:
+      - name: jobs report
+        id: report
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr_id = ${{ needs.preview-context.outputs.pr_id }};
+            const svg_icons_domain = "${{ needs.preview-context.outputs.svg_icons_domain }}";
+
+            const { data: { jobs } } = await github.rest.actions.listJobsForWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.runId,
+              per_page: 100
+            })
+
+            const preview = {
+              "miniprogram-svg-icons": { status: "", report_url: "" },
+            };
+            const preview_success = `<img width="300" alt="完成" src="https://user-images.githubusercontent.com/15634204/150816437-9f5bb788-cd67-4cbc-9897-b82d74e9aa65.png" />`;
+            const preview_failure = `<img width="300" alt="失败" src="https://user-images.githubusercontent.com/5378891/75333447-1e63a280-58c1-11ea-975d-235367fd1522.png" />`;
+            jobs
+              .filter((job) => job.name === "miniprogram-svg-icons")
+              .map((job) => {
+                preview["miniprogram-svg-icons"].status = preview_failure;
+                preview["miniprogram-svg-icons"].report_url = job.html_url;
+
+                if (job.conclusion === "success") {
+                  preview["miniprogram-svg-icons"].status = preview_success;
+                  preview["miniprogram-svg-icons"].report_url = svg_icons_domain;
+                }
+              });
+
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+
+            const comment = `
+              # Miniprogram SVG Icons Preview [Open](${runUrl})
+              | Site | Preview |
+              | --------- | :--: |
+              | miniprogram-svg-icons | [${preview["miniprogram-svg-icons"].status}](${preview["miniprogram-svg-icons"].report_url}) |
+
+              <!-- AUTO_PREVIEW_HOOK -->
+              `;
+
+            core.setOutput('comment', comment);
+
+      - name: comment
+        uses: actions-cool/maintain-one-comment@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          number: ${{ needs.preview-context.outputs.pr_id }}
+          body: ${{ steps.report.outputs.comment }}
+          body-include: '<!-- AUTO_PREVIEW_HOOK -->'

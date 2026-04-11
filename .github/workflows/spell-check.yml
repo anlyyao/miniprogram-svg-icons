@@ -1,11 +1,13 @@
 name: spell-check
+
 on:
-  workflow_call:
+  pull_request:
     inputs:
       config:
         required: false
         type: string
         default: .github/workflows/typos-config.toml
+
 jobs:
   check:
     name: Typos

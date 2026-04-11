@@ -1,8 +1,5 @@
 const useIcon = require("../common/use-icon");
-
-const iconsMap = {
-    "tdesign": require('./tdesign-icons')
-};
+const iconsMap = require("./icons");
 
 Component({
   behaviors: [useIcon],

@@ -1,9 +1,5 @@
 const useIcon = require("../common/use-icon");
-
-// 品牌图标数据映射（构建时自动生成）
-const iconsMap = {
-  /* __ICONS_MAP_PLACEHOLDER__ */
-};
+const iconsMap = require("./icons");
 
 Component({
   mixins: [useIcon],

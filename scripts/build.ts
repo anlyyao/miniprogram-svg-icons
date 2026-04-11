@@ -9,13 +9,14 @@ import {
   BrandInfo,
   IconEntry,
   PlatformTemplates,
+  BrandIconsMap,
   scanBrands,
   parseArgs,
   getPlatformConfig,
   loadAndFilterIcons,
   loadPlatformTemplates,
   generateIconJS,
-  generateIconsDataJS,
+  generateMergedIconsJS,
   cleanDistDir,
 } from './shared';
 
@@ -145,36 +146,32 @@ async function buildSingleIcons(
 async function buildIconComponent(
   platformDistDir: string,
   platform: PlatformConfig,
-  brands: BrandInfo[],
+  brandsIcons: BrandIconsMap,
   templates: PlatformTemplates,
 ): Promise<void> {
   const tplFileName = `index${platform.templateExt}`;
   const iconComponentDir = path.join(platformDistDir, 'icon');
   fs.ensureDirSync(iconComponentDir);
 
-  // 生成品牌映射的 require 语句
-  const iconsMapEntries = brands
-    .map((brand) => `  ${JSON.stringify(brand.name)}: require('./${brand.name}-icons')`)
-    .join(',\n');
-
-  // 替换模板中的占位符
-  const iconJSSource = templates.iconJSSource
-    .replace('/* __ICONS_MAP_PLACEHOLDER__ */', iconsMapEntries);
+  // 生成合并后的 icons.js
+  const iconsDataSource = generateMergedIconsJS(brandsIcons);
 
   // 压缩各文件
-  const [minifiedIconJS, minifiedIconJson, minifiedIconTemplate] = await Promise.all([
-    minifyJS(iconJSSource),
+  const [minifiedIconsData, minifiedIconJS, minifiedIconJson, minifiedIconTemplate] = await Promise.all([
+    minifyJS(iconsDataSource, true),
+    minifyJS(templates.iconJSSource),
     Promise.resolve(minifyJSON(templates.iconJsonTemplate)),
     Promise.resolve(minifyTemplate(templates.iconTemplateContent)),
   ]);
 
   await Promise.all([
+    fs.writeFile(path.join(iconComponentDir, 'icons.js'), minifiedIconsData),
     fs.writeFile(path.join(iconComponentDir, 'index.js'), minifiedIconJS),
     fs.writeFile(path.join(iconComponentDir, 'index.json'), minifiedIconJson),
     fs.writeFile(path.join(iconComponentDir, tplFileName), minifiedIconTemplate),
   ]);
 
-  console.log(`  📦 通用 icon 组件已生成`);
+  console.log(`  📦 通用 icon 组件已生成（包含合并的 icons.js）`);
 }
 
 /** 生成并压缩 common/use-icon.js */
@@ -190,7 +187,7 @@ async function buildCommonModule(platformDistDir: string, templates: PlatformTem
 
 interface BrandBuildResult {
   brand: string;
-  iconCount: number;
+  icons: IconEntry[];
   outputDir: string;
 }
 
@@ -218,19 +215,12 @@ async function buildBrand(
   const icons = loadAndFilterIcons(brand);
   const templates = loadPlatformTemplates(platformTemplateDir, platform);
 
-  // -------- 2. 生成并压缩品牌图标数据到 icon/{brand}-icons.js --------
-  const iconComponentDir = path.join(platformDistDir, 'icon');
-  fs.ensureDirSync(iconComponentDir);
-  const iconsDataSource = generateIconsDataJS(icons);
-  const minifiedIconsData = await minifyJS(iconsDataSource, true);
-  await fs.writeFile(path.join(iconComponentDir, `${brand.name}-icons.js`), minifiedIconsData);
-
-  // -------- 3. 生成并压缩单图标组件 --------
+  // -------- 2. 生成并压缩单图标组件 --------
   await buildSingleIcons(ctx, icons, templates.singleIconJsonTemplate, templates.singleIconTemplateContent);
 
   console.log(`  ✅ [${brand.name}] 共生成 ${icons.length} 个图标组件`);
 
-  return { brand: brand.name, iconCount: icons.length, outputDir };
+  return { brand: brand.name, icons, outputDir };
 }
 
 // ======================== 主构建入口 ========================
@@ -265,18 +255,20 @@ export async function build(platformId: string = 'wechat'): Promise<BuildResult>
   await buildCommonModule(platformDistDir, templates);
   console.log(`  📦 common/use-icon.js 已生成`);
 
-  // -------- 4. 为每个品牌构建组件 --------
+  // -------- 4. 为每个品牌构建组件，并收集图标数据 --------
   let totalIconCount = 0;
   const brandNames: string[] = [];
+  const brandsIcons: BrandIconsMap = {};
 
   for (const brand of brands) {
     const result = await buildBrand(platform, brand, platformDistDir, platformTemplateDir);
-    totalIconCount += result.iconCount;
+    totalIconCount += result.icons.length;
     brandNames.push(result.brand);
+    brandsIcons[result.brand] = result.icons;
   }
 
-  // -------- 5. 生成并压缩通用 icon 组件 --------
-  await buildIconComponent(platformDistDir, platform, brands, templates);
+  // -------- 5. 生成并压缩通用 icon 组件（包含合并的 icons.js） --------
+  await buildIconComponent(platformDistDir, platform, brandsIcons, templates);
 
   // -------- 6. 复制 README.md 到产物目录 --------
   const sourceReadmePath = path.resolve(ROOT_DIR, 'packages', platformId, 'README.md');

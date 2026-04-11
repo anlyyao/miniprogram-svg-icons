@@ -4,7 +4,7 @@ import { parseSvg, generateSvg } from './utils/svgTotemplate';
 
 // ======================== 路径常量 ========================
 
-export const SCRIPTS_DIR = __dirname;
+const SCRIPTS_DIR = __dirname;
 export const ROOT_DIR = path.resolve(SCRIPTS_DIR, '..');
 export const PACKAGES_DIR = path.resolve(ROOT_DIR, 'packages');
 export const DIST_DIR = path.resolve(ROOT_DIR, 'dist');
@@ -280,12 +280,25 @@ Component({
 `;
 }
 
+// ======================== 多品牌图标数据 ========================
+
+export interface BrandIconsMap {
+  [brandName: string]: IconEntry[];
+}
+
 /**
- * 生成品牌图标数据映射表的 JS 源码
+ * 生成合并后的 icons.js 源码
+ * 结构：{ "brand1": { "icon1": "svg1", ... }, "brand2": { ... } }
  */
-export function generateIconsDataJS(icons: IconEntry[]): string {
-  const entries = icons.map((icon) => `  ${JSON.stringify(icon.name)}: \`${icon.svg}\``);
-  return `module.exports = {\n${entries.join(',\n')}\n};\n`;
+export function generateMergedIconsJS(brandsIcons: BrandIconsMap): string {
+  const brandEntries: string[] = [];
+
+  for (const [brandName, icons] of Object.entries(brandsIcons)) {
+    const iconEntries = icons.map((icon) => `    ${JSON.stringify(icon.name)}: \`${icon.svg}\``);
+    brandEntries.push(`  ${JSON.stringify(brandName)}: {\n${iconEntries.join(',\n')}\n  }`);
+  }
+
+  return `module.exports = {\n${brandEntries.join(',\n')}\n};\n`;
 }
 
 // ======================== 目录清理 ========================

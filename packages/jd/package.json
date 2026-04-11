@@ -1,0 +1,26 @@
+{
+  "name": "@mp-svg-icons/jd",
+  "version": "0.0.1",
+  "description": "SVG 多色图标 - 京东小程序组件库",
+  "miniprogram": "./",
+  "keywords": [
+    "miniprogram",
+    "jd",
+    "jingdong",
+    "svg",
+    "icon",
+    "multicolor",
+    "tdesign"
+  ],
+  "author": "anlyyao",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anlyyao/miniprogram-svg-icons.git",
+    "directory": "packages/jd"
+  },
+  "bugs": {
+    "url": "https://github.com/anlyyao/miniprogram-svg-icons/issues"
+  },
+  "homepage": "https://github.com/anlyyao/miniprogram-svg-icons#readme"
+}

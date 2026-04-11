@@ -140,6 +140,10 @@ pnpm install
 pnpm run generate:wechat         # 微信小程序
 pnpm run generate:alipay         # 支付宝小程序
 pnpm run generate:kuaishou       # 快手小程序
+pnpm run generate:douyin         # 抖音小程序
+pnpm run generate:baidu          # 百度小程序
+pnpm run generate:jd             # 京东小程序
+pnpm run generate:xiaohongshu    # 小红书小程序
 pnpm run generate                # 全平台生成
 ```
 
@@ -386,15 +390,17 @@ dist/
 
 #### 组件 API 差异
 
-| 特性 | 微信 / 快手 / 抖音 / 百度 / 小红书 / 京东 | 支付宝 |
-|------|-------------------------------------------|--------|
-| 组件复用 | `Behavior` / `behaviors` | `Mixin` / `mixins` |
-| 属性定义 | `properties` (带 `type` / `value`) | `props` (直接赋默认值) |
-| 数据访问 | `this.data.xxx` | `this.props.xxx` (外部属性) / `this.data.xxx` (内部数据) |
-| 初始化生命周期 | `lifetimes.attached()` | `didMount()` |
-| 属性变化监听 | `observers` (声明式响应) | `didUpdate(prevProps)` (手动 diff) |
-| 纯数据字段 | `options.pureDataPattern` | 不支持 |
-| JS 语法风格 | ES6 (箭头函数、模板字符串、解构) | ES5 (var、字符串拼接、function) |
+| 特性 | 微信 / 京东 / 快手 / 抖音 / 百度 | 小红书小程序 | 支付宝小程序 |
+|------|----------------------------------|--------------|--------------|
+| 组件复用机制 | `Behavior` / `behaviors` | 不支持 `Behavior` | `Mixin` / `mixins` |
+| 属性定义 | `properties`（支持 `type`/`value` 结构） | `properties`（支持 `type`/`value` 结构） | `props`（直接赋值默认值） |
+| 数据访问 | `this.data.xxx` | `this.data.xxx` | `this.props.xxx`（外部属性）/ `this.data.xxx`（内部数据） |
+| 初始化生命周期 | `lifetimes.attached()` | `lifetimes.attached()` | `didMount()` |
+| 销毁生命周期 | `lifetimes.detached()` | `lifetimes.detached()` | `didUnmount()` |
+| 属性变化监听 | `observers` 声明式监听，支持多字段逗号分隔监听 | 仅支持 `properties` 单字段 `observer`，不支持多字段逗号监听 | 无 `observers`，使用 `didUpdate(prevProps)` 手动 diff |
+| 纯数据字段 | 支持 `options.pureDataPattern` | 不支持 | 不支持 |
+| JS 语法支持 | ES6+ 完全支持（箭头函数、模板字符串等） | ES6+ 完全支持 | 推荐 ES5；ES6 兼容不稳定 |
+
 
 #### 文件后缀差异
 
@@ -405,7 +411,10 @@ dist/
 | 逻辑文件 | `.js` | `.js` | `.js` | `.js` | `.js` | `.js` | `.js` |
 | 配置文件 | `.json` | `.json` | `.json` | `.json` | `.json` | `.json` | `.json` |
 
-> **说明**: 除支付宝外,其余平台（微信、快手、抖音、百度、小红书、京东）的自定义组件 API 基本一致,均支持 `Behavior` / `properties` / `observers` / `lifetimes` 等特性,主要差异仅在文件后缀。
+> **说明**: 
+> - 微信、快手、抖音、百度、京东 5 个平台的自定义组件 API 完全一致，均支持 `Behavior` / `properties` / `observers`（含多字段监听）/ `lifetimes` / `options.pureDataPattern` 等特性。
+> - 小红书平台不支持 `options.pureDataPattern` 纯数据字段和 `observers` 多字段监听语法，需使用单字段分开监听。
+> - 支付宝使用独立的组件 API（`mixins` / `props` / `didMount` / `didUpdate`），需要单独适配。
 
 ## 🔗 相关链接
 

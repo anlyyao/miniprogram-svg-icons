@@ -41,6 +41,41 @@
 
 
 
+#### @mp-svg-icons/kuaishou
+<!--
+- feat: 处理问题或特性描述
+-->
+
+
+
+#### @mp-svg-icons/douyin
+<!--
+- feat: 处理问题或特性描述
+-->
+
+
+
+#### @mp-svg-icons/baidu
+<!--
+- feat: 处理问题或特性描述
+-->
+
+
+
+#### @mp-svg-icons/jd
+<!--
+- feat: 处理问题或特性描述
+-->
+
+
+
+#### @mp-svg-icons/xiaohongshu
+<!--
+- feat: 处理问题或特性描述
+-->
+
+
+
 #### @mp-svg-icons/utils
 <!--
 - feat: 处理问题或特性描述

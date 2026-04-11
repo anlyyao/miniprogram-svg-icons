@@ -3,11 +3,21 @@ import fs from 'fs-extra';
 import path from 'path';
 import {
   ROOT_DIR,
-  PACKAGES_DIR,
+  DIST_DIR,
+  TEMPLATE_DIR,
+  PlatformConfig,
   BrandInfo,
+  IconEntry,
+  PlatformTemplates,
+  BrandIconsMap,
   scanBrands,
   parseArgs,
   getPlatformConfig,
+  loadAndFilterIcons,
+  loadPlatformTemplates,
+  generateIconJS,
+  generateMergedIconsJS,
+  cleanDistDir,
 } from './shared';
 
 // ======================== 配置常量 ========================
@@ -49,31 +59,13 @@ const TERSER_OPTIONS_TEMPLATE_LITERAL = {
   format: { comments: false, quote_keys: true },
 };
 
-// ======================== 构建函数 ========================
+// ======================== 压缩函数 ========================
 
-export interface BuildResult {
-  duration: number;
-  platform: string;
-  sourceDir: string;
-  distDir: string;
-  brands: string[];
-}
-
-/** 清理 dist 目录 */
-function cleanDistDir(distDir: string): void {
-  if (fs.existsSync(distDir)) {
-    fs.removeSync(distDir);
-  }
-  fs.ensureDirSync(distDir);
-}
-
-/** 压缩 JS 文件 */
-async function minifyJSFile(sourceFile: string, distFile: string, isIconsJs: boolean = false): Promise<void> {
-  const source = await fs.readFile(sourceFile, 'utf-8');
-
+/** 压缩 JS 代码 */
+async function minifyJS(source: string, isIconsJs: boolean = false): Promise<string> {
   const options = isIconsJs ? TERSER_OPTIONS_TEMPLATE_LITERAL : TERSER_OPTIONS;
   const minified = await terserMinify(source, options);
-  await fs.writeFile(distFile, minified.code || source);
+  return minified.code || source;
 }
 
 // ======================== 并发控制 ========================
@@ -98,148 +90,144 @@ async function pLimit<T>(tasks: (() => Promise<T>)[], limit: number): Promise<T[
   return results;
 }
 
-// ======================== 文件收集 ========================
+// ======================== 构建函数 ========================
 
-interface FileTask {
-  sourcePath: string;
-  distPath: string;
-  type: 'js' | 'json' | 'template' | 'copy';
-  isIconsJs?: boolean;
+export interface BuildResult {
+  duration: number;
+  platform: string;
+  distDir: string;
+  brands: string[];
+  iconCount: number;
 }
 
-/** 递归收集所有需要处理的文件，同时创建目标目录结构 */
-function collectFiles(sourceDir: string, distDir: string, templateExt: string): FileTask[] {
-  const tasks: FileTask[] = [];
-
-  function traverse(srcDir: string, dstDir: string): void {
-    let entries: fs.Dirent[];
-    try {
-      entries = fs.readdirSync(srcDir, { withFileTypes: true });
-    } catch {
-      return;
-    }
-
-    for (const entry of entries) {
-      const sourcePath = path.join(srcDir, entry.name);
-      const distPath = path.join(dstDir, entry.name);
-
-      if (entry.isDirectory()) {
-        fs.ensureDirSync(distPath);
-        traverse(sourcePath, distPath);
-      } else if (entry.isFile()) {
-        const ext = path.extname(entry.name);
-
-        if (ext === '.js') {
-          tasks.push({
-            sourcePath,
-            distPath,
-            type: 'js',
-            isIconsJs: entry.name.endsWith('-icons.js'),
-          });
-        } else if (ext === '.json') {
-          tasks.push({ sourcePath, distPath, type: 'json' });
-        } else if (ext === templateExt) {
-          tasks.push({ sourcePath, distPath, type: 'template' });
-        } else {
-          tasks.push({ sourcePath, distPath, type: 'copy' });
-        }
-      }
-    }
-  }
-
-  traverse(sourceDir, distDir);
-  return tasks;
+interface BuildContext {
+  platform: PlatformConfig;
+  brand: BrandInfo;
+  outputDir: string;
+  tplFileName: string;
 }
 
-// ======================== 文件处理 ========================
+/** 生成并压缩单图标组件 */
+async function buildSingleIcons(
+  ctx: BuildContext,
+  icons: IconEntry[],
+  singleIconJsonTemplate: string,
+  singleIconTemplateContent: string,
+): Promise<void> {
 
-/** 递归处理目录 */
-async function processDirectory(sourceDir: string, distDir: string, templateExt: string): Promise<void> {
-  if (!fs.existsSync(sourceDir)) {
-    throw new Error(`源目录不存在: ${sourceDir}\n请先运行 generate 脚本生成组件库`);
+  // 创建所有图标目录
+  for (const icon of icons) {
+    const iconDir = path.join(ctx.outputDir, `${icon.name}-icon`);
+    fs.ensureDirSync(iconDir);
   }
 
-  // 1. 收集所有文件
-  const fileTasks = collectFiles(sourceDir, distDir, templateExt);
+  // 压缩模板和 JSON
+  const minifiedJson = minifyJSON(singleIconJsonTemplate);
+  const minifiedTemplate = minifyTemplate(singleIconTemplateContent);
 
-  if (fileTasks.length === 0) {
-    return;
-  }
+  // 并发压缩和写入 JS 文件
+  const jsTasks = icons.map((icon) => async () => {
+    const iconDir = path.join(ctx.outputDir, `${icon.name}-icon`);
+    const jsSource = generateIconJS(icon.svg, ctx.platform);
+    const minifiedJs = await minifyJS(jsSource);
 
-  const jsTasks: FileTask[] = [];
-  const syncTasks: FileTask[] = [];
+    await Promise.all([
+      fs.writeFile(path.join(iconDir, 'index.js'), minifiedJs),
+      fs.writeFile(path.join(iconDir, 'index.json'), minifiedJson),
+      fs.writeFile(path.join(iconDir, ctx.tplFileName), minifiedTemplate),
+    ]);
+  });
 
-  for (const task of fileTasks) {
-    if (task.type === 'js') {
-      jsTasks.push(task);
-    } else {
-      syncTasks.push(task);
-    }
-  }
-
-  for (const task of syncTasks) {
-    const { sourcePath, distPath, type } = task;
-    switch (type) {
-      case 'json': {
-        const source = fs.readFileSync(sourcePath, 'utf-8');
-        fs.writeFileSync(distPath, minifyJSON(source));
-        break;
-      }
-      case 'template': {
-        const source = fs.readFileSync(sourcePath, 'utf-8');
-        fs.writeFileSync(distPath, minifyTemplate(source));
-        break;
-      }
-      case 'copy':
-        fs.copyFileSync(sourcePath, distPath);
-        break;
-    }
-  }
-
-  // 3. JS 任务并行处理
-  if (jsTasks.length > 0) {
-    const jsPromises = jsTasks.map(task => async () => {
-      await minifyJSFile(task.sourcePath, task.distPath, task.isIconsJs || false);
-    });
-
-    await pLimit(jsPromises, CONCURRENCY_LIMIT);
-  }
+  await pLimit(jsTasks, CONCURRENCY_LIMIT);
+  console.log(`  📦 ${icons.length}/${icons.length} 图标已完成\n`);
 }
 
-// ======================== 品牌构建信息 ========================
+/** 生成并压缩通用 icon 组件 */
+async function buildIconComponent(
+  platformDistDir: string,
+  platform: PlatformConfig,
+  brandsIcons: BrandIconsMap,
+  templates: PlatformTemplates,
+): Promise<void> {
+  const tplFileName = `index${platform.templateExt}`;
+  const iconComponentDir = path.join(platformDistDir, 'icon');
+  fs.ensureDirSync(iconComponentDir);
 
-interface BrandBuildInfo extends BrandInfo {
-  /** 品牌源目录路径（packages/{platform}/{brand}/） */
-  sourceDir: string;
+  // 生成合并后的 icons.js
+  const iconsDataSource = generateMergedIconsJS(brandsIcons);
+
+  // 压缩各文件
+  const [minifiedIconsData, minifiedIconJS, minifiedIconJson, minifiedIconTemplate] = await Promise.all([
+    minifyJS(iconsDataSource, true),
+    minifyJS(templates.iconJSSource),
+    Promise.resolve(minifyJSON(templates.iconJsonTemplate)),
+    Promise.resolve(minifyTemplate(templates.iconTemplateContent)),
+  ]);
+
+  await Promise.all([
+    fs.writeFile(path.join(iconComponentDir, 'icons.js'), minifiedIconsData),
+    fs.writeFile(path.join(iconComponentDir, 'index.js'), minifiedIconJS),
+    fs.writeFile(path.join(iconComponentDir, 'index.json'), minifiedIconJson),
+    fs.writeFile(path.join(iconComponentDir, tplFileName), minifiedIconTemplate),
+  ]);
+
+  console.log(`  📦 通用 icon 组件已生成（包含合并的 icons.js）`);
+}
+
+/** 生成并压缩 common/use-icon.js */
+async function buildCommonModule(platformDistDir: string, templates: PlatformTemplates): Promise<void> {
+  const commonDir = path.join(platformDistDir, 'common');
+  fs.ensureDirSync(commonDir);
+
+  const minifiedUseIcon = await minifyJS(templates.useIconSource);
+  await fs.writeFile(path.join(commonDir, 'use-icon.js'), minifiedUseIcon);
+}
+
+// ======================== 单品牌构建 ========================
+
+interface BrandBuildResult {
+  brand: string;
+  icons: IconEntry[];
+  outputDir: string;
 }
 
 /**
- * 获取品牌构建信息
- * 在 scanBrands 基础上添加 sourceDir 属性
+ * 构建单个品牌的图标组件（从 SVG 直接生成压缩产物）
  */
-function getBrandBuildInfos(platformSourceDir: string): BrandBuildInfo[] {
-  const brands = scanBrands();
-  const buildInfos: BrandBuildInfo[] = [];
+async function buildBrand(
+  platform: PlatformConfig,
+  brand: BrandInfo,
+  platformDistDir: string,
+  platformTemplateDir: string,
+): Promise<BrandBuildResult> {
+  const tplFileName = `index${platform.templateExt}`;
+  const outputDir = path.join(platformDistDir, brand.name);
 
-  for (const brand of brands) {
-    const sourceDir = path.join(platformSourceDir, brand.name);
-    if (fs.existsSync(sourceDir)) {
-      buildInfos.push({ ...brand, sourceDir });
-    }
-  }
+  const ctx: BuildContext = { platform, brand, outputDir, tplFileName };
 
-  if (buildInfos.length === 0) {
-    throw new Error(`未在 ${platformSourceDir} 下找到任何品牌目录，请先运行 generate 脚本`);
-  }
+  console.log(`\n  🎨 品牌: ${brand.name}`);
+  console.log(`  📁 输出目录: ${outputDir}\n`);
 
-  return buildInfos;
+  // -------- 0. 创建品牌目录 --------
+  fs.ensureDirSync(outputDir);
+
+  // -------- 1. 加载图标 & 读取模板 --------
+  const icons = loadAndFilterIcons(brand);
+  const templates = loadPlatformTemplates(platformTemplateDir, platform);
+
+  // -------- 2. 生成并压缩单图标组件 --------
+  await buildSingleIcons(ctx, icons, templates.singleIconJsonTemplate, templates.singleIconTemplateContent);
+
+  console.log(`  ✅ [${brand.name}] 共生成 ${icons.length} 个图标组件`);
+
+  return { brand: brand.name, icons, outputDir };
 }
 
 // ======================== 主构建入口 ========================
 
 /**
- * 编译压缩小程序图标组件包
- * 将 packages/{platform}/ 的源码编译压缩到 dist/{platform}/
+ * 编译打包小程序图标组件库
+ * 直接从 SVG 资源生成并压缩输出到 dist/{platform}/
  *
  * @param platformId - 平台标识（wechat / alipay / kuaishou）
  */
@@ -247,75 +235,66 @@ export async function build(platformId: string = 'wechat'): Promise<BuildResult>
   const platform = getPlatformConfig(platformId);
 
   const start = Date.now();
-  const platformSourceDir = path.resolve(PACKAGES_DIR, platformId);
-  const platformDistDir = path.resolve(ROOT_DIR, 'dist', platformId);
+  const platformDistDir = path.resolve(DIST_DIR, platformId);
+  const platformTemplateDir = path.join(TEMPLATE_DIR, platform.templateDir);
 
   console.log(`\n📦 编译打包平台: ${platform.label} (${platformId})`);
-  console.log(`📂 源目录: ${platformSourceDir}`);
   console.log(`📁 输出目录: ${platformDistDir}`);
 
   // -------- 0. 清理 dist 目录 --------
   cleanDistDir(platformDistDir);
 
-  // -------- 1. 扫描所有品牌（从 resources 目录） --------
-  const brands = getBrandBuildInfos(platformSourceDir);
-  const brandNames = new Set(brands.map((b) => b.name));
-  console.log(`\n🔍 发现 ${brands.length} 个品牌: ${brands.map((b) => b.name).join(', ')}`);
+  // -------- 1. 扫描所有品牌 --------
+  const brands = scanBrands();
+  console.log(`🔍 发现 ${brands.length} 个品牌: ${brands.map((b) => b.name).join(', ')}`);
 
-  // -------- 2. 处理公共目录（非品牌目录） --------
-  const platformEntries = fs.readdirSync(platformSourceDir, { withFileTypes: true });
-  for (const entry of platformEntries) {
-    if (!entry.isDirectory()) continue;
-    // 跳过品牌目录
-    if (brandNames.has(entry.name)) continue;
+  // -------- 2. 读取模板文件 --------
+  const templates = loadPlatformTemplates(platformTemplateDir, platform);
 
-    const sharedSourceDir = path.join(platformSourceDir, entry.name);
-    const sharedDistDir = path.join(platformDistDir, entry.name);
+  // -------- 3. 生成并压缩 common/use-icon.js --------
+  await buildCommonModule(platformDistDir, templates);
+  console.log(`  📦 common/use-icon.js 已生成`);
 
-    console.log(`\n  📁 公共目录: ${entry.name}`);
-    fs.ensureDirSync(sharedDistDir);
-    await processDirectory(sharedSourceDir, sharedDistDir, platform.templateExt);
-    console.log(`  ✅ [${entry.name}] 打包完成`);
-  }
+  // -------- 4. 为每个品牌构建组件，并收集图标数据 --------
+  let totalIconCount = 0;
+  const brandNames: string[] = [];
+  const brandsIcons: BrandIconsMap = {};
 
-  // -------- 3. 为每个品牌编译压缩 --------
-  console.log('');
   for (const brand of brands) {
-    const brandDistDir = path.join(platformDistDir, brand.name);
-    console.log(`  🎨 品牌: ${brand.name}`);
-    console.log(`  📂 源目录: ${brand.sourceDir}`);
-    console.log(`  📁 输出目录: ${brandDistDir}\n`);
-
-    fs.ensureDirSync(brandDistDir);
-    await processDirectory(brand.sourceDir, brandDistDir, platform.templateExt);
-    console.log(`  ✅ [${brand.name}] 打包完成\n`);
+    const result = await buildBrand(platform, brand, platformDistDir, platformTemplateDir);
+    totalIconCount += result.icons.length;
+    brandNames.push(result.brand);
+    brandsIcons[result.brand] = result.icons;
   }
 
-  // -------- 4. 复制平台 README 文件到产物中 --------
-  const readmePath = path.resolve(platformSourceDir, 'README.md');
+  // -------- 5. 生成并压缩通用 icon 组件（包含合并的 icons.js） --------
+  await buildIconComponent(platformDistDir, platform, brandsIcons, templates);
+
+  // -------- 6. 复制 README.md 到产物目录 --------
+  const sourceReadmePath = path.resolve(ROOT_DIR, 'packages', platformId, 'README.md');
   const distReadmePath = path.resolve(platformDistDir, 'README.md');
-  if (fs.existsSync(readmePath)) {
-    fs.copyFileSync(readmePath, distReadmePath);
+  if (fs.existsSync(sourceReadmePath)) {
+    fs.copyFileSync(sourceReadmePath, distReadmePath);
     console.log(`📄 已复制 README.md 到产物目录`);
   } else {
-    console.log(`⚠️  未找到 ${readmePath}，跳过 README 复制`);
+    console.log(`⚠️  未找到 ${sourceReadmePath}，跳过 README 复制`);
   }
 
-  // -------- 5. 复制平台 package.json 文件到产物中 --------
-  const packageJsonPath = path.resolve(platformSourceDir, 'package.json');
+  // -------- 7. 复制 package.json 到产物目录 --------
+  const sourcePackageJsonPath = path.resolve(ROOT_DIR, 'packages', platformId, 'package.json');
   const distPackageJsonPath = path.resolve(platformDistDir, 'package.json');
-  if (fs.existsSync(packageJsonPath)) {
-    fs.copyFileSync(packageJsonPath, distPackageJsonPath);
+  if (fs.existsSync(sourcePackageJsonPath)) {
+    fs.copyFileSync(sourcePackageJsonPath, distPackageJsonPath);
     console.log(`📄 已复制 package.json 到产物目录`);
   } else {
-    console.log(`⚠️  未找到 ${packageJsonPath}，跳过 package.json 复制`);
+    console.log(`⚠️  未找到 ${sourcePackageJsonPath}，跳过 package.json 复制`);
   }
 
   const duration = (Date.now() - start) / 1000;
-  console.log(`✅ [${platform.label}] 全部品牌打包完成`);
+  console.log(`\n✅ [${platform.label}] 全部品牌打包完成，共 ${totalIconCount} 个图标组件`);
   console.log(`⏱️  耗时: ${duration.toFixed(1)}s\n`);
 
-  return { duration, platform: platformId, sourceDir: platformSourceDir, distDir: platformDistDir, brands: brands.map((b) => b.name) };
+  return { duration, platform: platformId, distDir: platformDistDir, brands: brandNames, iconCount: totalIconCount };
 }
 
 // ======================== CLI 入口 ========================

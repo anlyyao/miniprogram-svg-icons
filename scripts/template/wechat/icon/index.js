@@ -1,8 +1,5 @@
 const useIcon = require("../common/use-icon");
-
-const iconsMap = {
-  /* __ICONS_MAP_PLACEHOLDER__ */
-};
+const iconsMap = require("./icons");
 
 Component({
   behaviors: [useIcon],

@@ -52,15 +52,13 @@ export interface ClearResult {
 
 /**
  * 品牌信息
- * 每个品牌有独立的 {brand}-icons.js 和单图标组件目录
+ * 每个品牌有独立的单图标组件目录
  */
 export interface BrandInfo {
   /** 品牌名称 */
   readonly name: string;
   /** 品牌单图标组件目录绝对路径（pkgDir/{brand}） */
   readonly dir: string;
-  /** 品牌对应的 icons 文件路径（pkgDir/icon/{brand}-icons.js） */
-  readonly iconsFilePath: string;
 }
 
 /** 扫描上下文：在各阶段间共享的运行时数据 */
@@ -90,7 +88,6 @@ export interface ScanContext {
 /** 单个品牌的图标数据加载结果 */
 export interface BrandIconDataLoadResult {
   readonly brand: BrandInfo;
-  readonly iconData: IconData | null;
   readonly singleIconDirs: readonly string[];
   /** 该品牌的图标名集合（icons + 单图标组件） */
   readonly iconNameSet: Set<string>;
@@ -102,14 +99,17 @@ export interface IconDataLoadResult {
   readonly brandResults: readonly BrandIconDataLoadResult[];
   /** 全量图标名集合（所有品牌合并去重） */
   readonly allIconNameSet: Set<string>;
+  /** 合并后的 icons.js 数据（可能为 null） */
+  readonly mergedIconsData: MergedIconsData | null;
 }
 
-/** icon 数据 */
-export interface IconData {
-  readonly names: readonly string[];
-  readonly data: Record<string, string>;
+/** 合并后的 icons.js 数据结构 */
+export interface MergedIconsData {
+  /** 所有品牌的图标数据 { "brand1": { "icon1": "svg1", ... }, ... } */
+  readonly data: Record<string, Record<string, string>>;
+  /** icons.js 文件路径 */
   readonly filePath: string;
-  /** 原始文件大小（字节），用于计算裁剪节省量，避免重复读取文件 */
+  /** 原始文件大小（字节） */
   readonly originalSize: number;
 }
 

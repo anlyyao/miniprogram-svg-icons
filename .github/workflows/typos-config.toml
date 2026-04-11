@@ -1,0 +1,16 @@
+[files]
+# 忽略的文件/目录
+extend-exclude = [
+
+]
+
+[default]
+# 忽略的单词（全局）
+extend-ignore-words-re = [
+  # 例如: 品牌名/项目名
+  
+]
+
+[default.extend-words]
+# 自定义允许的单词映射（key = 被检测词, value = 正确词或空字符串表示忽略）
+# 例如: ect = "etc"

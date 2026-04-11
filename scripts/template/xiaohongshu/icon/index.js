@@ -2,8 +2,8 @@ const useIcon = require("../common/use-icon");
 const iconsMap = require("./icons");
 
 Component({
-  mixins: [useIcon],
-  props: {
+  behaviors: [useIcon],
+  properties: {
     name: {
       type: String,
       value: '',
@@ -13,22 +13,28 @@ Component({
       value: 'tdesign',
     },
   },
-  didMount() {
-    this.getSvgContent();
-  },
-  didUpdate(prevProps) {
-    if (prevProps.name !== this.props.name || prevProps.brand !== this.props.brand) {
+  observers: {
+    name() {
       this.getSvgContent();
-    }
+      this.init();
+    },
+    brand() {
+      this.getSvgContent();
+      this.init();
+    },
+  },
+  lifetimes: {
+    attached() {
+      this.getSvgContent();
+    },
   },
 
   methods: {
     getSvgContent() {
-      const { name, brand } = this.props;
+      const { name, brand } = this.data;
       const iconsData = iconsMap[brand] || {};
       const svgContent = iconsData[name] || '';
       this.setData({ svgContent });
-      this.init();
     },
   },
 });

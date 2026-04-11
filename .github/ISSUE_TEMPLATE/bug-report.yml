@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         # 欢迎你的参与
-        miniprogram-svg-icons 是一个小程序多色图标解决方案库，支持微信、支付宝、快手等多平台小程序。
+        miniprogram-svg-icons 是一个小程序多色图标解决方案库，支持微信、支付宝、快手、抖音、百度、京东、小红书等多平台小程序。
 
         在发布 Bug 报告前，请确保：
         - 你已检查了 [更新日志](https://github.com/anlyyao/miniprogram-svg-icons/releases) 中的最新版本

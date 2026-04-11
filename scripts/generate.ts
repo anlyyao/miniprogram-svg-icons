@@ -1,94 +1,22 @@
 import fs from 'fs-extra';
 import path from 'path';
-import { parseSvg, generateSvg } from './utils/svgTotemplate';
 import {
   PACKAGES_DIR,
   TEMPLATE_DIR,
   PlatformConfig,
   BrandInfo,
+  IconEntry,
+  PlatformTemplates,
+  BrandIconsMap,
   scanBrands,
   parseArgs,
   getPlatformConfig,
+  loadAndFilterIcons,
+  loadPlatformTemplates,
+  generateIconJS,
+  generateMergedIconsJS,
+  cleanOutputDir,
 } from './shared';
-
-// ======================== SVG 解析 ========================
-
-interface IconEntry {
-  name: string;
-  svg: string;
-}
-
-function loadIcons(svgDir: string): IconEntry[] {
-  if (!fs.existsSync(svgDir)) {
-    throw new Error(`SVG directory not found: ${svgDir}`);
-  }
-
-  const svgFiles = fs.readdirSync(svgDir).filter((f) => f.endsWith('.svg'));
-
-  const rawEntries: { name: string; content: string; file: string }[] = [];
-  for (const file of svgFiles) {
-    try {
-      const filePath = path.join(svgDir, file);
-      rawEntries.push({
-        name: path.basename(file, '.svg'),
-        content: fs.readFileSync(filePath, 'utf-8'),
-        file,
-      });
-    } catch (err) {
-      console.error(`  ⚠️  读取失败: ${file}`, err instanceof Error ? err.message : String(err));
-    }
-  }
-
-  const icons: IconEntry[] = [];
-  for (const entry of rawEntries) {
-    try {
-      icons.push({ name: entry.name, svg: generateSvg(parseSvg(entry.content), entry.name) });
-    } catch (err) {
-      console.error(`  ⚠️  解析失败: ${entry.file}`, err instanceof Error ? err.message : String(err));
-    }
-  }
-
-  return icons;
-}
-
-function loadAndFilterIcons(brand: BrandInfo): IconEntry[] {
-  console.log(`📂 读取 SVG 图标: ${brand.svgDir}`);
-
-  const svgFiles = fs.readdirSync(brand.svgDir).filter((f) => f.endsWith('.svg'));
-  console.log(`📄 发现 ${svgFiles.length} 个 SVG 文件`);
-
-  const icons = loadIcons(brand.svgDir);
-
-  if (icons.length < svgFiles.length) {
-    const missing = svgFiles.length - icons.length;
-    console.warn(`⚠️  有 ${missing} 个 SVG 文件解析失败，请检查上方日志`);
-  }
-
-  console.log(`✅ 成功解析 ${icons.length} 个图标\n`);
-  return icons;
-}
-
-// ======================== 生成单图标 JS 源码 ========================
-
-function generateIconJS(svgContent: string, platform: PlatformConfig): string {
-  const reuseKey = platform.reuseKey;
-  return `var useIcon = require("../../common/use-icon");
-
-Component({
-  ${reuseKey}: [useIcon],
-  data: {
-    svgContent: \`${svgContent}\`,
-  },
-});
-`;
-}
-
-// ======================== 生成 SVG 映射表 JS 源码 ========================
-
-function generateIconsDataJS(icons: IconEntry[]): string {
-  const entries = icons.map((icon) => `  ${JSON.stringify(icon.name)}: \`${icon.svg}\``);
-  return `module.exports = {\n${entries.join(',\n')}\n};\n`;
-}
 
 // ======================== 生成函数 ========================
 
@@ -106,94 +34,6 @@ interface GenerateContext {
   outputDir: string;
   platformTemplateDir: string;
   tplFileName: string;
-}
-
-interface PlatformTemplates {
-  singleIconJsonTemplate: string;
-  singleIconTemplateContent: string;
-  iconJsonTemplate: string;
-  iconTemplateContent: string;
-  useIconSource: string;
-  iconJSSource: string;
-}
-
-/** 清理旧产物（保留 package.json 和 README.md） */
-async function cleanOutputDir(outputDir: string): Promise<void> {
-  if (!fs.existsSync(outputDir)) {
-    fs.ensureDirSync(outputDir);
-    return;
-  }
-
-  const items = fs.readdirSync(outputDir);
-  const removePromises: Promise<void>[] = [];
-
-  for (const item of items) {
-    if (item === 'package.json' || item === 'README.md') continue;
-    removePromises.push(
-      fs.remove(path.join(outputDir, item)).catch((err) => {
-        console.warn(`  ⚠️  清理失败: ${item}: ${err instanceof Error ? err.message : String(err)}`);
-      }),
-    );
-  }
-
-  await Promise.all(removePromises);
-}
-
-/** 安全读取模板文件 */
-function readTemplateFile(dir: string, filename: string): string {
-  const filePath = path.join(dir, filename);
-  if (!fs.existsSync(filePath)) {
-    throw new Error(`模板文件不存在: ${filePath}`);
-  }
-  return fs.readFileSync(filePath, 'utf-8');
-}
-
-/** 查找并读取模板文件（支持动态扩展名） */
-function findAndReadTemplate(dir: string, ext: string): string {
-  const files = fs.readdirSync(dir);
-  const templateFile = files.find((f) => f.startsWith('index') && f.endsWith(ext));
-
-  if (!templateFile) {
-    throw new Error(`未找到模板文件: ${dir}/index${ext}`);
-  }
-
-  return fs.readFileSync(path.join(dir, templateFile), 'utf-8');
-}
-
-/** 读取平台模板文件 */
-function loadPlatformTemplates(platformTemplateDir: string, platform: PlatformConfig): PlatformTemplates {
-  try {
-    // 单图标模板
-    const singleIconTemplateContent = findAndReadTemplate(
-      path.join(platformTemplateDir, 'single-icon'),
-      platform.templateExt
-    );
-    const singleIconJsonTemplate = readTemplateFile(platformTemplateDir, 'single-icon/index.json');
-
-    // 通用 icon 组件模板
-    const iconTemplateContent = findAndReadTemplate(
-      path.join(platformTemplateDir, 'icon'),
-      platform.templateExt
-    );
-    const iconJsonTemplate = readTemplateFile(platformTemplateDir, 'icon/index.json');
-    const iconJSSource = readTemplateFile(platformTemplateDir, 'icon/index.js');
-
-    // 公共模块
-    const useIconSource = readTemplateFile(platformTemplateDir, 'common/use-icon.js');
-
-    return {
-      singleIconJsonTemplate,
-      singleIconTemplateContent,
-      iconJsonTemplate,
-      iconTemplateContent,
-      useIconSource,
-      iconJSSource,
-    };
-  } catch (err) {
-    throw new Error(
-      `加载平台模板失败 [${platform.label}]: ${err instanceof Error ? err.message : String(err)}`
-    );
-  }
 }
 
 /** 生成单图标组件 */
@@ -233,33 +73,28 @@ async function generateSingleIcons(
 async function generateIconComponent(
   platformOutputDir: string,
   platform: PlatformConfig,
-  brands: BrandInfo[],
+  brandsIcons: BrandIconsMap,
   templates: PlatformTemplates,
 ): Promise<void> {
   const tplFileName = `index${platform.templateExt}`;
   const iconComponentDir = path.join(platformOutputDir, 'icon');
   fs.ensureDirSync(iconComponentDir);
 
-  // 生成品牌映射的 require 语句
-  const iconsMapEntries = brands
-    .map((brand) => `  ${JSON.stringify(brand.name)}: require('./${brand.name}-icons')`)
-    .join(',\n');
-
-  // 替换模板中的占位符
-  const iconJSSource = templates.iconJSSource
-    .replace('/* __ICONS_MAP_PLACEHOLDER__ */', iconsMapEntries);
+  // 生成合并后的 icons.js
+  const iconsDataSource = generateMergedIconsJS(brandsIcons);
 
   // index.json
   const iconJsonParsed = JSON.parse(templates.iconJsonTemplate);
   const finalIconJson = JSON.stringify(iconJsonParsed, null, 2) + '\n';
 
   await Promise.all([
-    fs.writeFile(path.join(iconComponentDir, 'index.js'), iconJSSource),
+    fs.writeFile(path.join(iconComponentDir, 'icons.js'), iconsDataSource),
+    fs.writeFile(path.join(iconComponentDir, 'index.js'), templates.iconJSSource),
     fs.writeFile(path.join(iconComponentDir, 'index.json'), finalIconJson),
     fs.writeFile(path.join(iconComponentDir, tplFileName), templates.iconTemplateContent),
   ]);
 
-  console.log(`  📦 通用 icon 组件已生成`);
+  console.log(`  📦 通用 icon 组件已生成（包含合并的 icons.js）`);
 }
 
 
@@ -267,7 +102,7 @@ async function generateIconComponent(
 
 interface BrandGenerateResult {
   brand: string;
-  iconCount: number;
+  icons: IconEntry[];
   outputDir: string;
 }
 
@@ -300,18 +135,12 @@ async function generateBrand(
   fs.ensureDirSync(commonDir);
   fs.writeFileSync(path.join(commonDir, 'use-icon.js'), templates.useIconSource);
 
-  // -------- 3. 生成品牌图标数据到 icon/{brand}-icons.js --------
-  const iconComponentDir = path.join(platformOutputDir, 'icon');
-  fs.ensureDirSync(iconComponentDir);
-  const iconsDataSource = generateIconsDataJS(icons);
-  await fs.writeFile(path.join(iconComponentDir, `${brand.name}-icons.js`), iconsDataSource);
-
-  // -------- 4. 生成单图标组件 --------
+  // -------- 3. 生成单图标组件 --------
   await generateSingleIcons(ctx, icons, templates.singleIconJsonTemplate, templates.singleIconTemplateContent);
 
   console.log(`  ✅ [${brand.name}] 共生成 ${icons.length} 个图标组件`);
 
-  return { brand: brand.name, iconCount: icons.length, outputDir };
+  return { brand: brand.name, icons, outputDir };
 }
 
 // ======================== 主生成入口 ========================
@@ -320,7 +149,7 @@ async function generateBrand(
  * 生成小程序图标组件库
  * 输出完整的组件库到 packages/{platform}/，包含：
  * - {brand}/ 各品牌的单图标组件
- * - icon/ 通用 icon 组件（包含所有品牌的图标数据）
+ * - icon/ 通用 icon 组件（包含合并的 icons.js）
  * - common/use-icon.js
  *
  * @param platformId - 平台标识（wechat / alipay / kuaishou）
@@ -342,19 +171,21 @@ export async function generate(platformId: string = 'wechat'): Promise<GenerateR
   const brands = scanBrands();
   console.log(`🔍 发现 ${brands.length} 个品牌: ${brands.map((b) => b.name).join(', ')}`);
 
-  // -------- 为每个品牌生成组件 --------
+  // -------- 为每个品牌生成组件，并收集图标数据 --------
   let totalIconCount = 0;
   const brandNames: string[] = [];
+  const brandsIcons: BrandIconsMap = {};
 
   for (const brand of brands) {
     const result = await generateBrand(platform, brand, platformOutputDir, platformTemplateDir);
-    totalIconCount += result.iconCount;
+    totalIconCount += result.icons.length;
     brandNames.push(result.brand);
+    brandsIcons[result.brand] = result.icons;
   }
 
-  // -------- 生成通用 icon 组件（所有品牌共用） --------
+  // -------- 生成通用 icon 组件（包含合并的 icons.js） --------
   const templates = loadPlatformTemplates(platformTemplateDir, platform);
-  await generateIconComponent(platformOutputDir, platform, brands, templates);
+  await generateIconComponent(platformOutputDir, platform, brandsIcons, templates);
 
   const duration = (Date.now() - start) / 1000;
   console.log(`\n✅ [${platform.label}] 全部品牌生成完成，共 ${totalIconCount} 个图标组件`);

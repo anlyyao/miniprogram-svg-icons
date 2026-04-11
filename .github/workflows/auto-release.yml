@@ -1,0 +1,157 @@
+name: Auto Release
+
+on:
+  pull_request:
+    branches: [develop]
+    types: [closed]
+    paths:
+      - 'packages/wechat/package.json'
+      - 'packages/alipay/package.json'
+      - 'packages/kuaishou/package.json'
+      - 'packages/utils/package.json'
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  # ============================================================
+  # PR 合并后打 tag 并发布 npm
+  # 支持版本类型: latest, beta, alpha, patch, rc, next 等
+  # ============================================================
+  release:
+    runs-on: ubuntu-latest
+    if: >
+      github.event.pull_request.merged == true &&
+      startsWith(github.head_ref, 'release/')
+    steps:
+      - name: Parse release branch info
+        id: parse
+        run: |
+          BRANCH_NAME="${{ github.head_ref }}"
+
+          # 提取包名和版本号
+          # 分支名格式: release/@mp-svg-icons/<framework>@<version>
+          if [[ "$BRANCH_NAME" =~ ^release/@mp-svg-icons/([^@]+)@(.+)$ ]]; then
+            FRAMEWORK="${BASH_REMATCH[1]}"
+            VERSION="${BASH_REMATCH[2]}"
+            PACKAGE_NAME="@mp-svg-icons/$FRAMEWORK"
+          else
+            echo "❌ Invalid branch name format: $BRANCH_NAME"
+            echo "   Expected: release/@mp-svg-icons/<framework>@<version>"
+            exit 1
+          fi
+
+          # 验证 framework 是否为支持的包
+          VALID_FRAMEWORKS="wechat alipay kuaishou douyin baidu jd xiaohongshu utils"
+          if [[ ! " $VALID_FRAMEWORKS " =~ " $FRAMEWORK " ]]; then
+            echo "❌ Invalid framework: $FRAMEWORK"
+            echo "   Supported: $VALID_FRAMEWORKS"
+            exit 1
+          fi
+
+          echo "framework=$FRAMEWORK" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "package_name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+          echo "tag_name=$PACKAGE_NAME@$VERSION" >> $GITHUB_OUTPUT
+
+          # 根据版本号判断 npm dist-tag
+          if [[ "$VERSION" == *"-beta"* ]]; then
+            echo "dist_tag=beta" >> $GITHUB_OUTPUT
+          elif [[ "$VERSION" == *"-alpha"* ]]; then
+            echo "dist_tag=alpha" >> $GITHUB_OUTPUT
+          elif [[ "$VERSION" == *"-patch"* ]]; then
+            echo "dist_tag=patch" >> $GITHUB_OUTPUT
+          elif [[ "$VERSION" == *"-rc"* ]]; then
+            echo "dist_tag=rc" >> $GITHUB_OUTPUT
+          elif [[ "$VERSION" == *"-next"* ]]; then
+            echo "dist_tag=next" >> $GITHUB_OUTPUT
+          elif [[ "$VERSION" == *"-"* ]]; then
+            echo "dist_tag=next" >> $GITHUB_OUTPUT
+          else
+            echo "dist_tag=latest" >> $GITHUB_OUTPUT
+          fi
+
+          echo "📦 Package: $PACKAGE_NAME"
+          echo "📌 Version: $VERSION"
+
+      - uses: actions/checkout@v6
+        with:
+          ref: develop
+          token: ${{ secrets.ACCESS_TOKEN }}
+
+      - name: Verify package version
+        run: |
+          FRAMEWORK="${{ steps.parse.outputs.framework }}"
+          VERSION="${{ steps.parse.outputs.version }}"
+          PKG_VERSION=$(node -p "require('./packages/$FRAMEWORK/package.json').version")
+
+          if [ "$PKG_VERSION" != "$VERSION" ]; then
+            echo "❌ Version mismatch!"
+            echo "   Branch version: $VERSION"
+            echo "   Package version: $PKG_VERSION"
+            exit 1
+          fi
+
+          echo "✅ Version verified: $VERSION"
+
+      - name: Create and push tag
+        run: |
+          TAG_NAME="${{ steps.parse.outputs.tag_name }}"
+
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git tag "$TAG_NAME"
+          git push origin "$TAG_NAME"
+
+          echo "🏷️ Pushed tag: $TAG_NAME"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Generate icons
+        run: pnpm run generate
+
+      - name: Build package
+        run: |
+          FRAMEWORK="${{ steps.parse.outputs.framework }}"
+          if [ "$FRAMEWORK" = "utils" ]; then
+            pnpm run build:utils
+          else
+            pnpm run build:$FRAMEWORK
+          fi
+
+      - name: Publish to npm
+        uses: JS-DevTools/npm-publish@v3
+        with:
+          package: dist/${{ steps.parse.outputs.framework }}
+          tag: ${{ steps.parse.outputs.dist_tag }}
+          token: ${{ secrets.NPM_TOKEN }}
+          access: public
+          provenance: true
+
+      - name: Release summary
+        run: |
+          FRAMEWORK="${{ steps.parse.outputs.framework }}"
+          VERSION="${{ steps.parse.outputs.version }}"
+          DIST_TAG="${{ steps.parse.outputs.dist_tag }}"
+          TAG_NAME="${{ steps.parse.outputs.tag_name }}"
+
+          echo "## 🎉 Release Published Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "| ---- | ----- |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📦 Package | \`@mp-svg-icons/$FRAMEWORK\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📌 Version | \`$VERSION\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🏷️ Git Tag | \`$TAG_NAME\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🏷️ npm Tag | \`$DIST_TAG\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔗 npm | [View on npm](https://www.npmjs.com/package/@mp-svg-icons/$FRAMEWORK/v/$VERSION) |" >> $GITHUB_STEP_SUMMARY

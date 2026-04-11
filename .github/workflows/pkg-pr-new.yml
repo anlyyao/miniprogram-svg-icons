@@ -27,4 +27,4 @@ jobs:
         with:
           node-version: 20
 
-      - run: pnpm dlx pkg-pr-new publish 'packages/wechat' 'packages/alipay' 'packages/kuaishou' 'packages/utils'
+      - run: pnpm dlx pkg-pr-new publish 'packages/wechat' 'packages/alipay' 'packages/kuaishou' 'packages/douyin' 'packages/baidu' 'packages/jd' 'packages/xiaohongshu' 'packages/utils'

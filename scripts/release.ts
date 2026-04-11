@@ -6,7 +6,7 @@ import readline from 'readline';
 // ======================== 配置 ========================
 
 /** 支持的框架列表 */
-const FRAMEWORKS = ['wechat', 'alipay', 'kuaishou', 'utils'] as const;
+const FRAMEWORKS = ['wechat', 'alipay', 'kuaishou', 'douyin', 'baidu', 'jd', 'xiaohongshu', 'utils'] as const;
 type Framework = (typeof FRAMEWORKS)[number];
 
 const VERSION_BUMPS = ['patch', 'minor', 'major', 'prepatch', 'preminor', 'premajor', 'prerelease', 'custom'] as const;
@@ -16,11 +16,15 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 
 /** 获取指定框架的子包信息 */
 function getPackageConfig(framework: Framework) {
-  const configs: Record<Framework, { dir: string; distDir: string; buildCmd: string }> = {
-    wechat: { dir: 'packages/wechat', distDir: 'dist/wechat', buildCmd: 'build:wechat' },
-    alipay: { dir: 'packages/alipay', distDir: 'dist/alipay', buildCmd: 'build:alipay' },
-    kuaishou: { dir: 'packages/kuaishou', distDir: 'dist/kuaishou', buildCmd: 'build:kuaishou' },
-    utils: { dir: 'packages/utils', distDir: 'dist/utils', buildCmd: 'build:utils' },
+  const configs: Record<Framework, { pkgDir: string; distDir: string; buildCmd: string }> = {
+    wechat: { pkgDir: 'packages/wechat', distDir: 'dist/wechat', buildCmd: 'build:wechat' },
+    alipay: { pkgDir: 'packages/alipay', distDir: 'dist/alipay', buildCmd: 'build:alipay' },
+    kuaishou: { pkgDir: 'packages/kuaishou', distDir: 'dist/kuaishou', buildCmd: 'build:kuaishou' },
+    douyin: { pkgDir: 'packages/douyin', distDir: 'dist/douyin', buildCmd: 'build:douyin' },
+    baidu: { pkgDir: 'packages/baidu', distDir: 'dist/baidu', buildCmd: 'build:baidu' },
+    jd: { pkgDir: 'packages/jd', distDir: 'dist/jd', buildCmd: 'build:jd' },
+    xiaohongshu: { pkgDir: 'packages/xiaohongshu', distDir: 'dist/xiaohongshu', buildCmd: 'build:xiaohongshu' },
+    utils: { pkgDir: 'packages/utils', distDir: 'dist/utils', buildCmd: 'build:utils' },
   };
   return configs[framework];
 }
@@ -286,7 +290,7 @@ async function main(): Promise<void> {
 
     // 获取子包配置
     const pkgConfig = getPackageConfig(targetFramework);
-    const pkgDir = path.join(ROOT_DIR, pkgConfig.dir);
+    const pkgDir = path.join(ROOT_DIR, pkgConfig.pkgDir);
     const distDir = path.join(ROOT_DIR, pkgConfig.distDir);
     const pkgJson = readPkg(pkgDir);
 
@@ -356,31 +360,27 @@ async function main(): Promise<void> {
     console.log(`📦 发布 ${pkgJson.name} → ${newVersion}`);
     console.log('='.repeat(50));
 
-    // 备份 package.json，用于失败时回滚
+    // 备份源 package.json，用于失败时回滚
     const backupMap = new Map<string, string>();
     const backupPkg = (dir: string) => {
       const filePath = path.join(dir, 'package.json');
-      backupMap.set(filePath, fs.readFileSync(filePath, 'utf-8'));
+      if (fs.existsSync(filePath)) {
+        backupMap.set(filePath, fs.readFileSync(filePath, 'utf-8'));
+      }
     };
 
     try {
       backupPkg(pkgDir);
-      backupPkg(distDir);
 
-      // 生产构建
-      console.log('\n🔨 生产构建...');
-      run(`npm run ${pkgConfig.buildCmd}`);
-
-      // 更新源 package.json 版本号
+      // 先更新源 package.json 版本号（build 会复制到 dist）
       console.log('\n📝 更新版本号...');
       pkgJson.version = newVersion;
       writePkg(pkgDir, pkgJson);
-
-      // 同步更新 dist 目录的 package.json 版本号
-      const distPkgJson = readPkg(distDir);
-      distPkgJson.version = newVersion;
-      writePkg(distDir, distPkgJson);
       console.log(`  ${pkgJson.name}@${newVersion}`);
+
+      // 生产构建（会从 SVG 生成压缩产物到 dist，并复制 package.json）
+      console.log('\n🔨 生产构建...');
+      run(`npm run ${pkgConfig.buildCmd}`);
 
       // 在 dist 目录发布
       const publishCmd = `npm publish --tag ${distTag}${isDryRun ? ' --dry-run' : ''}`;

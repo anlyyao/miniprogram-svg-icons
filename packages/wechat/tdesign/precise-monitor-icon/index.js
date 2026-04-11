@@ -1,8 +1,0 @@
-var useIcon = require("../../common/use-icon");
-
-Component({
-  behaviors: [useIcon],
-  data: {
-    svgContent: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g><path d="M3 12H12M13 12C13 12.5523 12.5523 13 12 13C11.4477 13 11 12.5523 11 12C11 11.4477 11.4477 11 12 11C12.5523 11 13 11.4477 13 12Z" stroke="{{strokeColor1 || 'currentColor'}}" stroke-width="{{strokeWidth}}" stroke-linecap="square" /><path d="M4 20L8.5 15.5M12 7V3M8.5 8.5L4 4M15.5 8.5L20 4M17 12H21M20 20L15.5 15.5M12 21V17" stroke="{{strokeColor2 || 'currentColor'}}" stroke-width="{{strokeWidth}}" stroke-linecap="square" /></g></svg>`,
-  },
-});

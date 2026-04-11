@@ -43,7 +43,7 @@ jobs:
           fi
 
           # 验证 framework 是否为支持的包
-          VALID_FRAMEWORKS="wechat alipay kuaishou utils"
+          VALID_FRAMEWORKS="wechat alipay kuaishou douyin baidu jd xiaohongshu utils"
           if [[ ! " $VALID_FRAMEWORKS " =~ " $FRAMEWORK " ]]; then
             echo "❌ Invalid framework: $FRAMEWORK"
             echo "   Supported: $VALID_FRAMEWORKS"

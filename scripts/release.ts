@@ -6,7 +6,7 @@ import readline from 'readline';
 // ======================== 配置 ========================
 
 /** 支持的框架列表 */
-const FRAMEWORKS = ['wechat', 'alipay', 'kuaishou', 'utils'] as const;
+const FRAMEWORKS = ['wechat', 'alipay', 'kuaishou', 'douyin', 'baidu', 'jd', 'xiaohongshu', 'utils'] as const;
 type Framework = (typeof FRAMEWORKS)[number];
 
 const VERSION_BUMPS = ['patch', 'minor', 'major', 'prepatch', 'preminor', 'premajor', 'prerelease', 'custom'] as const;
@@ -20,6 +20,10 @@ function getPackageConfig(framework: Framework) {
     wechat: { pkgDir: 'packages/wechat', distDir: 'dist/wechat', buildCmd: 'build:wechat' },
     alipay: { pkgDir: 'packages/alipay', distDir: 'dist/alipay', buildCmd: 'build:alipay' },
     kuaishou: { pkgDir: 'packages/kuaishou', distDir: 'dist/kuaishou', buildCmd: 'build:kuaishou' },
+    douyin: { pkgDir: 'packages/douyin', distDir: 'dist/douyin', buildCmd: 'build:douyin' },
+    baidu: { pkgDir: 'packages/baidu', distDir: 'dist/baidu', buildCmd: 'build:baidu' },
+    jd: { pkgDir: 'packages/jd', distDir: 'dist/jd', buildCmd: 'build:jd' },
+    xiaohongshu: { pkgDir: 'packages/xiaohongshu', distDir: 'dist/xiaohongshu', buildCmd: 'build:xiaohongshu' },
     utils: { pkgDir: 'packages/utils', distDir: 'dist/utils', buildCmd: 'build:utils' },
   };
   return configs[framework];

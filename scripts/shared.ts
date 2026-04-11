@@ -53,6 +53,38 @@ export const PLATFORMS: Record<string, PlatformConfig> = {
     reuseKey: 'behaviors',
     templateDir: 'kuaishou',
   },
+  xiaohongshu: {
+    id: 'xiaohongshu',
+    label: '小红书小程序',
+    templateExt: '.xhsml',
+    styleExt: '.css',
+    reuseKey: 'behaviors',
+    templateDir: 'xiaohongshu',
+  },
+  douyin: {
+    id: 'douyin',
+    label: '抖音小程序',
+    templateExt: '.ttml',
+    styleExt: '.ttss',
+    reuseKey: 'behaviors',
+    templateDir: 'douyin',
+  },
+  baidu: {
+    id: 'baidu',
+    label: '百度小程序',
+    templateExt: '.swan',
+    styleExt: '.css',
+    reuseKey: 'behaviors',
+    templateDir: 'baidu',
+  },
+  jd: {
+    id: 'jd',
+    label: '京东小程序',
+    templateExt: '.jxml',
+    styleExt: '.jxss',
+    reuseKey: 'behaviors',
+    templateDir: 'jd',
+  },
 };
 
 // ======================== 品牌扫描 ========================

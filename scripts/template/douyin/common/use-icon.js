@@ -83,7 +83,7 @@ module.exports = Behavior({
     getSvgDataUri(svgContent, strokeWidth, strokeColors, fillColors) {
       const svg = this.getSvg(svgContent, strokeWidth, strokeColors, fillColors);
       if (!svg) return '';
-      return `data:image/svg+xml;charset=utf-8,${svg.replace(/<|>|#/g, (m) => encodeURIComponent(m))}`;
+      return `data:image/svg+xml;charset=utf-8,${svg.replace(/"/g, "'").replace(/<|>|#/g, (m) => encodeURIComponent(m))}`;
     },
   },
 });

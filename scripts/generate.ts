@@ -13,7 +13,7 @@ import {
   getPlatformConfig,
   loadAndFilterIcons,
   loadPlatformTemplates,
-  generateMergedIconsJS,
+  generateIconsJS,
   cleanOutputDir,
 } from './shared';
 
@@ -39,8 +39,8 @@ async function generateIconComponent(
   const iconComponentDir = path.join(platformOutputDir, 'icon');
   fs.ensureDirSync(iconComponentDir);
 
-  // 生成合并后的 icons.js
-  const iconsDataSource = generateMergedIconsJS(brandsIcons);
+  // 生成 icons.js
+  const iconsDataSource = generateIconsJS(brandsIcons);
 
   // index.json
   const iconJsonParsed = JSON.parse(templates.iconJsonTemplate);
@@ -53,7 +53,7 @@ async function generateIconComponent(
     fs.writeFile(path.join(iconComponentDir, tplFileName), templates.iconTemplateContent),
   ]);
 
-  console.log(`  📦 图标组件（Icon）已生成（包含合并的 icons.js）`);
+  console.log(`  📦 图标组件（Icon）已生成（包含 icons.js）`);
 }
 
 
@@ -86,7 +86,7 @@ async function loadBrandIcons(
 /**
  * 生成小程序图标组件库
  * 输出完整的组件库到 packages/{platform}/，包含：
- * - icon/ 图标组件（Icon）（包含合并的 icons.js）
+ * - icon/ 图标组件（Icon）（包含 icons.js）
  *
  * @param platformId - 平台标识（wechat / alipay / kuaishou）
  */
@@ -119,7 +119,7 @@ export async function generate(platformId: string = 'wechat'): Promise<GenerateR
     brandsIcons[result.brand] = result.icons;
   }
 
-  // -------- 生成图标组件（Icon）（包含合并的 icons.js） --------
+  // -------- 生成图标组件（Icon）（包含 icons.js） --------
   const templates = loadPlatformTemplates(platformTemplateDir, platform);
   await generateIconComponent(platformOutputDir, platform, brandsIcons, templates);
 

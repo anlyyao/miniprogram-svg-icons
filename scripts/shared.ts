@@ -275,10 +275,10 @@ export interface BrandIconsMap {
 }
 
 /**
- * 生成合并后的 icons.js 源码
+ * 生成 icons.js 源码
  * 结构：{ "brand1": { "icon1": "svg1", ... }, "brand2": { ... } }
  */
-export function generateMergedIconsJS(brandsIcons: BrandIconsMap): string {
+export function generateIconsJS(brandsIcons: BrandIconsMap): string {
   const brandEntries: string[] = [];
 
   for (const [brandName, icons] of Object.entries(brandsIcons)) {
@@ -292,7 +292,7 @@ export function generateMergedIconsJS(brandsIcons: BrandIconsMap): string {
 // ======================== 目录清理 ========================
 
 /**
- * 清理输出目录（保留 package.json 和 README.md）
+ * 清理输出目录（保留 package.json）
  */
 export async function cleanOutputDir(outputDir: string): Promise<void> {
   if (!fs.existsSync(outputDir)) {
@@ -304,7 +304,7 @@ export async function cleanOutputDir(outputDir: string): Promise<void> {
   const removePromises: Promise<void>[] = [];
 
   for (const item of items) {
-    if (item === 'package.json' || item === 'README.md') continue;
+    if (item === 'package.json') continue;
     removePromises.push(
       fs.remove(path.join(outputDir, item)).catch((err) => {
         console.warn(`  ⚠️  清理失败: ${item}: ${err instanceof Error ? err.message : String(err)}`);

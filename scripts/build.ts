@@ -15,7 +15,7 @@ import {
   getPlatformConfig,
   loadAndFilterIcons,
   loadPlatformTemplates,
-  generateMergedIconsJS,
+  generateIconsJS,
   cleanDistDir,
 } from './shared';
 
@@ -84,8 +84,8 @@ async function buildIconComponent(
   const iconComponentDir = path.join(platformDistDir, 'icon');
   fs.ensureDirSync(iconComponentDir);
 
-  // 生成合并后的 icons.js
-  const iconsDataSource = generateMergedIconsJS(brandsIcons);
+  // 生成 icons.js
+  const iconsDataSource = generateIconsJS(brandsIcons);
 
   // 压缩各文件
   const [minifiedIconsData, minifiedIconJS, minifiedIconJson, minifiedIconTemplate] = await Promise.all([
@@ -102,7 +102,7 @@ async function buildIconComponent(
     fs.writeFile(path.join(iconComponentDir, tplFileName), minifiedIconTemplate),
   ]);
 
-  console.log(`  📦 图标组件（Icon）已生成（包含合并的 icons.js）`);
+  console.log(`  📦 图标组件（Icon）已生成（包含 icons.js）`);
 }
 
 // ======================== 单品牌构建 ========================
@@ -167,20 +167,10 @@ export async function build(platformId: string = 'wechat'): Promise<BuildResult>
     brandsIcons[result.brand] = result.icons;
   }
 
-  // -------- 4. 生成并压缩图标组件（Icon）（包含合并的 icons.js） --------
+  // -------- 4. 生成并压缩图标组件（Icon）（包含 icons.js） --------
   await buildIconComponent(platformDistDir, platform, brandsIcons, templates);
 
-  // -------- 5. 复制 README.md 到产物目录 --------
-  const sourceReadmePath = path.resolve(ROOT_DIR, 'packages', platformId, 'README.md');
-  const distReadmePath = path.resolve(platformDistDir, 'README.md');
-  if (fs.existsSync(sourceReadmePath)) {
-    fs.copyFileSync(sourceReadmePath, distReadmePath);
-    console.log(`📄 已复制 README.md 到产物目录`);
-  } else {
-    console.log(`⚠️  未找到 ${sourceReadmePath}，跳过 README 复制`);
-  }
-
-  // -------- 6. 复制 package.json 到产物目录 --------
+  // -------- 5. 复制 package.json 到产物目录 --------
   const sourcePackageJsonPath = path.resolve(ROOT_DIR, 'packages', platformId, 'package.json');
   const distPackageJsonPath = path.resolve(platformDistDir, 'package.json');
   if (fs.existsSync(sourcePackageJsonPath)) {

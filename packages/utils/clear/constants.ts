@@ -2,9 +2,6 @@
  * @mp-svg-icons/utils— 常量定义
  */
 
-/** 公共 Behavior 目录名（被 icon 组件依赖） */
-export const COMMON_DIR = 'common';
-
 /** app.json 文件名 */
 export const APP_JSON_FILE = 'app.json';
 

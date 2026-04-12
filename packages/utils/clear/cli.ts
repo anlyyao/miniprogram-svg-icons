@@ -74,7 +74,7 @@ function parseCLIArgs(): ClearOptions {
   }
 
   const scanDirs: string[] = [];
-  let includeIcons: string[] = [];
+  let icons: string[] = [];
   let pkgDir: string | undefined;
   let dryRun = false;
 
@@ -95,7 +95,7 @@ function parseCLIArgs(): ClearOptions {
       case '--icons': {
         i++;
         if (i < args.length) {
-          includeIcons = args[i].split(',').map((s) => s.trim()).filter(Boolean);
+          icons = args[i].split(',').map((s) => s.trim()).filter(Boolean);
           i++;
         }
         break;
@@ -132,13 +132,13 @@ function parseCLIArgs(): ClearOptions {
   }
 
   // 校验至少有一种图标来源
-  if (scanDirs.length === 0 && includeIcons.length === 0) {
+  if (scanDirs.length === 0 && icons.length === 0) {
     console.error('❌ --scan 和 --icons 至少需要指定一个\n');
     printHelp();
     process.exit(1);
   }
 
-  return { scanDirs, includeIcons, pkgDir, dryRun };
+  return { scanDirs, icons, pkgDir, dryRun };
 }
 
 // ======================== CLI 入口 ========================

@@ -72,7 +72,7 @@
 - ✅ **零依赖运行** — Data URI 方案，无需额外资源加载
 - ✅ **7+ 平台适配** — 支持微信 / 支付宝 / 快手 / 抖音 / 百度 / 小红书 / 京东
 - ✅ **按需裁剪** — 内置 CLI 工具，移除未使用图标减小包体积
-- ✅ **品牌系统** — 支持多品牌图标源（如 TDesign），可自由扩展
+- ✅ **多品牌支持** — 支持多品牌图标源（如 TDesign），易扩展
 
 ---
 
@@ -136,7 +136,7 @@ SVG 源文件经过解析、颜色替换、属性清理，最终生成带模板�
 | 3. 颜色替换 | `normalizeColor()` | 根据元素 `id` 将颜色属性替换为模板变量 |
 | 4. 属性清理 | `buildAttrString()` | 移除 `id`、`width`、`height` 等运行时无用属性 |
 | 5. 模板生成 | `generateSvg()` | 拼接为完整的 SVG 模板字符串 |
-| 6. 组件写入 | `generateMergedIconsJS()` | 合并为 icons.js 映射表，写入组件文件 |
+| 6. 组件写入 | `generateIconsJS()` | 生成 icons.js 映射表，写入组件文件 |
 | 7. 运行时渲染 | `icon/index.js` | HEX→RGB 转换 + URL 编码 → Data URI → `<image>` |
 
 ### 颜色映射规则
@@ -411,7 +411,6 @@ npx mp-svg-icons-clear \
 4. **结果合并**：扫描结果 ∪ `--icons` 手动指定 = 最终保留集
 5. **执行裁剪**：
    - 重写 `icons.js`，仅保留使用中的图标 SVG 数据
-   - 若图标组件（Icon）未被引用，自动移除 `common/` 目录
 6. **输出统计**：报告保留/移除的图标数量
 
 ---
@@ -420,32 +419,30 @@ npx mp-svg-icons-clear \
 
 ### 支持平台概览
 
-项目支持 **8 大小程序平台**，分为两类适配模式：
+项目支持 **8 大小程序平台**，分为三类适配模式：
 
-**Behavior 模式**（6 个平台，共用同一套模板逻辑）：
+**标准模式**（5 个平台，共用同一套组件 API）：
 - 微信（`.wxml` / `.wxss`）
 - QQ（直接复用 `@mp-svg-icons/wechat`，无需独立包）
 - 快手（`.ksml` / `.css`）
-- 抖音（`.ttml` / `.ttss`）
 - 百度（`.swan` / `.css`）
 - 京东（`.jxml` / `.jxss`）
 
-**特殊适配**（2 个平台，需要独立模板）：
-- 小红书（`.xhsml` / `.css`）— 不支持 `Behavior`、多字段 `observers`
-- 支付宝（`.axml` / `.acss`）— 使用 `Mixin` + `props` + ES5 语法
+**特殊适配**（3 个平台，需要独立模板）：
+- 抖音（`.ttml` / `.ttss`）— SVG Data URI 需额外转义双引号
+- 小红书（`.xhsml` / `.css`）— 不支持多字段 `observers`，需逐个声明
+- 支付宝（`.axml` / `.acss`）— 使用 `props` + `didMount/didUpdate` + ES5 语法
 
 ### 组件 API 差异
 
-| 特性 | 微信 / QQ / 京东 / 快手 / 抖音 / 百度 | 小红书小程序 | 支付宝小程序 |
-|------|----------------------------------|--------------|--------------|
-| 组件复用机制 | `Behavior` / `behaviors` | 不支持 `Behavior` | `Mixin` / `mixins` |
-| 属性定义 | `properties`（`type`/`value`） | `properties`（`type`/`value`） | `props`（直接赋值默认值） |
-| 数据访问 | `this.data.xxx` | `this.data.xxx` | `this.props.xxx`（外部）/ `this.data.xxx`（内部） |
-| 初始化生命周期 | `lifetimes.attached()` | `lifetimes.attached()` | `didMount()` |
-| 销毁生命周期 | `lifetimes.detached()` | `lifetimes.detached()` | `didUnmount()` |
-| 属性变化监听 | `observers` 多字段逗号分隔 | 仅支持单字段 `observer` | `didUpdate(prevProps)` 手动 diff |
-| 纯数据字段 | 支持 `options.pureDataPattern` | 不支持 | 不支持 |
-| JS 语法 | ES6+ 完全支持 | ES6+ 完全支持 | 推荐 ES5，ES6 兼容不稳定 |
+| 特性 | 微信 / QQ / 京东 / 快手 / 百度 | 抖音小程序 | 小红书小程序 | 支付宝小程序 |
+|------|----------------------------------|------------|--------------|--------------|
+| 属性定义 | `properties`（`type`/`value`） | `properties`（`type`/`value`） | `properties`（`type`/`value`） | `props`（直接赋值默认值） |
+| 数据访问 | `this.data.xxx` | `this.data.xxx` | `this.data.xxx` | `this.props.xxx`（外部）/ `this.data.xxx`（内部） |
+| 初始化生命周期 | `lifetimes.attached()` | `lifetimes.attached()` | `lifetimes.attached()` | `didMount()` |
+| 属性变化监听 | `observers` 多字段逗号分隔 | `observers` 多字段逗号分隔 | 仅支持单字段 `observer` | `didUpdate(prevProps)` 手动 diff |
+| SVG 编码 | 标准编码 | 额外转义双引号 | 标准编码 | 标准编码 |
+| JS 语法 | ES6+ 完全支持 | ES6+ 完全支持 | ES6+ 完全支持 | 推荐 ES5，ES6 兼容不稳定 |
 
 ### 文件后缀差异
 
@@ -520,7 +517,6 @@ export interface PlatformConfig {
 | `packages/utils/src/clear/index.ts` | 裁剪主逻辑：品牌收集 → 数据加载 → 扫描 → 裁剪 → 统计输出 |
 | `packages/utils/src/clear/scanner.ts` | 项目扫描器：扫描 `usingComponents` JSON 引用和模板中的组件标签 |
 | `packages/utils/src/clear/icon.ts` | `icons.js` 映射表的读写与裁剪逻辑 |
-| `packages/utils/src/clear/single-icon.ts` | 单图标组件目录的枚举与删除逻辑 |
 
 ---
 

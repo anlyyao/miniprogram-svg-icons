@@ -6,50 +6,38 @@ export interface ClearOptions {
   /** 要扫描的源码目录（相对于 cwd） */
   readonly scanDirs: readonly string[];
   /** 手动指定保留的图标名列表 */
-  readonly includeIcons: readonly string[];
+  readonly icons: readonly string[];
   /** 构建产物中图标包所在目录（必填） */
   readonly pkgDir: string;
   /** 仅预览，不实际修改 */
   readonly dryRun: boolean;
 }
 
-/** 单个组件类型的裁剪结果 */
-export interface ComponentClearResult {
-  /** 该组件中使用中的图标名列表 */
+/** 单个品牌的裁剪结果 */
+export interface BrandClearResult {
+  /** 品牌名称 */
+  readonly brand: string;
+  /** 该品牌的图标总数 */
+  readonly totalCount: number;
+  /** 使用中的图标名列表 */
   readonly usedIcons: readonly string[];
-  /** 该组件中被移除的图标名列表 */
+  /** 被裁剪的图标名列表 */
   readonly removedIcons: readonly string[];
-  /** 节省的文件大小（字节） */
-  readonly savedBytes: number;
 }
 
 export interface ClearResult {
-  /** 全局去重后使用中的图标总数 */
-  readonly usedCount: number;
-  /** 全局去重后被裁剪的图标总数 */
-  readonly removedCount: number;
-  /** 全局去重后的图标总数 */
-  readonly totalCount: number;
-  /** 全局去重后使用中的图标列表 */
-  readonly usedIcons: readonly string[];
-  /** 全局去重后被裁剪的图标列表 */
-  readonly removedIcons: readonly string[];
+  /** 各品牌的裁剪结果 */
+  readonly brands: readonly BrandClearResult[];
   /** 总计节省的文件大小（字节） */
   readonly totalSavedBytes: number;
-  /** icon 组件裁剪结果（不存在时为 null） */
-  readonly icon: (ComponentClearResult & { readonly removedDir: boolean }) | null;
-  /** common 公共 Behavior 目录裁剪结果 */
-  readonly common: { readonly removedDir: boolean; readonly savedBytes: number };
 }
 
 /**
- * 品牌信息
+ * 品牌信息（来源于 icons.js 的顶层 key）
  */
 export interface BrandInfo {
   /** 品牌名称 */
   readonly name: string;
-  /** 品牌目录绝对路径（pkgDir/{brand}） */
-  readonly dir: string;
 }
 
 /** 扫描上下文：在各阶段间共享的运行时数据 */
@@ -60,7 +48,7 @@ export interface ScanContext {
   readonly pkgDirName: string;
   /** 排除的目录集合 */
   readonly excludeDirs: Set<string>;
-  /** 全量图标名集合 */
+  /** 图标名集合 */
   readonly allIconNameSet: Set<string>;
   /** 是否为 dry-run 模式 */
   readonly dryRun: boolean;
@@ -68,7 +56,7 @@ export interface ScanContext {
   readonly brands: readonly BrandInfo[];
   /** 品牌名集合（用于快速判断） */
   readonly brandNameSet: Set<string>;
-  /** 默认品牌（优先 tdesign，否则第一个品牌） */
+  /** 默认品牌（与 icon 组件的 brand 属性默认值一致，固定为 'tdesign'） */
   readonly defaultBrand: string;
   /** 预编译的 icon 路径匹配正则 */
   readonly iconPathRegex: RegExp;
@@ -85,14 +73,14 @@ export interface BrandIconDataLoadResult {
 export interface IconDataLoadResult {
   /** 各品牌的图标数据 */
   readonly brandResults: readonly BrandIconDataLoadResult[];
-  /** 全量图标名集合（所有品牌合并去重） */
+  /** 图标名集合（所有品牌合并去重） */
   readonly allIconNameSet: Set<string>;
-  /** 合并后的 icons.js 数据（可能为 null） */
-  readonly mergedIconsData: MergedIconsData | null;
+  /** icons.js 数据（可能为 null） */
+  readonly iconsData: IconsData | null;
 }
 
-/** 合并后的 icons.js 数据结构 */
-export interface MergedIconsData {
+/** icons.js 数据结构 */
+export interface IconsData {
   /** 所有品牌的图标数据 { "brand1": { "icon1": "svg1", ... }, ... } */
   readonly data: Record<string, Record<string, string>>;
   /** icons.js 文件路径 */
@@ -111,14 +99,8 @@ export interface ScanResult {
 
 /** performClear 执行裁剪后的完整返回结果 */
 export interface PerformClearResult {
-  readonly iconSavedBytes: number;
-  /** icon 整个目录是否被移除（当无任何引用时） */
-  readonly iconDirRemoved: boolean;
-  /** common 公共 Behavior 目录是否被移除（当 icon 未引用时） */
-  readonly commonDirRemoved: boolean;
-  readonly commonSavedBytes: number;
-  readonly iconUsed: readonly string[];
-  readonly iconRemoved: readonly string[];
-  readonly globalRemovedSet: Set<string>;
-  readonly usedIcons: Set<string>;
+  /** 各品牌的使用/移除图标 */
+  readonly brandResults: ReadonlyMap<string, { used: readonly string[]; removed: readonly string[]; total: number }>;
+  /** 总节省字节数 */
+  readonly savedBytes: number;
 }

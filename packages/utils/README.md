@@ -78,7 +78,7 @@ import { clear } from '@mp-svg-icons/utils/clear';
 
 const result = clear({
   scanDirs: ['./pages', './components'],
-  includeIcons: ['loading'],
+  icons: ['loading'],
   pkgDir: './miniprogram_npm/@mp-svg-icons/wechat',
   dryRun: false,
 });
@@ -98,7 +98,6 @@ console.log(`节省 ${result.totalSavedBytes} 字节`);
 4. **结果合并**：扫描结果 ∪ `--icons` 手动指定 = 最终保留集
 5. **执行裁剪**：
    - 重写 `icons.js`，仅保留使用中的图标 SVG 数据
-   - 若图标组件（Icon）未被引用，自动移除 `common/` 目录
 6. **输出统计**：报告保留/移除的图标数量
 
 ## 支持的小程序平台

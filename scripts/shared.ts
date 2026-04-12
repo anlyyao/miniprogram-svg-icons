@@ -229,8 +229,6 @@ export function loadAndFilterIcons(brand: BrandInfo): IconEntry[] {
 // ======================== 模板文件读取 ========================
 
 export interface PlatformTemplates {
-  singleIconJsonTemplate: string;
-  singleIconTemplateContent: string;
   iconJsonTemplate: string;
   iconTemplateContent: string;
   useIconSource: string;
@@ -261,14 +259,6 @@ function findAndReadTemplate(dir: string, ext: string): string {
 /** 读取平台模板文件 */
 export function loadPlatformTemplates(platformTemplateDir: string, platform: PlatformConfig): PlatformTemplates {
   try {
-    // 单图标模板
-    const singleIconTemplateContent = findAndReadTemplate(
-      path.join(platformTemplateDir, 'single-icon'),
-      platform.templateExt
-    );
-    const singleIconJsonTemplate = readTemplateFile(platformTemplateDir, 'single-icon/index.json');
-
-    // 通用 icon 组件模板
     const iconTemplateContent = findAndReadTemplate(
       path.join(platformTemplateDir, 'icon'),
       platform.templateExt
@@ -280,8 +270,6 @@ export function loadPlatformTemplates(platformTemplateDir: string, platform: Pla
     const useIconSource = readTemplateFile(platformTemplateDir, 'common/use-icon.js');
 
     return {
-      singleIconJsonTemplate,
-      singleIconTemplateContent,
       iconJsonTemplate,
       iconTemplateContent,
       useIconSource,
@@ -292,24 +280,6 @@ export function loadPlatformTemplates(platformTemplateDir: string, platform: Pla
       `加载平台模板失败 [${platform.label}]: ${err instanceof Error ? err.message : String(err)}`
     );
   }
-}
-
-// ======================== 代码生成函数 ========================
-
-/**
- * 生成单图标组件的 JS 源码
- */
-export function generateIconJS(svgContent: string, platform: PlatformConfig): string {
-  const reuseKey = platform.reuseKey;
-  return `var useIcon = require("../../common/use-icon");
-
-Component({
-  ${reuseKey}: [useIcon],
-  data: {
-    svgContent: \`${svgContent}\`,
-  },
-});
-`;
 }
 
 // ======================== 多品牌图标数据 ========================

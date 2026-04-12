@@ -15,14 +15,9 @@ import {
   getPlatformConfig,
   loadAndFilterIcons,
   loadPlatformTemplates,
-  generateIconJS,
   generateMergedIconsJS,
   cleanDistDir,
 } from './shared';
-
-// ======================== 配置常量 ========================
-
-const CONCURRENCY_LIMIT = 200; // 并发处理 JS 文件数量限制
 
 // ======================== 压缩工具 ========================
 
@@ -68,28 +63,6 @@ async function minifyJS(source: string, isIconsJs: boolean = false): Promise<str
   return minified.code || source;
 }
 
-// ======================== 并发控制 ========================
-
-/** 并发控制：限制同时执行的 Promise 数量 */
-async function pLimit<T>(tasks: (() => Promise<T>)[], limit: number): Promise<T[]> {
-  const results: T[] = new Array(tasks.length);
-  let currentIndex = 0;
-
-  async function runNext(): Promise<void> {
-    const index = currentIndex++;
-    if (index >= tasks.length) return;
-
-    results[index] = await tasks[index]();
-    await runNext();
-  }
-
-  await Promise.all(
-    Array.from({ length: Math.min(limit, tasks.length) }, () => runNext())
-  );
-
-  return results;
-}
-
 // ======================== 构建函数 ========================
 
 export interface BuildResult {
@@ -100,49 +73,7 @@ export interface BuildResult {
   iconCount: number;
 }
 
-interface BuildContext {
-  platform: PlatformConfig;
-  brand: BrandInfo;
-  outputDir: string;
-  tplFileName: string;
-}
-
-/** 生成并压缩单图标组件 */
-async function buildSingleIcons(
-  ctx: BuildContext,
-  icons: IconEntry[],
-  singleIconJsonTemplate: string,
-  singleIconTemplateContent: string,
-): Promise<void> {
-
-  // 创建所有图标目录
-  for (const icon of icons) {
-    const iconDir = path.join(ctx.outputDir, `${icon.name}-icon`);
-    fs.ensureDirSync(iconDir);
-  }
-
-  // 压缩模板和 JSON
-  const minifiedJson = minifyJSON(singleIconJsonTemplate);
-  const minifiedTemplate = minifyTemplate(singleIconTemplateContent);
-
-  // 并发压缩和写入 JS 文件
-  const jsTasks = icons.map((icon) => async () => {
-    const iconDir = path.join(ctx.outputDir, `${icon.name}-icon`);
-    const jsSource = generateIconJS(icon.svg, ctx.platform);
-    const minifiedJs = await minifyJS(jsSource);
-
-    await Promise.all([
-      fs.writeFile(path.join(iconDir, 'index.js'), minifiedJs),
-      fs.writeFile(path.join(iconDir, 'index.json'), minifiedJson),
-      fs.writeFile(path.join(iconDir, ctx.tplFileName), minifiedTemplate),
-    ]);
-  });
-
-  await pLimit(jsTasks, CONCURRENCY_LIMIT);
-  console.log(`  📦 ${icons.length}/${icons.length} 图标已完成\n`);
-}
-
-/** 生成并压缩通用 icon 组件 */
+/** 生成并压缩图标组件（Icon） */
 async function buildIconComponent(
   platformDistDir: string,
   platform: PlatformConfig,
@@ -171,7 +102,7 @@ async function buildIconComponent(
     fs.writeFile(path.join(iconComponentDir, tplFileName), minifiedIconTemplate),
   ]);
 
-  console.log(`  📦 通用 icon 组件已生成（包含合并的 icons.js）`);
+  console.log(`  📦 图标组件（Icon）已生成（包含合并的 icons.js）`);
 }
 
 /** 生成并压缩 common/use-icon.js */
@@ -188,39 +119,21 @@ async function buildCommonModule(platformDistDir: string, templates: PlatformTem
 interface BrandBuildResult {
   brand: string;
   icons: IconEntry[];
-  outputDir: string;
 }
 
 /**
- * 构建单个品牌的图标组件（从 SVG 直接生成压缩产物）
+ * 加载单个品牌的图标数据（从 SVG 直接加载）
  */
 async function buildBrand(
-  platform: PlatformConfig,
   brand: BrandInfo,
-  platformDistDir: string,
-  platformTemplateDir: string,
 ): Promise<BrandBuildResult> {
-  const tplFileName = `index${platform.templateExt}`;
-  const outputDir = path.join(platformDistDir, brand.name);
-
-  const ctx: BuildContext = { platform, brand, outputDir, tplFileName };
-
   console.log(`\n  🎨 品牌: ${brand.name}`);
-  console.log(`  📁 输出目录: ${outputDir}\n`);
 
-  // -------- 0. 创建品牌目录 --------
-  fs.ensureDirSync(outputDir);
-
-  // -------- 1. 加载图标 & 读取模板 --------
   const icons = loadAndFilterIcons(brand);
-  const templates = loadPlatformTemplates(platformTemplateDir, platform);
 
-  // -------- 2. 生成并压缩单图标组件 --------
-  await buildSingleIcons(ctx, icons, templates.singleIconJsonTemplate, templates.singleIconTemplateContent);
+  console.log(`  ✅ [${brand.name}] 共加载 ${icons.length} 个图标`);
 
-  console.log(`  ✅ [${brand.name}] 共生成 ${icons.length} 个图标组件`);
-
-  return { brand: brand.name, icons, outputDir };
+  return { brand: brand.name, icons };
 }
 
 // ======================== 主构建入口 ========================
@@ -255,19 +168,19 @@ export async function build(platformId: string = 'wechat'): Promise<BuildResult>
   await buildCommonModule(platformDistDir, templates);
   console.log(`  📦 common/use-icon.js 已生成`);
 
-  // -------- 4. 为每个品牌构建组件，并收集图标数据 --------
+  // -------- 4. 为每个品牌加载图标数据 --------
   let totalIconCount = 0;
   const brandNames: string[] = [];
   const brandsIcons: BrandIconsMap = {};
 
   for (const brand of brands) {
-    const result = await buildBrand(platform, brand, platformDistDir, platformTemplateDir);
+    const result = await buildBrand(brand);
     totalIconCount += result.icons.length;
     brandNames.push(result.brand);
     brandsIcons[result.brand] = result.icons;
   }
 
-  // -------- 5. 生成并压缩通用 icon 组件（包含合并的 icons.js） --------
+  // -------- 5. 生成并压缩图标组件（Icon）（包含合并的 icons.js） --------
   await buildIconComponent(platformDistDir, platform, brandsIcons, templates);
 
   // -------- 6. 复制 README.md 到产物目录 --------
@@ -291,7 +204,7 @@ export async function build(platformId: string = 'wechat'): Promise<BuildResult>
   }
 
   const duration = (Date.now() - start) / 1000;
-  console.log(`\n✅ [${platform.label}] 全部品牌打包完成，共 ${totalIconCount} 个图标组件`);
+  console.log(`\n✅ [${platform.label}] 全部品牌打包完成，共 ${totalIconCount} 个图标`);
   console.log(`⏱️  耗时: ${duration.toFixed(1)}s\n`);
 
   return { duration, platform: platformId, distDir: platformDistDir, brands: brandNames, iconCount: totalIconCount };

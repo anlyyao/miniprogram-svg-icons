@@ -3,11 +3,10 @@
  *
  * 扫描项目源码,识别图标组件实际使用的图标,裁剪构建产物:
  *   1. 裁剪 icon/icons.js 映射表,只保留通用图标组件用到的图标
- *   2. 移除未使用的单图标组件目录(如 add-icon/、close-icon/ 等,可选)
  *
  * 专门针对 @mp-svg-icons/xx 系列图标库的品牌嵌套结构：
  * @mp-svg-icons/wechat/
- *   ├── {品牌1}/          单图标组件目录
+ *   ├── {品牌1}/
  *   ├── {品牌2}/
  *   ├── icon/             通用图标组件
  *   │   └── icons.js      合并后的图标数据 { "brand1": {...}, "brand2": {...} }
@@ -29,20 +28,20 @@ import type {
   BrandIconDataLoadResult,
   MergedIconsData,
 } from './types';
-import { SINGLE_ICON_SUFFIX, COMMON_DIR } from './constants';
+import { COMMON_DIR } from './constants';
 import { escapeRegExp, formatBytes } from './utils';
-import { resolvePkgDir, stripIconSuffix } from './path-utils';
+import { resolvePkgDir } from './path-utils';
 import { scanAllFiles } from './scanner';
 import { loadMergedIconsData, clearMergedIconsJs } from './icon';
-import { collectSingleIconDirsForBrand, removeUnusedSingleIconDirs, removeComponentDir, removeIconsFile } from './single-icon';
+import { removeComponentDir, removeIconsFile } from './fs-utils';
 
 // ======================== 品牌收集 ========================
 
 /**
  * 收集品牌列表
  *
- * 扫描 pkgDir 下的所有子目录，检查是否包含单图标组件
- * 同时检查 icon/icons.js 中是否包含对应品牌的数据
+ * 扫描 pkgDir 下的所有子目录
+ * 检查 icon/icons.js 中是否包含对应品牌的数据
  */
 function collectBrands(pkgDir: string, mergedData: MergedIconsData | null): BrandInfo[] {
   const brands: BrandInfo[] = [];
@@ -60,17 +59,11 @@ function collectBrands(pkgDir: string, mergedData: MergedIconsData | null): Bran
     if (entry.name === 'icon' || entry.name === COMMON_DIR) continue;
 
     const brandDir = path.join(pkgDir, entry.name);
-    const subEntries = fs.readdirSync(brandDir, { withFileTypes: true });
-
-    // 检查是否包含单图标组件
-    const hasSingleIconComponents = subEntries.some(
-      (sub) => sub.isDirectory() && sub.name.endsWith(SINGLE_ICON_SUFFIX),
-    );
 
     // 检查是否在 icons.js 中存在
     const hasIconsData = brandNamesInIcons.has(entry.name);
 
-    if (hasSingleIconComponents || hasIconsData) {
+    if (hasIconsData) {
       brands.push({
         name: entry.name,
         dir: brandDir,
@@ -84,12 +77,12 @@ function collectBrands(pkgDir: string, mergedData: MergedIconsData | null): Bran
 // ======================== 图标数据加载 ========================
 
 /**
- * 加载全量图标数据(icon + 单图标组件)
+ * 加载全量图标数据
  *
  * 各组件均为可选,不存在则自动跳过。
  * 支持多品牌，合并所有品牌的图标名。
  */
-function loadAllIconData(pkgDir: string, brands: readonly BrandInfo[], mergedData: MergedIconsData | null): IconDataLoadResult {
+function loadAllIconData(brands: readonly BrandInfo[], mergedData: MergedIconsData | null): IconDataLoadResult {
   const allIconNameSet = new Set<string>();
   const brandResults: BrandIconDataLoadResult[] = [];
 
@@ -107,7 +100,6 @@ function loadAllIconData(pkgDir: string, brands: readonly BrandInfo[], mergedDat
   }
 
   for (const brand of brands) {
-    const brandPrefix = `[${brand.name}] `;
     const iconNameSet = new Set<string>();
 
     // 从合并的 icons.js 中获取该品牌的图标名
@@ -118,23 +110,8 @@ function loadAllIconData(pkgDir: string, brands: readonly BrandInfo[], mergedDat
       }
     }
 
-    // 收集单图标组件目录(可选)
-    const singleIconDirs = collectSingleIconDirsForBrand(brand);
-    for (const dirName of singleIconDirs) {
-      const iconName = stripIconSuffix(dirName);
-      iconNameSet.add(iconName);
-      allIconNameSet.add(iconName);
-    }
-
-    if (singleIconDirs.length > 0) {
-      console.log(`📦 ${brandPrefix}单图标组件: ${singleIconDirs.length} 个`);
-    } else {
-      console.log(`⏭️ ${brandPrefix}未找到单图标组件`);
-    }
-
     brandResults.push({
       brand,
-      singleIconDirs,
       iconNameSet,
     });
   }
@@ -155,20 +132,16 @@ function collectUsedIcons(
 ): {
   /** 按品牌分组的 icon 使用图标 */
   iconUsedByBrand: Map<string, Set<string>>;
-  /** 按品牌分组的单图标组件使用图标 */
-  singleUsedByBrand: Map<string, Set<string>>;
   /** icon 通用组件是否在 usingComponents 中被引用（按品牌） */
   iconReferencedByBrand: Map<string, boolean>;
 } {
-  const { allIconNameSet, brands, defaultBrand } = ctx;
+  const { allIconNameSet, brands } = ctx;
   const iconUsedByBrand = new Map<string, Set<string>>();
-  const singleUsedByBrand = new Map<string, Set<string>>();
   const iconReferencedByBrand = new Map<string, boolean>();
 
   // 初始化每个品牌的集合
   for (const brand of brands) {
     iconUsedByBrand.set(brand.name, new Set());
-    singleUsedByBrand.set(brand.name, new Set());
     iconReferencedByBrand.set(brand.name, false);
   }
 
@@ -179,14 +152,6 @@ function collectUsedIcons(
     // 按品牌分组收集结果
     for (const brand of brands) {
       const brandName = brand.name;
-
-      // 收集单图标组件引用
-      const singleRefs = scanResult.singleIconRefsByBrand.get(brandName);
-      if (singleRefs) {
-        for (const ref of singleRefs) {
-          singleUsedByBrand.get(brandName)!.add(ref);
-        }
-      }
 
       // 标记通用组件是否在 usingComponents 中被引用
       const iconTags = scanResult.iconTagNamesByBrand.get(brandName);
@@ -199,15 +164,11 @@ function collectUsedIcons(
     for (const brand of brands) {
       const brandPrefix = `[${brand.name}] `;
       const iconTags = scanResult.iconTagNamesByBrand.get(brand.name);
-      const singleRefs = scanResult.singleIconRefsByBrand.get(brand.name);
 
       if (iconTags && iconTags.size > 0) {
         console.log(`\n🏷️ ${brandPrefix}发现 icon 组件标签: ${[...iconTags].join(', ')}`);
       } else {
         console.log(`\n🏷️ ${brandPrefix}未发现 icon 组件引用`);
-      }
-      if (singleRefs && singleRefs.size > 0) {
-        console.log(`🔗 ${brandPrefix}发现 ${singleRefs.size} 个单图标组件引用`);
       }
     }
 
@@ -249,7 +210,7 @@ function collectUsedIcons(
     console.log(`📌 手动指定 ${includeIcons.length} 个图标(有效 ${validCount} 个)`);
   }
 
-  return { iconUsedByBrand, singleUsedByBrand, iconReferencedByBrand };
+  return { iconUsedByBrand, iconReferencedByBrand };
 }
 
 /**
@@ -259,25 +220,19 @@ function performClear(
   ctx: ScanContext,
   loadResult: IconDataLoadResult,
   iconUsedByBrand: Map<string, Set<string>>,
-  singleUsedByBrand: Map<string, Set<string>>,
   iconReferencedByBrand: Map<string, boolean>,
 ): PerformClearResult {
   const { pkgDir, dryRun } = ctx;
-  const { brandResults, mergedIconsData } = loadResult;
+  const { mergedIconsData } = loadResult;
 
   // 汇总统计
   let totalIconSavedBytes = 0;
   let totalIconDirRemoved = false;
-  let totalRemovedDirCount = 0;
-  let totalSingleSavedBytes = 0;
   let totalCommonDirRemoved = false;
   let totalCommonSavedBytes = 0;
 
   const allIconUsed: string[] = [];
   const allIconRemoved: string[] = [];
-  const allSingleIconUsed: string[] = [];
-  const allSingleIconRemoved: string[] = [];
-  const allUnusedDirs: string[] = [];
   const globalRemovedSet = new Set<string>();
   const usedIcons = new Set<string>();
 
@@ -290,58 +245,9 @@ function performClear(
     }
   }
 
-  // 检查是否所有品牌的单图标组件都未被使用
-  let anySingleIconUsed = false;
-  for (const icons of singleUsedByBrand.values()) {
-    if (icons.size > 0) {
-      anySingleIconUsed = true;
-      break;
-    }
-  }
-
-  // 先处理单图标组件（各品牌独立）
-  for (const brandResult of brandResults) {
-    const { brand, singleIconDirs } = brandResult;
-    const brandPrefix = `[${brand.name}] `;
-
-    const iconUsedIcons = iconUsedByBrand.get(brand.name)!;
-    const singleUsedIcons = singleUsedByBrand.get(brand.name)!;
-
-    // 合并所有来源的使用图标
-    for (const icon of iconUsedIcons) usedIcons.add(icon);
-    for (const icon of singleUsedIcons) usedIcons.add(icon);
-
-    // 单图标组件
-    const singleIconUsed = singleIconDirs
-      .filter((dir) => singleUsedIcons.has(stripIconSuffix(dir)))
-      .map(stripIconSuffix);
-    const singleIconRemoved = singleIconDirs
-      .filter((dir) => !singleUsedIcons.has(stripIconSuffix(dir)))
-      .map(stripIconSuffix);
-    const unusedDirs = singleIconDirs.filter(
-      (dir) => !singleUsedIcons.has(stripIconSuffix(dir)),
-    );
-
-    allSingleIconUsed.push(...singleIconUsed);
-    allSingleIconRemoved.push(...singleIconRemoved);
-    allUnusedDirs.push(...unusedDirs.map((d) => `${brand.name}/${d}`));
-
-    // 收集全局移除的图标
-    for (const name of singleIconRemoved) globalRemovedSet.add(name);
-
-    // 移除未使用的单图标组件目录
-    let removedDirCount = 0;
-    let singleSavedBytes = 0;
-    if (unusedDirs.length > 0) {
-      const actionLabel = dryRun ? '将' : '正在';
-      console.log(`\n🗑️ ${brandPrefix}${actionLabel}移除 ${unusedDirs.length} 个未使用的单图标组件目录...`);
-      const result = removeUnusedSingleIconDirs(brand.dir, unusedDirs, dryRun);
-      removedDirCount = result.removed;
-      singleSavedBytes = result.savedBytes;
-    }
-
-    totalRemovedDirCount += removedDirCount;
-    totalSingleSavedBytes += singleSavedBytes;
+  // 收集使用中的图标
+  for (const icons of iconUsedByBrand.values()) {
+    for (const icon of icons) usedIcons.add(icon);
   }
 
   // 处理合并的 icons.js（一次性裁剪所有品牌）
@@ -385,9 +291,9 @@ function performClear(
   }
 
   // 移除 common 公共 Behavior 目录
-  if (!anyIconReferenced && !anySingleIconUsed) {
+  if (!anyIconReferenced) {
     const actionLabel = dryRun ? '将' : '正在';
-    console.log(`\n🗑️ ${actionLabel}移除 ${COMMON_DIR}/ 目录(项目中未引用 icon 和单图标组件)...`);
+    console.log(`\n🗑️ ${actionLabel}移除 ${COMMON_DIR}/ 目录(项目中未引用 icon 组件)...`);
     const result = removeComponentDir(pkgDir, COMMON_DIR, dryRun);
     totalCommonDirRemoved = result.removed;
     totalCommonSavedBytes = result.savedBytes;
@@ -399,15 +305,10 @@ function performClear(
   return {
     iconSavedBytes: totalIconSavedBytes,
     iconDirRemoved: totalIconDirRemoved,
-    removedDirCount: totalRemovedDirCount,
-    singleSavedBytes: totalSingleSavedBytes,
     commonDirRemoved: totalCommonDirRemoved,
     commonSavedBytes: totalCommonSavedBytes,
     iconUsed: allIconUsed,
     iconRemoved: allIconRemoved,
-    singleIconUsed: allSingleIconUsed,
-    singleIconRemoved: allSingleIconRemoved,
-    unusedDirs: allUnusedDirs,
     globalRemovedSet,
     usedIcons,
   };
@@ -421,23 +322,19 @@ function printSummary(
   loadResult: IconDataLoadResult,
   clearResult: PerformClearResult,
 ): void {
-  const { brandResults, mergedIconsData } = loadResult;
+  const { mergedIconsData } = loadResult;
   const {
     iconUsed,
     iconRemoved,
-    singleIconUsed,
-    unusedDirs,
     iconSavedBytes,
     iconDirRemoved,
-    removedDirCount,
-    singleSavedBytes,
     commonDirRemoved,
     commonSavedBytes,
   } = clearResult;
 
-  const totalSavedBytes = iconSavedBytes + singleSavedBytes + commonSavedBytes;
+  const totalSavedBytes = iconSavedBytes + commonSavedBytes;
 
-  // 计算总的图标数和单图标组件数
+  // 计算总的图标数
   let totalIconCount = 0;
   if (mergedIconsData) {
     for (const icons of Object.values(mergedIconsData.data)) {
@@ -445,12 +342,7 @@ function printSummary(
     }
   }
 
-  let totalSingleIconCount = 0;
-  for (const brandResult of brandResults) {
-    totalSingleIconCount += brandResult.singleIconDirs.length;
-  }
-
-  if (iconRemoved.length === 0 && unusedDirs.length === 0 && !commonDirRemoved) {
+  if (iconRemoved.length === 0 && !commonDirRemoved) {
     console.log(`\n✅ 所有图标均在使用中,无需裁剪`);
     return;
   }
@@ -463,14 +355,13 @@ function printSummary(
       console.log(`   📊 [全量图标]   保留 ${iconUsed.length} / ${totalIconCount} 个图标,移除 ${iconRemoved.length} 个${iconSavedBytes > 0 ? `,节省 ${formatBytes(iconSavedBytes)}` : ''}`);
     }
   }
-  console.log(`   📊 [单图标组件] 保留 ${singleIconUsed.length} / ${totalSingleIconCount} 个目录,移除 ${removedDirCount} 个${removedDirCount > 0 ? `,节省 ${formatBytes(singleSavedBytes)}` : ''}`);
   console.log(`   💾 总计节省: ${formatBytes(totalSavedBytes)}`);
 
   if (dryRun) {
     console.log(`\n💡 移除 --dry-run 参数以执行实际裁剪`);
   }
 
-  // 打印保留的图标分类列表
+  // 打印保留的图标列表
   console.log(`\n📋 保留的图标:`);
   if (totalIconCount > 0) {
     if (iconDirRemoved) {
@@ -479,13 +370,12 @@ function printSummary(
       console.log(`   [全量图标]   (${iconUsed.length}): ${[...iconUsed].sort().join(', ') || '无'}`);
     }
   }
-  console.log(`   [单图标组件] (${singleIconUsed.length}): ${[...singleIconUsed].sort().join(', ') || '无'}`);
 }
 
 // ======================== 主函数(可编程调用) ========================
 
 /**
- * 执行图标组件裁剪(icon + 单图标组件)
+ * 执行图标组件裁剪
  *
  * @example
  * ```ts
@@ -526,13 +416,8 @@ export function clear(options: ClearOptions): ClearResult {
   }
   console.log(`🏷️ 发现 ${brands.length} 个品牌: ${brands.map((b) => b.name).join(', ')}`);
 
-  // 仅指定 --icons 而未指定 --scan 时,单图标组件目录无法通过 usingComponents 扫描来保护
-  if (scanDirs.length === 0 && includeIcons.length > 0) {
-    console.warn('⚠️ 未指定 --scan 目录,单图标组件目录将不受 --icons 保护,会被全部移除');
-  }
-
   // 1. 加载全量图标数据
-  const loadResult = loadAllIconData(pkgDir, brands, mergedData);
+  const loadResult = loadAllIconData(brands, mergedData);
   const { allIconNameSet } = loadResult;
 
   if (allIconNameSet.size === 0) {
@@ -549,9 +434,6 @@ export function clear(options: ClearOptions): ClearResult {
   // 通用组件: 包名/icon 或 包名/icon/index（品牌通过 brand 属性指定，不在路径中）
   const iconPathRegex = new RegExp(`${escapeRegExp(pkgDirName)}/${escapeRegExp('icon')}(?:/index)?$`);
 
-  // 单图标组件: 包名/{品牌}/{name}-icon
-  const singleIconPathRegex = new RegExp(`${escapeRegExp(pkgDirName)}/([^/]+)/([a-z][a-z0-9-]*)${escapeRegExp(SINGLE_ICON_SUFFIX)}(?:/index)?$`);
-
   // 构建品牌名集合和默认品牌
   const brandNameSet = new Set(brands.map((b) => b.name));
   // 默认品牌：优先使用 tdesign，如果不存在则使用第一个品牌
@@ -567,11 +449,10 @@ export function clear(options: ClearOptions): ClearResult {
     brandNameSet,
     defaultBrand,
     iconPathRegex,
-    singleIconPathRegex,
   };
 
   // 3. 收集使用中的图标
-  const { iconUsedByBrand, singleUsedByBrand, iconReferencedByBrand } = collectUsedIcons(
+  const { iconUsedByBrand, iconReferencedByBrand } = collectUsedIcons(
     scanDirs, includeIcons, ctx, loadResult,
   );
 
@@ -583,14 +464,6 @@ export function clear(options: ClearOptions): ClearResult {
       break;
     }
   }
-  if (!hasUsedIcons) {
-    for (const icons of singleUsedByBrand.values()) {
-      if (icons.size > 0) {
-        hasUsedIcons = true;
-        break;
-      }
-    }
-  }
 
   if (!hasUsedIcons) {
     console.warn(
@@ -600,14 +473,14 @@ export function clear(options: ClearOptions): ClearResult {
   }
 
   // 4. 执行裁剪
-  const clearResult = performClear(ctx, loadResult, iconUsedByBrand, singleUsedByBrand, iconReferencedByBrand);
+  const clearResult = performClear(ctx, loadResult, iconUsedByBrand, iconReferencedByBrand);
 
   // 5. 打印汇总
   printSummary(dryRun, loadResult, clearResult);
 
   // 6. 构建返回结果
   const { usedIcons, globalRemovedSet } = clearResult;
-  const totalSavedBytes = clearResult.iconSavedBytes + clearResult.singleSavedBytes + clearResult.commonSavedBytes;
+  const totalSavedBytes = clearResult.iconSavedBytes + clearResult.commonSavedBytes;
 
   return {
     usedCount: usedIcons.size,
@@ -619,12 +492,6 @@ export function clear(options: ClearOptions): ClearResult {
     icon: mergedData
       ? { usedIcons: clearResult.iconUsed, removedIcons: clearResult.iconRemoved, savedBytes: clearResult.iconSavedBytes, removedDir: clearResult.iconDirRemoved }
       : null,
-    singleIcon: {
-      usedIcons: clearResult.singleIconUsed,
-      removedIcons: clearResult.singleIconRemoved,
-      removedDirs: clearResult.removedDirCount,
-      savedBytes: clearResult.singleSavedBytes,
-    },
     common: { removedDir: clearResult.commonDirRemoved, savedBytes: clearResult.commonSavedBytes },
   };
 }

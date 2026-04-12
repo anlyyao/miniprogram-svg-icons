@@ -13,7 +13,6 @@ import {
   getPlatformConfig,
   loadAndFilterIcons,
   loadPlatformTemplates,
-  generateIconJS,
   generateMergedIconsJS,
   cleanOutputDir,
 } from './shared';
@@ -28,48 +27,8 @@ export interface GenerateResult {
   brands: string[];
 }
 
-interface GenerateContext {
-  platform: PlatformConfig;
-  brand: BrandInfo;
-  outputDir: string;
-  platformTemplateDir: string;
-  tplFileName: string;
-}
 
-/** 生成单图标组件 */
-async function generateSingleIcons(
-  ctx: GenerateContext,
-  icons: IconEntry[],
-  singleIconJsonTemplate: string,
-  singleIconTemplateContent: string,
-): Promise<void> {
-
-  for (const icon of icons) {
-    const iconDir = path.join(ctx.outputDir, `${icon.name}-icon`);
-    fs.ensureDirSync(iconDir);
-  }
-
-  const jsonBuf = Buffer.from(singleIconJsonTemplate, 'utf-8');
-  const tplBuf = Buffer.from(singleIconTemplateContent, 'utf-8');
-
-  const writePromises: Promise<void>[] = [];
-
-  for (const icon of icons) {
-    const iconDir = path.join(ctx.outputDir, `${icon.name}-icon`);
-    const jsSource = generateIconJS(icon.svg, ctx.platform);
-
-    writePromises.push(
-      fs.writeFile(path.join(iconDir, 'index.js'), jsSource),
-      fs.writeFile(path.join(iconDir, 'index.json'), jsonBuf),
-      fs.writeFile(path.join(iconDir, ctx.tplFileName), tplBuf),
-    );
-  }
-
-  await Promise.all(writePromises);
-  console.log(`  📦 ${icons.length}/${icons.length} 图标已完成\n`);
-}
-
-/** 生成通用 icon 组件（在平台根目录，所有品牌共用） */
+/** 生成图标组件（Icon）（在平台根目录，所有品牌共用） */
 async function generateIconComponent(
   platformOutputDir: string,
   platform: PlatformConfig,
@@ -94,7 +53,7 @@ async function generateIconComponent(
     fs.writeFile(path.join(iconComponentDir, tplFileName), templates.iconTemplateContent),
   ]);
 
-  console.log(`  📦 通用 icon 组件已生成（包含合并的 icons.js）`);
+  console.log(`  📦 图标组件（Icon）已生成（包含合并的 icons.js）`);
 }
 
 
@@ -107,40 +66,27 @@ interface BrandGenerateResult {
 }
 
 /**
- * 生成单个品牌的图标组件
+ * 加载单个品牌的图标数据
  */
-async function generateBrand(
+async function loadBrandIcons(
   platform: PlatformConfig,
   brand: BrandInfo,
   platformOutputDir: string,
   platformTemplateDir: string,
 ): Promise<BrandGenerateResult> {
-  const tplFileName = `index${platform.templateExt}`;
-  const outputDir = path.join(platformOutputDir, brand.name);
-
-  const ctx: GenerateContext = { platform, brand, outputDir, platformTemplateDir, tplFileName };
-
   console.log(`\n  🎨 品牌: ${brand.name}`);
-  console.log(`  📁 输出目录: ${outputDir}\n`);
 
-  // -------- 0. 创建品牌目录 --------
-  fs.ensureDirSync(outputDir);
-
-  // -------- 1. 加载图标 & 读取模板 --------
   const icons = loadAndFilterIcons(brand);
   const templates = loadPlatformTemplates(platformTemplateDir, platform);
 
-  // -------- 2. 生成 common/use-icon.js（在平台根目录） --------
+  // 生成 common/use-icon.js（在平台根目录）
   const commonDir = path.join(platformOutputDir, 'common');
   fs.ensureDirSync(commonDir);
   fs.writeFileSync(path.join(commonDir, 'use-icon.js'), templates.useIconSource);
 
-  // -------- 3. 生成单图标组件 --------
-  await generateSingleIcons(ctx, icons, templates.singleIconJsonTemplate, templates.singleIconTemplateContent);
+  console.log(`  ✅ [${brand.name}] 共加载 ${icons.length} 个图标`);
 
-  console.log(`  ✅ [${brand.name}] 共生成 ${icons.length} 个图标组件`);
-
-  return { brand: brand.name, icons, outputDir };
+  return { brand: brand.name, icons, outputDir: platformOutputDir };
 }
 
 // ======================== 主生成入口 ========================
@@ -148,8 +94,7 @@ async function generateBrand(
 /**
  * 生成小程序图标组件库
  * 输出完整的组件库到 packages/{platform}/，包含：
- * - {brand}/ 各品牌的单图标组件
- * - icon/ 通用 icon 组件（包含合并的 icons.js）
+ * - icon/ 图标组件（Icon）（包含合并的 icons.js）
  * - common/use-icon.js
  *
  * @param platformId - 平台标识（wechat / alipay / kuaishou）
@@ -171,24 +116,24 @@ export async function generate(platformId: string = 'wechat'): Promise<GenerateR
   const brands = scanBrands();
   console.log(`🔍 发现 ${brands.length} 个品牌: ${brands.map((b) => b.name).join(', ')}`);
 
-  // -------- 为每个品牌生成组件，并收集图标数据 --------
+  // -------- 为每个品牌加载图标数据 --------
   let totalIconCount = 0;
   const brandNames: string[] = [];
   const brandsIcons: BrandIconsMap = {};
 
   for (const brand of brands) {
-    const result = await generateBrand(platform, brand, platformOutputDir, platformTemplateDir);
+    const result = await loadBrandIcons(platform, brand, platformOutputDir, platformTemplateDir);
     totalIconCount += result.icons.length;
     brandNames.push(result.brand);
     brandsIcons[result.brand] = result.icons;
   }
 
-  // -------- 生成通用 icon 组件（包含合并的 icons.js） --------
+  // -------- 生成图标组件（Icon）（包含合并的 icons.js） --------
   const templates = loadPlatformTemplates(platformTemplateDir, platform);
   await generateIconComponent(platformOutputDir, platform, brandsIcons, templates);
 
   const duration = (Date.now() - start) / 1000;
-  console.log(`\n✅ [${platform.label}] 全部品牌生成完成，共 ${totalIconCount} 个图标组件`);
+  console.log(`\n✅ [${platform.label}] 全部品牌生成完成，共 ${totalIconCount} 个图标`);
   console.log(`⏱️  耗时: ${duration.toFixed(1)}s\n`);
 
   return { iconCount: totalIconCount, duration, platform: platformId, outputDir: platformOutputDir, brands: brandNames };

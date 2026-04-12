@@ -5,13 +5,7 @@
 export interface ClearOptions {
   /** 要扫描的源码目录（相对于 cwd） */
   readonly scanDirs: readonly string[];
-  /**
-   * 手动指定保留的图标名列表
-   *
-   * 注意：--icons 仅将图标添加到通用组件（icon）的保留集合中，
-   * 不会保护对应的单图标组件目录（如 add-icon/）。
-   * 单图标组件目录的保留仅依赖 --scan 扫描 usingComponents 中的实际引用。
-   */
+  /** 手动指定保留的图标名列表 */
   readonly includeIcons: readonly string[];
   /** 构建产物中图标包所在目录（必填） */
   readonly pkgDir: string;
@@ -44,20 +38,17 @@ export interface ClearResult {
   readonly totalSavedBytes: number;
   /** icon 组件裁剪结果（不存在时为 null） */
   readonly icon: (ComponentClearResult & { readonly removedDir: boolean }) | null;
-  /** 单图标组件裁剪结果 */
-  readonly singleIcon: ComponentClearResult & { readonly removedDirs: number };
   /** common 公共 Behavior 目录裁剪结果 */
   readonly common: { readonly removedDir: boolean; readonly savedBytes: number };
 }
 
 /**
  * 品牌信息
- * 每个品牌有独立的单图标组件目录
  */
 export interface BrandInfo {
   /** 品牌名称 */
   readonly name: string;
-  /** 品牌单图标组件目录绝对路径（pkgDir/{brand}） */
+  /** 品牌目录绝对路径（pkgDir/{brand}） */
   readonly dir: string;
 }
 
@@ -81,15 +72,12 @@ export interface ScanContext {
   readonly defaultBrand: string;
   /** 预编译的 icon 路径匹配正则 */
   readonly iconPathRegex: RegExp;
-  /** 预编译的单图标组件路径匹配正则 */
-  readonly singleIconPathRegex: RegExp;
 }
 
 /** 单个品牌的图标数据加载结果 */
 export interface BrandIconDataLoadResult {
   readonly brand: BrandInfo;
-  readonly singleIconDirs: readonly string[];
-  /** 该品牌的图标名集合（icons + 单图标组件） */
+  /** 该品牌的图标名集合 */
   readonly iconNameSet: Set<string>;
 }
 
@@ -117,8 +105,6 @@ export interface MergedIconsData {
 export interface ScanResult {
   /** icon 通用组件的自定义标签名集合（按品牌分组，key 为品牌名） */
   readonly iconTagNamesByBrand: Map<string, Set<string>>;
-  /** 单图标组件引用集合（按品牌分组，key 为品牌名） */
-  readonly singleIconRefsByBrand: Map<string, Set<string>>;
   /** 通过 icon 通用组件使用的图标名（按品牌分组） */
   readonly iconsByBrand: Map<string, Set<string>>;
 }
@@ -128,16 +114,11 @@ export interface PerformClearResult {
   readonly iconSavedBytes: number;
   /** icon 整个目录是否被移除（当无任何引用时） */
   readonly iconDirRemoved: boolean;
-  readonly removedDirCount: number;
-  readonly singleSavedBytes: number;
-  /** common 公共 Behavior 目录是否被移除（当 icon 和单图标组件均未引用时） */
+  /** common 公共 Behavior 目录是否被移除（当 icon 未引用时） */
   readonly commonDirRemoved: boolean;
   readonly commonSavedBytes: number;
   readonly iconUsed: readonly string[];
   readonly iconRemoved: readonly string[];
-  readonly singleIconUsed: readonly string[];
-  readonly singleIconRemoved: readonly string[];
-  readonly unusedDirs: readonly string[];
   readonly globalRemovedSet: Set<string>;
   readonly usedIcons: Set<string>;
 }

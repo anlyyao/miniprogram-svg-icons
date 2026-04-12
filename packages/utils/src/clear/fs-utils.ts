@@ -1,82 +1,9 @@
 /**
- * @mp-svg-icons/utils— 单图标组件目录清理
+ * @mp-svg-icons/utils— 目录与文件清理工具
  */
 
 import fs from 'fs';
 import path from 'path';
-
-import type { BrandInfo } from './types';
-import { SINGLE_ICON_SUFFIX } from './constants';
-
-/**
- * 扫描指定目录下的单图标组件目录，收集所有图标名称
- *
- * 单图标组件目录命名规则：{icon-name}-icon/（如 add-icon/、close-icon/）
- * 通用图标组件目录名为 icon（不以 -icon 结尾），因此不会被误识别
- *
- * @param dir 要扫描的目录（品牌目录）
- */
-export function collectSingleIconDirsInDir(dir: string): string[] {
-  const iconDirs: string[] = [];
-
-  if (!fs.existsSync(dir)) return iconDirs;
-
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
-  for (const entry of entries) {
-    if (!entry.isDirectory()) continue;
-    if (!entry.name.endsWith(SINGLE_ICON_SUFFIX)) continue;
-    iconDirs.push(entry.name);
-  }
-
-  return iconDirs;
-}
-
-/**
- * 收集品牌下的单图标组件目录
- *
- * @param brand 品牌信息
- * @returns 单图标组件目录名列表
- */
-export function collectSingleIconDirsForBrand(brand: BrandInfo): string[] {
-  return collectSingleIconDirsInDir(brand.dir);
-}
-
-/**
- * 移除未使用的单图标组件目录
- *
- * @param baseDir 基础目录（品牌目录）
- * @param unusedDirs 未使用的目录名列表（已筛选）
- * @param dryRun 是否为预览模式
- * @returns { removed: number, savedBytes: number }
- */
-export function removeUnusedSingleIconDirs(
-  baseDir: string,
-  unusedDirs: readonly string[],
-  dryRun: boolean,
-): { removed: number; savedBytes: number } {
-  let removed = 0;
-  let savedBytes = 0;
-
-  for (const dirName of unusedDirs) {
-    const dirPath = path.join(baseDir, dirName);
-    const dirSize = getDirSize(dirPath);
-
-    if (dryRun) {
-      removed++;
-      savedBytes += dirSize;
-    } else {
-      try {
-        fs.rmSync(dirPath, { recursive: true, force: true });
-        removed++;
-        savedBytes += dirSize;
-      } catch {
-        console.warn(`⚠️ 删除失败: ${dirName}`);
-      }
-    }
-  }
-
-  return { removed, savedBytes };
-}
 
 /**
  * 移除整个目录（通用组件目录 icon 等）

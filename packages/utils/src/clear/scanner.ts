@@ -18,19 +18,16 @@ import { walkDir, isExcluded } from './path-utils';
 function extractAllFromJson(
   content: string,
   iconPathRegex: RegExp,
-  singleIconPathRegex: RegExp,
 ): {
   iconTagNamesByBrand: Map<string, Set<string>>;
-  singleIconRefsByBrand: Map<string, Set<string>>;
 } {
   const iconTagNamesByBrand = new Map<string, Set<string>>();
-  const singleIconRefsByBrand = new Map<string, Set<string>>();
 
   try {
     const json = JSON.parse(content);
     const usingComponents = json?.usingComponents;
     if (!usingComponents || typeof usingComponents !== 'object') {
-      return { iconTagNamesByBrand, singleIconRefsByBrand };
+      return { iconTagNamesByBrand };
     }
 
     for (const [tagName, componentPath] of Object.entries(usingComponents)) {
@@ -46,25 +43,13 @@ function extractAllFromJson(
           iconTagNamesByBrand.set(brandName, new Set());
         }
         iconTagNamesByBrand.get(brandName)!.add(tagName);
-        continue;
-      }
-
-      // 匹配单图标组件
-      const singleMatch = normalized.match(singleIconPathRegex);
-      if (singleMatch) {
-        const brandName = singleMatch[1] || '';
-        const iconName = singleMatch[2];
-        if (!singleIconRefsByBrand.has(brandName)) {
-          singleIconRefsByBrand.set(brandName, new Set());
-        }
-        singleIconRefsByBrand.get(brandName)!.add(iconName);
       }
     }
   } catch {
     // JSON 解析失败，静默跳过
   }
 
-  return { iconTagNamesByBrand, singleIconRefsByBrand };
+  return { iconTagNamesByBrand };
 }
 
 /**
@@ -123,10 +108,9 @@ export function scanAllFiles(
   scanDirs: readonly string[],
   ctx: ScanContext,
 ): ScanResult {
-  const { excludeDirs, allIconNameSet, iconPathRegex, singleIconPathRegex, brandNameSet, defaultBrand } = ctx;
+  const { excludeDirs, allIconNameSet, iconPathRegex, brandNameSet, defaultBrand } = ctx;
 
   const iconTagNamesByBrand = new Map<string, Set<string>>();
-  const singleIconRefsByBrand = new Map<string, Set<string>>();
   const iconsByBrand = new Map<string, Set<string>>();
 
   const jsonFiles: { content: string }[] = [];
@@ -182,7 +166,7 @@ export function scanAllFiles(
 
   // 阶段一：从 JSON 文件提取组件信息
   for (const { content } of jsonFiles) {
-    const result = extractAllFromJson(content, iconPathRegex, singleIconPathRegex);
+    const result = extractAllFromJson(content, iconPathRegex);
 
     for (const [brandName, tags] of result.iconTagNamesByBrand) {
       if (!iconTagNamesByBrand.has(brandName)) {
@@ -190,15 +174,6 @@ export function scanAllFiles(
       }
       for (const tag of tags) {
         iconTagNamesByBrand.get(brandName)!.add(tag);
-      }
-    }
-
-    for (const [brandName, refs] of result.singleIconRefsByBrand) {
-      if (!singleIconRefsByBrand.has(brandName)) {
-        singleIconRefsByBrand.set(brandName, new Set());
-      }
-      for (const ref of refs) {
-        singleIconRefsByBrand.get(brandName)!.add(ref);
       }
     }
   }
@@ -225,5 +200,5 @@ export function scanAllFiles(
     }
   }
 
-  return { iconTagNamesByBrand, singleIconRefsByBrand, iconsByBrand };
+  return { iconTagNamesByBrand, iconsByBrand };
 }

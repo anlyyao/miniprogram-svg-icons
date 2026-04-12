@@ -105,15 +105,6 @@ async function buildIconComponent(
   console.log(`  📦 图标组件（Icon）已生成（包含合并的 icons.js）`);
 }
 
-/** 生成并压缩 common/use-icon.js */
-async function buildCommonModule(platformDistDir: string, templates: PlatformTemplates): Promise<void> {
-  const commonDir = path.join(platformDistDir, 'common');
-  fs.ensureDirSync(commonDir);
-
-  const minifiedUseIcon = await minifyJS(templates.useIconSource);
-  await fs.writeFile(path.join(commonDir, 'use-icon.js'), minifiedUseIcon);
-}
-
 // ======================== 单品牌构建 ========================
 
 interface BrandBuildResult {
@@ -164,11 +155,7 @@ export async function build(platformId: string = 'wechat'): Promise<BuildResult>
   // -------- 2. 读取模板文件 --------
   const templates = loadPlatformTemplates(platformTemplateDir, platform);
 
-  // -------- 3. 生成并压缩 common/use-icon.js --------
-  await buildCommonModule(platformDistDir, templates);
-  console.log(`  📦 common/use-icon.js 已生成`);
-
-  // -------- 4. 为每个品牌加载图标数据 --------
+  // -------- 3. 为每个品牌加载图标数据 --------
   let totalIconCount = 0;
   const brandNames: string[] = [];
   const brandsIcons: BrandIconsMap = {};
@@ -180,10 +167,10 @@ export async function build(platformId: string = 'wechat'): Promise<BuildResult>
     brandsIcons[result.brand] = result.icons;
   }
 
-  // -------- 5. 生成并压缩图标组件（Icon）（包含合并的 icons.js） --------
+  // -------- 4. 生成并压缩图标组件（Icon）（包含合并的 icons.js） --------
   await buildIconComponent(platformDistDir, platform, brandsIcons, templates);
 
-  // -------- 6. 复制 README.md 到产物目录 --------
+  // -------- 5. 复制 README.md 到产物目录 --------
   const sourceReadmePath = path.resolve(ROOT_DIR, 'packages', platformId, 'README.md');
   const distReadmePath = path.resolve(platformDistDir, 'README.md');
   if (fs.existsSync(sourceReadmePath)) {
@@ -193,7 +180,7 @@ export async function build(platformId: string = 'wechat'): Promise<BuildResult>
     console.log(`⚠️  未找到 ${sourceReadmePath}，跳过 README 复制`);
   }
 
-  // -------- 7. 复制 package.json 到产物目录 --------
+  // -------- 6. 复制 package.json 到产物目录 --------
   const sourcePackageJsonPath = path.resolve(ROOT_DIR, 'packages', platformId, 'package.json');
   const distPackageJsonPath = path.resolve(platformDistDir, 'package.json');
   if (fs.existsSync(sourcePackageJsonPath)) {

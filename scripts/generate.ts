@@ -69,20 +69,12 @@ interface BrandGenerateResult {
  * 加载单个品牌的图标数据
  */
 async function loadBrandIcons(
-  platform: PlatformConfig,
   brand: BrandInfo,
   platformOutputDir: string,
-  platformTemplateDir: string,
 ): Promise<BrandGenerateResult> {
   console.log(`\n  🎨 品牌: ${brand.name}`);
 
   const icons = loadAndFilterIcons(brand);
-  const templates = loadPlatformTemplates(platformTemplateDir, platform);
-
-  // 生成 common/use-icon.js（在平台根目录）
-  const commonDir = path.join(platformOutputDir, 'common');
-  fs.ensureDirSync(commonDir);
-  fs.writeFileSync(path.join(commonDir, 'use-icon.js'), templates.useIconSource);
 
   console.log(`  ✅ [${brand.name}] 共加载 ${icons.length} 个图标`);
 
@@ -95,7 +87,6 @@ async function loadBrandIcons(
  * 生成小程序图标组件库
  * 输出完整的组件库到 packages/{platform}/，包含：
  * - icon/ 图标组件（Icon）（包含合并的 icons.js）
- * - common/use-icon.js
  *
  * @param platformId - 平台标识（wechat / alipay / kuaishou）
  */
@@ -122,7 +113,7 @@ export async function generate(platformId: string = 'wechat'): Promise<GenerateR
   const brandsIcons: BrandIconsMap = {};
 
   for (const brand of brands) {
-    const result = await loadBrandIcons(platform, brand, platformOutputDir, platformTemplateDir);
+    const result = await loadBrandIcons(brand, platformOutputDir);
     totalIconCount += result.icons.length;
     brandNames.push(result.brand);
     brandsIcons[result.brand] = result.icons;

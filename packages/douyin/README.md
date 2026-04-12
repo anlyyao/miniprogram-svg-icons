@@ -21,10 +21,8 @@ pnpm add @mp-svg-icons/douyin
 
 ```
 @mp-svg-icons/douyin/
-├── common/                    # 公共 Behavior（颜色解析 + Data URI 生成）
-│   └── use-icon.js
 ├── icon/                      # 图标组件（Icon）（全量图标）
-│   ├── index.js
+│   ├── index.js               #   组件逻辑（含颜色解析 + Data URI 生成）
 │   ├── index.json
 │   ├── index.ttml
 │   └── icons.js               # 全量图标 SVG 映射表（~1.5MB）

@@ -22,8 +22,6 @@ export interface PlatformConfig {
   templateExt: string;
   /** 模板文件后缀：样式 */
   styleExt: string;
-  /** 组件复用机制：behaviors（微信/快手）或 mixins（支付宝） */
-  reuseKey: 'behaviors' | 'mixins';
   /** 模板目录名（对应 template/{platform}/） */
   templateDir: string;
 }
@@ -34,7 +32,6 @@ export const PLATFORMS: Record<string, PlatformConfig> = {
     label: '微信小程序',
     templateExt: '.wxml',
     styleExt: '.wxss',
-    reuseKey: 'behaviors',
     templateDir: 'wechat',
   },
   alipay: {
@@ -42,7 +39,6 @@ export const PLATFORMS: Record<string, PlatformConfig> = {
     label: '支付宝小程序',
     templateExt: '.axml',
     styleExt: '.acss',
-    reuseKey: 'mixins',
     templateDir: 'alipay',
   },
   kuaishou: {
@@ -50,7 +46,6 @@ export const PLATFORMS: Record<string, PlatformConfig> = {
     label: '快手小程序',
     templateExt: '.ksml',
     styleExt: '.css',
-    reuseKey: 'behaviors',
     templateDir: 'kuaishou',
   },
   xiaohongshu: {
@@ -58,7 +53,6 @@ export const PLATFORMS: Record<string, PlatformConfig> = {
     label: '小红书小程序',
     templateExt: '.xhsml',
     styleExt: '.css',
-    reuseKey: 'behaviors',
     templateDir: 'xiaohongshu',
   },
   douyin: {
@@ -66,7 +60,6 @@ export const PLATFORMS: Record<string, PlatformConfig> = {
     label: '抖音小程序',
     templateExt: '.ttml',
     styleExt: '.ttss',
-    reuseKey: 'behaviors',
     templateDir: 'douyin',
   },
   baidu: {
@@ -74,7 +67,6 @@ export const PLATFORMS: Record<string, PlatformConfig> = {
     label: '百度小程序',
     templateExt: '.swan',
     styleExt: '.css',
-    reuseKey: 'behaviors',
     templateDir: 'baidu',
   },
   jd: {
@@ -82,7 +74,6 @@ export const PLATFORMS: Record<string, PlatformConfig> = {
     label: '京东小程序',
     templateExt: '.jxml',
     styleExt: '.jxss',
-    reuseKey: 'behaviors',
     templateDir: 'jd',
   },
 };
@@ -231,7 +222,6 @@ export function loadAndFilterIcons(brand: BrandInfo): IconEntry[] {
 export interface PlatformTemplates {
   iconJsonTemplate: string;
   iconTemplateContent: string;
-  useIconSource: string;
   iconJSSource: string;
 }
 
@@ -266,13 +256,9 @@ export function loadPlatformTemplates(platformTemplateDir: string, platform: Pla
     const iconJsonTemplate = readTemplateFile(platformTemplateDir, 'icon/index.json');
     const iconJSSource = readTemplateFile(platformTemplateDir, 'icon/index.js');
 
-    // 公共模块
-    const useIconSource = readTemplateFile(platformTemplateDir, 'common/use-icon.js');
-
     return {
       iconJsonTemplate,
       iconTemplateContent,
-      useIconSource,
       iconJSSource,
     };
   } catch (err) {

@@ -137,7 +137,7 @@ SVG 源文件经过解析、颜色替换、属性清理，最终生成带模板�
 | 4. 属性清理 | `buildAttrString()` | 移除 `id`、`width`、`height` 等运行时无用属性 |
 | 5. 模板生成 | `generateSvg()` | 拼接为完整的 SVG 模板字符串 |
 | 6. 组件写入 | `generateMergedIconsJS()` | 合并为 icons.js 映射表，写入组件文件 |
-| 7. 运行时渲染 | `use-icon.js` | HEX→RGB 转换 + URL 编码 → Data URI → `<image>` |
+| 7. 运行时渲染 | `icon/index.js` | HEX→RGB 转换 + URL 编码 → Data URI → `<image>` |
 
 ### 颜色映射规则
 
@@ -225,10 +225,8 @@ miniprogram-svg-icons/              # Monorepo 根目录
 
 ```
 packages/wechat/
-├── common/
-│   └── use-icon.js              # 公共 Behavior（颜色解析 + Data URI 生成）
 ├── icon/                         # 图标组件（Icon）（支持动态切换图标）
-│   ├── index.js                 #   组件逻辑
+│   ├── index.js                 #   组件逻辑（含颜色解析 + Data URI 生成）
 │   ├── index.json               #   组件配置
 │   ├── index.wxml               #   组件模板
 │   └── icons.js                 #   全量图标 SVG 映射表（~1.5MB）
@@ -468,7 +466,6 @@ export interface PlatformConfig {
   label: string;       // 平台显示名
   templateExt: string; // 模板文件后缀
   styleExt: string;    // 样式文件后缀
-  reuseKey: 'behaviors' | 'mixins'; // 组件复用机制
   templateDir: string; // 模板目录名
 }
 ```
@@ -559,11 +556,9 @@ export interface PlatformConfig {
 
 ```
 scripts/template/{platform}/
-├── common/
-│   └── use-icon.js              # 公共 Behavior / Mixin
 └── icon/
     ├── index.{模板后缀}          # 图标组件（Icon）模板
-    ├── index.js                 # 图标组件（Icon）逻辑
+    ├── index.js                 # 图标组件（Icon）逻辑（含颜色解析 + Data URI 生成）
     └── index.json               # 图标组件（Icon）配置
 ```
 
@@ -577,7 +572,6 @@ newplatform: {
   label: '新平台小程序',
   templateExt: '.nxml',
   styleExt: '.ncss',
-  reuseKey: 'behaviors',  // 或 'mixins'
   templateDir: 'newplatform',
 },
 ```

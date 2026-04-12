@@ -10,6 +10,8 @@
 - ✅ **多品牌支持** — 支持 TDesign 等多种图标品牌
 - ✅ **双组件模式** — 单图标组件（tree-shaking）+ 通用 icon 组件（动态切换）
 
+> 💡 **QQ 小程序兼容**：QQ 小程序与微信小程序的组件规范完全一致（`Behavior`、`properties`、`observers` 等 API 相同），可直接安装本包使用，无需额外适配。
+
 ## 安装
 
 ```bash
@@ -18,7 +20,7 @@ npm install @mp-svg-icons/wechat
 pnpm add @mp-svg-icons/wechat
 ```
 
-安装后在微信开发者工具中点击「工具」→「构建 npm」。
+安装后在微信开发者工具（或 QQ 小程序开发者工具）中点击「工具」→「构建 npm」。
 
 ## 目录结构
 

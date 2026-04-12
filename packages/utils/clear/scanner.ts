@@ -13,58 +13,37 @@ import { escapeRegExp } from './utils';
 import { walkDir, isExcluded } from './path-utils';
 
 /**
- * 从 JSON 文件中提取图标组件信息
+ * 从 JSON 文件中提取图标组件标签名
+ *
+ * 解析 usingComponents，匹配指向 icon 通用组件的路径，
+ * 收集对应的自定义标签名（如 t-icon、my-icon）。
  */
-function extractAllFromJson(
+function extractIconTagNames(
   content: string,
   iconPathRegex: RegExp,
-  singleIconPathRegex: RegExp,
-): {
-  iconTagNamesByBrand: Map<string, Set<string>>;
-  singleIconRefsByBrand: Map<string, Set<string>>;
-} {
-  const iconTagNamesByBrand = new Map<string, Set<string>>();
-  const singleIconRefsByBrand = new Map<string, Set<string>>();
+): Set<string> {
+  const tagNames = new Set<string>();
 
   try {
     const json = JSON.parse(content);
     const usingComponents = json?.usingComponents;
     if (!usingComponents || typeof usingComponents !== 'object') {
-      return { iconTagNamesByBrand, singleIconRefsByBrand };
+      return tagNames;
     }
 
     for (const [tagName, componentPath] of Object.entries(usingComponents)) {
       if (typeof componentPath !== 'string') continue;
 
       const normalized = componentPath.replace(/\\/g, '/');
-
-      // 匹配通用组件
-      const iconMatch = normalized.match(iconPathRegex);
-      if (iconMatch) {
-        const brandName = iconMatch[1] || '';
-        if (!iconTagNamesByBrand.has(brandName)) {
-          iconTagNamesByBrand.set(brandName, new Set());
-        }
-        iconTagNamesByBrand.get(brandName)!.add(tagName);
-        continue;
-      }
-
-      // 匹配单图标组件
-      const singleMatch = normalized.match(singleIconPathRegex);
-      if (singleMatch) {
-        const brandName = singleMatch[1] || '';
-        const iconName = singleMatch[2];
-        if (!singleIconRefsByBrand.has(brandName)) {
-          singleIconRefsByBrand.set(brandName, new Set());
-        }
-        singleIconRefsByBrand.get(brandName)!.add(iconName);
+      if (iconPathRegex.test(normalized)) {
+        tagNames.add(tagName);
       }
     }
   } catch {
     // JSON 解析失败，静默跳过
   }
 
-  return { iconTagNamesByBrand, singleIconRefsByBrand };
+  return tagNames;
 }
 
 /**
@@ -123,10 +102,8 @@ export function scanAllFiles(
   scanDirs: readonly string[],
   ctx: ScanContext,
 ): ScanResult {
-  const { excludeDirs, allIconNameSet, iconPathRegex, singleIconPathRegex, brandNameSet, defaultBrand } = ctx;
+  const { excludeDirs, allIconNameSet, iconPathRegex, brandNameSet, defaultBrand } = ctx;
 
-  const iconTagNamesByBrand = new Map<string, Set<string>>();
-  const singleIconRefsByBrand = new Map<string, Set<string>>();
   const iconsByBrand = new Map<string, Set<string>>();
 
   const jsonFiles: { content: string }[] = [];
@@ -180,37 +157,24 @@ export function scanAllFiles(
     }
   }
 
-  // 阶段一：从 JSON 文件提取组件信息
-  for (const { content } of jsonFiles) {
-    const result = extractAllFromJson(content, iconPathRegex, singleIconPathRegex);
-
-    for (const [brandName, tags] of result.iconTagNamesByBrand) {
-      if (!iconTagNamesByBrand.has(brandName)) {
-        iconTagNamesByBrand.set(brandName, new Set());
-      }
-      for (const tag of tags) {
-        iconTagNamesByBrand.get(brandName)!.add(tag);
-      }
-    }
-
-    for (const [brandName, refs] of result.singleIconRefsByBrand) {
-      if (!singleIconRefsByBrand.has(brandName)) {
-        singleIconRefsByBrand.set(brandName, new Set());
-      }
-      for (const ref of refs) {
-        singleIconRefsByBrand.get(brandName)!.add(ref);
-      }
-    }
-  }
-
-  // 阶段二：从模板文件提取图标使用
+  // 阶段一：从 JSON 文件提取 icon 组件标签名
   const allIconTagNames = new Set<string>();
-  for (const tags of iconTagNamesByBrand.values()) {
+  for (const { content } of jsonFiles) {
+    const tags = extractIconTagNames(content, iconPathRegex);
     for (const tag of tags) {
       allIconTagNames.add(tag);
     }
   }
 
+  // 将标签名分配给所有已知品牌（品牌由模板中的 brand 属性决定）
+  const iconTagNamesByBrand = new Map<string, Set<string>>();
+  if (allIconTagNames.size > 0) {
+    for (const brand of brandNameSet) {
+      iconTagNamesByBrand.set(brand, new Set(allIconTagNames));
+    }
+  }
+
+  // 阶段二：从模板文件提取图标使用
   for (const { content } of templateFiles) {
     const foundByBrand = extractIconNamesFromTemplate(
       content, allIconNameSet, allIconTagNames, brandNameSet, defaultBrand,
@@ -225,5 +189,5 @@ export function scanAllFiles(
     }
   }
 
-  return { iconTagNamesByBrand, singleIconRefsByBrand, iconsByBrand };
+  return { iconTagNamesByBrand, iconsByBrand };
 }

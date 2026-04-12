@@ -22,8 +22,6 @@ export interface PlatformConfig {
   templateExt: string;
   /** 模板文件后缀：样式 */
   styleExt: string;
-  /** 组件复用机制：behaviors（微信/快手）或 mixins（支付宝） */
-  reuseKey: 'behaviors' | 'mixins';
   /** 模板目录名（对应 template/{platform}/） */
   templateDir: string;
 }
@@ -34,7 +32,6 @@ export const PLATFORMS: Record<string, PlatformConfig> = {
     label: '微信小程序',
     templateExt: '.wxml',
     styleExt: '.wxss',
-    reuseKey: 'behaviors',
     templateDir: 'wechat',
   },
   alipay: {
@@ -42,7 +39,6 @@ export const PLATFORMS: Record<string, PlatformConfig> = {
     label: '支付宝小程序',
     templateExt: '.axml',
     styleExt: '.acss',
-    reuseKey: 'mixins',
     templateDir: 'alipay',
   },
   kuaishou: {
@@ -50,7 +46,6 @@ export const PLATFORMS: Record<string, PlatformConfig> = {
     label: '快手小程序',
     templateExt: '.ksml',
     styleExt: '.css',
-    reuseKey: 'behaviors',
     templateDir: 'kuaishou',
   },
   xiaohongshu: {
@@ -58,7 +53,6 @@ export const PLATFORMS: Record<string, PlatformConfig> = {
     label: '小红书小程序',
     templateExt: '.xhsml',
     styleExt: '.css',
-    reuseKey: 'behaviors',
     templateDir: 'xiaohongshu',
   },
   douyin: {
@@ -66,7 +60,6 @@ export const PLATFORMS: Record<string, PlatformConfig> = {
     label: '抖音小程序',
     templateExt: '.ttml',
     styleExt: '.ttss',
-    reuseKey: 'behaviors',
     templateDir: 'douyin',
   },
   baidu: {
@@ -74,7 +67,6 @@ export const PLATFORMS: Record<string, PlatformConfig> = {
     label: '百度小程序',
     templateExt: '.swan',
     styleExt: '.css',
-    reuseKey: 'behaviors',
     templateDir: 'baidu',
   },
   jd: {
@@ -82,7 +74,6 @@ export const PLATFORMS: Record<string, PlatformConfig> = {
     label: '京东小程序',
     templateExt: '.jxml',
     styleExt: '.jxss',
-    reuseKey: 'behaviors',
     templateDir: 'jd',
   },
 };
@@ -229,11 +220,8 @@ export function loadAndFilterIcons(brand: BrandInfo): IconEntry[] {
 // ======================== 模板文件读取 ========================
 
 export interface PlatformTemplates {
-  singleIconJsonTemplate: string;
-  singleIconTemplateContent: string;
   iconJsonTemplate: string;
   iconTemplateContent: string;
-  useIconSource: string;
   iconJSSource: string;
 }
 
@@ -261,14 +249,6 @@ function findAndReadTemplate(dir: string, ext: string): string {
 /** 读取平台模板文件 */
 export function loadPlatformTemplates(platformTemplateDir: string, platform: PlatformConfig): PlatformTemplates {
   try {
-    // 单图标模板
-    const singleIconTemplateContent = findAndReadTemplate(
-      path.join(platformTemplateDir, 'single-icon'),
-      platform.templateExt
-    );
-    const singleIconJsonTemplate = readTemplateFile(platformTemplateDir, 'single-icon/index.json');
-
-    // 通用 icon 组件模板
     const iconTemplateContent = findAndReadTemplate(
       path.join(platformTemplateDir, 'icon'),
       platform.templateExt
@@ -276,15 +256,9 @@ export function loadPlatformTemplates(platformTemplateDir: string, platform: Pla
     const iconJsonTemplate = readTemplateFile(platformTemplateDir, 'icon/index.json');
     const iconJSSource = readTemplateFile(platformTemplateDir, 'icon/index.js');
 
-    // 公共模块
-    const useIconSource = readTemplateFile(platformTemplateDir, 'common/use-icon.js');
-
     return {
-      singleIconJsonTemplate,
-      singleIconTemplateContent,
       iconJsonTemplate,
       iconTemplateContent,
-      useIconSource,
       iconJSSource,
     };
   } catch (err) {
@@ -294,24 +268,6 @@ export function loadPlatformTemplates(platformTemplateDir: string, platform: Pla
   }
 }
 
-// ======================== 代码生成函数 ========================
-
-/**
- * 生成单图标组件的 JS 源码
- */
-export function generateIconJS(svgContent: string, platform: PlatformConfig): string {
-  const reuseKey = platform.reuseKey;
-  return `var useIcon = require("../../common/use-icon");
-
-Component({
-  ${reuseKey}: [useIcon],
-  data: {
-    svgContent: \`${svgContent}\`,
-  },
-});
-`;
-}
-
 // ======================== 多品牌图标数据 ========================
 
 export interface BrandIconsMap {
@@ -319,10 +275,10 @@ export interface BrandIconsMap {
 }
 
 /**
- * 生成合并后的 icons.js 源码
+ * 生成 icons.js 源码
  * 结构：{ "brand1": { "icon1": "svg1", ... }, "brand2": { ... } }
  */
-export function generateMergedIconsJS(brandsIcons: BrandIconsMap): string {
+export function generateIconsJS(brandsIcons: BrandIconsMap): string {
   const brandEntries: string[] = [];
 
   for (const [brandName, icons] of Object.entries(brandsIcons)) {
@@ -336,7 +292,7 @@ export function generateMergedIconsJS(brandsIcons: BrandIconsMap): string {
 // ======================== 目录清理 ========================
 
 /**
- * 清理输出目录（保留 package.json 和 README.md）
+ * 清理输出目录（保留 package.json）
  */
 export async function cleanOutputDir(outputDir: string): Promise<void> {
   if (!fs.existsSync(outputDir)) {
@@ -348,7 +304,7 @@ export async function cleanOutputDir(outputDir: string): Promise<void> {
   const removePromises: Promise<void>[] = [];
 
   for (const item of items) {
-    if (item === 'package.json' || item === 'README.md') continue;
+    if (item === 'package.json') continue;
     removePromises.push(
       fs.remove(path.join(outputDir, item)).catch((err) => {
         console.warn(`  ⚠️  清理失败: ${item}: ${err instanceof Error ? err.message : String(err)}`);

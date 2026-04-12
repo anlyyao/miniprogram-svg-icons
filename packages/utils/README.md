@@ -28,7 +28,7 @@ npx mp-svg-icons-clear --pkg-dir <path> [--scan <dirs...>] [--icons <names>] [--
 |------|------|------|
 | `--pkg-dir` | 是 | 图标 npm 包目录路径 |
 | `--scan` | 否 | 要扫描的项目目录（支持多个，空格分隔） |
-| `--icons` | 否 | 逗号分隔的图标名称列表，手动指定要保留的图标。**注意：仅保护通用组件（`icons.js` 映射表），不保护单图标组件目录** |
+| `--icons` | 否 | 逗号分隔的图标名称列表，手动指定要保留的图标（保留 `icons.js` 映射表中对应的图标数据） |
 | `--dry-run` | 否 | 预览模式，只输出将移除的图标，不实际执行 |
 
 > **说明**：`--scan` 和 `--icons` 至少需要指定一个，两者可同时使用。同时使用时，最终保留的图标为扫描结果与手动指定的**并集**。`--icons` 的典型场景是补充静态分析无法识别的动态图标（如 JS 中动态赋值的图标名）。
@@ -78,7 +78,7 @@ import { clear } from '@mp-svg-icons/utils/clear';
 
 const result = clear({
   scanDirs: ['./pages', './components'],
-  includeIcons: ['loading'],
+  icons: ['loading'],
   pkgDir: './miniprogram_npm/@mp-svg-icons/wechat',
   dryRun: false,
 });
@@ -90,16 +90,14 @@ console.log(`节省 ${result.totalSavedBytes} 字节`);
 ## 裁剪原理
 
 1. **品牌收集**：扫描图标包目录，识别所有品牌（如 `tdesign/`）
-2. **数据加载**：读取 `icon/icons.js` 映射表 + 枚举单图标组件目录列表
+2. **数据加载**：读取 `icon/icons.js` 映射表，获取所有可用图标数据
 3. **源码扫描**（`scanner.ts`）：
    - 解析 JSON 文件中的 `usingComponents` 引用
    - 扫描模板文件中的图标组件标签名
-   - 提取图标名称（去除 `-icon` 后缀）
+   - 提取图标名称
 4. **结果合并**：扫描结果 ∪ `--icons` 手动指定 = 最终保留集
 5. **执行裁剪**：
    - 重写 `icons.js`，仅保留使用中的图标 SVG 数据
-   - 删除未使用的 `{name}-icon/` 单图标组件目录
-   - 若通用 icon 组件和所有单图标组件均未被引用，自动移除 `common/` 目录
 6. **输出统计**：报告保留/移除的图标数量
 
 ## 支持的小程序平台

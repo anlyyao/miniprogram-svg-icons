@@ -11,8 +11,7 @@
  *   --pkg-dir <path>     (必填) 构建产物中图标包所在目录
  *   --scan <dirs...>     扫描指定目录中的源文件（支持多个目录，空格分隔），
  *                        应覆盖所有使用了图标的目录，包括分包目录（subpackages）
- *   --icons <names>      手动指定要保留的图标名（逗号分隔），仅保护通用组件（svg-icon），
- *                        不保护单图标组件目录（如 add-icon/）；单图标组件目录仅通过 --scan 扫描 usingComponents 引用来保护
+ *   --icons <names>      手动指定要保留的图标名（逗号分隔）
  *   --dry-run            仅打印将被移除的图标，不实际执行
  *   -h, --help           显示帮助信息
  */
@@ -20,7 +19,6 @@
 import type { ClearOptions } from './types';
 import {
   CLI_BIN_NAME,
-  SINGLE_ICON_SUFFIX,
 } from './constants';
 import { clear } from './index';
 
@@ -37,21 +35,19 @@ mp-svg-icons-clear — 小程序图标组件裁剪 CLI 工具
   --pkg-dir <path>     （必填）构建产物中图标包所在目录
   --scan <dirs...>     扫描指定目录中的源文件（支持多个目录，空格分隔）
   --icons <names>      手动指定要保留的图标名（逗号分隔）
-                       注意：仅保护通用组件（svg-icon），不保护单图标组件目录
   --dry-run            仅预览，不实际修改文件
   -h, --help           显示帮助信息
 
 说明:
   工具会自动解析 app.json 及扫描目录中 .json 文件的 usingComponents，
-  识别所有引用图标包通用 icon 组件的自定义标签名
+  识别所有引用图标包图标组件（Icon）的自定义标签名
   （如 t-icon、test、my-icon），然后精确匹配模板文件中这些标签的 name 属性值。
 
   注意：本工具为静态分析工具，无法识别 JS/TS 中动态赋值的图标名。
   对于动态图标，请通过 --icons 参数手动指定。
 
   裁剪目标（均为可选，不存在则自动跳过）：
-    1. icon/{品牌}-icons.js — SVG 图标映射表（移除未使用的 SVG 数据）
-    2. {name}${SINGLE_ICON_SUFFIX}/ — 单图标组件目录（移除未使用的组件目录）
+    1. icon/icons.js — SVG 图标映射表（移除未使用的 SVG 数据）
 
   支持的小程序平台：
     微信(.wxml/.wxss) | 支付宝(.axml/.acss) | 百度(.swan/.css)
@@ -78,7 +74,7 @@ function parseCLIArgs(): ClearOptions {
   }
 
   const scanDirs: string[] = [];
-  let includeIcons: string[] = [];
+  let icons: string[] = [];
   let pkgDir: string | undefined;
   let dryRun = false;
 
@@ -99,7 +95,7 @@ function parseCLIArgs(): ClearOptions {
       case '--icons': {
         i++;
         if (i < args.length) {
-          includeIcons = args[i].split(',').map((s) => s.trim()).filter(Boolean);
+          icons = args[i].split(',').map((s) => s.trim()).filter(Boolean);
           i++;
         }
         break;
@@ -136,13 +132,13 @@ function parseCLIArgs(): ClearOptions {
   }
 
   // 校验至少有一种图标来源
-  if (scanDirs.length === 0 && includeIcons.length === 0) {
+  if (scanDirs.length === 0 && icons.length === 0) {
     console.error('❌ --scan 和 --icons 至少需要指定一个\n');
     printHelp();
     process.exit(1);
   }
 
-  return { scanDirs, includeIcons, pkgDir, dryRun };
+  return { scanDirs, icons, pkgDir, dryRun };
 }
 
 // ======================== CLI 入口 ========================

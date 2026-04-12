@@ -16,11 +16,11 @@
     "inlineSources": true,
     "strictPropertyInitialization": false,
     "outDir": "../../dist/utils",
-    "rootDir": "./src",
+    "rootDir": ".",
     "skipLibCheck": true,
     "esModuleInterop": true,
     "resolveJsonModule": true
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["clear/**/*.ts"],
+  "exclude": ["node_modules"]
 }

@@ -18,7 +18,7 @@
     }
   },
   "scripts": {
-    "build": "tsc && cp README.md ../../dist/utils/ && cp package.json ../../dist/utils/"
+    "build": "tsc && cp package.json ../../dist/utils/"
   },
   "files": [
     "clear"

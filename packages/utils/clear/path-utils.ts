@@ -4,8 +4,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { SINGLE_ICON_SUFFIX, SCAN_EXTENSIONS, SKIP_DIR_NAMES } from './constants';
-import { escapeRegExp } from './utils';
+import { SCAN_EXTENSIONS, SKIP_DIR_NAMES } from './constants';
 
 /**
  * 解析并校验 --pkg-dir 指定的图标包路径
@@ -37,17 +36,6 @@ export function isExcluded(targetPath: string, excludeDirs: Set<string>): boolea
     if (isSubPathOf(targetPath, excludeDir)) return true;
   }
   return false;
-}
-
-/** 预编译的 -icon 后缀正则（避免在循环中重复创建） */
-const SUFFIX_REGEX = new RegExp(`${escapeRegExp(SINGLE_ICON_SUFFIX)}$`);
-
-/**
- * 剥离图标目录名中的 -icon 后缀，返回图标名
- * @example stripIconSuffix('add-icon') → 'add'
- */
-export function stripIconSuffix(dirName: string): string {
-  return dirName.replace(SUFFIX_REGEX, '');
 }
 
 /**

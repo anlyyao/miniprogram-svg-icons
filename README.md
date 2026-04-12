@@ -72,8 +72,7 @@
 - ✅ **零依赖运行** — Data URI 方案，无需额外资源加载
 - ✅ **7+ 平台适配** — 支持微信 / 支付宝 / 快手 / 抖音 / 百度 / 小红书 / 京东
 - ✅ **按需裁剪** — 内置 CLI 工具，移除未使用图标减小包体积
-- ✅ **品牌系统** — 支持多品牌图标源（如 TDesign），可自由扩展
-- ✅ **双组件模式** — 单图标组件（tree-shaking）+ 通用 icon 组件（动态切换）
+- ✅ **多品牌支持** — 支持多品牌图标源（如 TDesign），易扩展
 
 ---
 
@@ -137,8 +136,8 @@ SVG 源文件经过解析、颜色替换、属性清理，最终生成带模板�
 | 3. 颜色替换 | `normalizeColor()` | 根据元素 `id` 将颜色属性替换为模板变量 |
 | 4. 属性清理 | `buildAttrString()` | 移除 `id`、`width`、`height` 等运行时无用属性 |
 | 5. 模板生成 | `generateSvg()` | 拼接为完整的 SVG 模板字符串 |
-| 6. 组件写入 | `generateIconJS()` | 包装为 JS 模板字面量，写入组件文件 |
-| 7. 运行时渲染 | `use-icon.js` | HEX→RGB 转换 + URL 编码 → Data URI → `<image>` |
+| 6. 组件写入 | `generateIconsJS()` | 生成 icons.js 映射表，写入组件文件 |
+| 7. 运行时渲染 | `icon/index.js` | HEX→RGB 转换 + URL 编码 → Data URI → `<image>` |
 
 ### 颜色映射规则
 
@@ -226,38 +225,20 @@ miniprogram-svg-icons/              # Monorepo 根目录
 
 ```
 packages/wechat/
-├── common/
-│   └── use-icon.js              # 公共 Behavior（颜色解析 + Data URI 生成）
-├── icon/                         # 通用 icon 组件（支持动态切换图标）
-│   ├── index.js                 #   组件逻辑
+├── icon/                         # 图标组件（Icon）（支持动态切换图标）
+│   ├── index.js                 #   组件逻辑（含颜色解析 + Data URI 生成）
 │   ├── index.json               #   组件配置
 │   ├── index.wxml               #   组件模板
 │   └── icons.js                 #   全量图标 SVG 映射表（~1.5MB）
-├── tdesign/                      # TDesign 品牌单图标组件
-│   ├── add-icon/                #   每个图标一个独立组件
-│   │   ├── index.js             #     含 SVG 模板字面量
-│   │   ├── index.json           #     组件配置
-│   │   └── index.wxml           #     组件模板
-│   ├── close-icon/
-│   └── ... (~2300+ 个图标组件)
 ├── package.json
 └── README.md
 ```
 
 ---
 
-## 🧩 双组件模式
+## 🧩 图标组件（Icon）
 
-项目为每个平台生成两种组件模式，适用于不同使用场景。
-
-### 单图标组件（推荐静态场景）
-
-- 每个图标一个独立目录：`{name}-icon/`
-- 按需引入，**tree-shaking 友好**
-- 体积极小：每个组件仅 ~1KB
-- 适合图标固定不变的场景
-
-### 通用 icon 组件（动态场景）
+项目为每个平台生成图标组件（Icon），通过 `name` 属性动态切换图标。
 
 - 一个组件包含全部图标映射：`icon/icons.js`（~1.5MB）
 - 通过 `name` 属性动态切换图标
@@ -305,29 +286,9 @@ pnpm run release
 
 ## 📖 使用方式
 
-### 方式一：单图标组件（推荐）
+### 图标组件（Icon）
 
-每个图标生成一个独立组件目录，按需引入：
-
-```json
-// 页面或组件的 JSON 配置
-{
-  "usingComponents": {
-    "add-icon": "@mp-svg-icons/wechat/tdesign/add-icon",
-    "close-icon": "@mp-svg-icons/wechat/tdesign/close-icon"
-  }
-}
-```
-
-```xml
-<!-- 模板中使用 -->
-<add-icon size="{{48}}" />
-<close-icon size="{{32}}" stroke-color="#0052D9" fill-color="#E7EFFF" />
-```
-
-### 方式二：通用 icon 组件
-
-通过 `name` 属性指定图标名称，适合需要**动态切换图标**的场景：
+通过 `name` 属性指定图标名称，支持**动态切换图标**：
 
 ```json
 {
@@ -342,7 +303,7 @@ pnpm run release
 <t-icon name="close" size="{{32}}" stroke-color="#0052D9" fill-color="#E7EFFF" />
 ```
 
-> **提示**：通用 icon 组件包含全量图标映射（~1.5MB），建议配合[图标裁剪工具](#️-图标裁剪)使用。
+> **提示**：图标组件（Icon）包含全量图标映射（~1.5MB），建议配合[图标裁剪工具](#️-图标裁剪)使用。
 
 
 ### 组件属性
@@ -353,8 +314,8 @@ pnpm run release
 | `strokeColor` | `String` | — | 描边颜色，支持 `rgb()` / `rgba()` / HEX 格式 |
 | `fillColor` | `String` | — | 填充颜色，支持 `rgb()` / `rgba()` / HEX 格式 |
 | `strokeWidth` | `String` | `2` | 描边宽度 |
-| `name` | `String` | — | 图标名称（仅通用 icon 组件支持） |
-| `brand` | `String` | `tdesign` | 品牌名称（仅通用 icon 组件支持） |
+| `name` | `String` | — | 图标名称 |
+| `brand` | `String` | `tdesign` | 品牌名称 |
 
 > **注意**：颜色值内部统一转为 `rgb()` 格式后注入 Data URI，因此 HEX 的 `#` 无需手动转义。
 
@@ -375,7 +336,7 @@ pnpm run release
 |------|------|------|
 | **📥 输入** | 接收 CLI 参数 | `--pkg-dir`（必须）、`--scan`、`--icons`、`--dry-run` |
 | **🔍 分析** | 加载数据 + 扫描源码 | 解析 `icons.js` 映射表 + 扫描 `usingComponents` 引用 |
-| **✂️ 裁剪** | 移除未使用图标 | 裁剪 `icons.js` 映射 + 删除 `{name}-icon/` 目录 |
+| **✂️ 裁剪** | 移除未使用图标 | 裁剪 `icons.js` 映射 |
 | **📊 输出** | 统计报告 | 输出保留/移除数量，`--dry-run` 仅预览 |
 
 ### 安装 CLI 工具
@@ -434,7 +395,7 @@ npx mp-svg-icons-clear \
 |------|------|------|
 | `--pkg-dir` | 是 | 图标 npm 包目录路径 |
 | `--scan` | 否 | 要扫描的项目目录（支持多个，空格分隔） |
-| `--icons` | 否 | 逗号分隔的图标名称列表，手动指定要保留的图标。**注意：仅保护通用组件（`icons.js` 映射表），不保护单图标组件目录** |
+| `--icons` | 否 | 逗号分隔的图标名称列表，手动指定要保留的图标 |
 | `--dry-run` | 否 | 预览模式，只输出将移除的图标，不实际执行 |
 
 > **说明**：`--scan` 和 `--icons` 至少需要指定一个，两者可同时使用。同时使用时，最终保留的图标为扫描结果与手动指定的**并集**。`--icons` 的典型场景是补充静态分析无法识别的动态图标（如 JS 中动态赋值的图标名）。
@@ -442,16 +403,14 @@ npx mp-svg-icons-clear \
 ### 裁剪原理详解
 
 1. **品牌收集**：扫描图标包目录，识别所有品牌（如 `tdesign/`）
-2. **数据加载**：读取 `icon/icons.js` 映射表 + 枚举单图标组件目录列表
+2. **数据加载**：读取 `icon/icons.js` 映射表
 3. **源码扫描**（`scanner.ts`）：
    - 解析 JSON 文件中的 `usingComponents` 引用
    - 扫描模板文件中的图标组件标签名
-   - 提取图标名称（去除 `-icon` 后缀）
+   - 提取图标名称
 4. **结果合并**：扫描结果 ∪ `--icons` 手动指定 = 最终保留集
 5. **执行裁剪**：
    - 重写 `icons.js`，仅保留使用中的图标 SVG 数据
-   - 删除未使用的 `{name}-icon/` 单图标组件目录
-   - 若通用 icon 组件和所有单图标组件均未被引用，自动移除 `common/` 目录
 6. **输出统计**：报告保留/移除的图标数量
 
 ---
@@ -460,32 +419,30 @@ npx mp-svg-icons-clear \
 
 ### 支持平台概览
 
-项目支持 **8 大小程序平台**，分为两类适配模式：
+项目支持 **8 大小程序平台**，分为三类适配模式：
 
-**Behavior 模式**（6 个平台，共用同一套模板逻辑）：
+**标准模式**（5 个平台，共用同一套组件 API）：
 - 微信（`.wxml` / `.wxss`）
 - QQ（直接复用 `@mp-svg-icons/wechat`，无需独立包）
 - 快手（`.ksml` / `.css`）
-- 抖音（`.ttml` / `.ttss`）
 - 百度（`.swan` / `.css`）
 - 京东（`.jxml` / `.jxss`）
 
-**特殊适配**（2 个平台，需要独立模板）：
-- 小红书（`.xhsml` / `.css`）— 不支持 `Behavior`、多字段 `observers`
-- 支付宝（`.axml` / `.acss`）— 使用 `Mixin` + `props` + ES5 语法
+**特殊适配**（3 个平台，需要独立模板）：
+- 抖音（`.ttml` / `.ttss`）— SVG Data URI 需额外转义双引号
+- 小红书（`.xhsml` / `.css`）— 不支持多字段 `observers`，需逐个声明
+- 支付宝（`.axml` / `.acss`）— 使用 `props` + `didMount/didUpdate` + ES5 语法
 
 ### 组件 API 差异
 
-| 特性 | 微信 / QQ / 京东 / 快手 / 抖音 / 百度 | 小红书小程序 | 支付宝小程序 |
-|------|----------------------------------|--------------|--------------|
-| 组件复用机制 | `Behavior` / `behaviors` | 不支持 `Behavior` | `Mixin` / `mixins` |
-| 属性定义 | `properties`（`type`/`value`） | `properties`（`type`/`value`） | `props`（直接赋值默认值） |
-| 数据访问 | `this.data.xxx` | `this.data.xxx` | `this.props.xxx`（外部）/ `this.data.xxx`（内部） |
-| 初始化生命周期 | `lifetimes.attached()` | `lifetimes.attached()` | `didMount()` |
-| 销毁生命周期 | `lifetimes.detached()` | `lifetimes.detached()` | `didUnmount()` |
-| 属性变化监听 | `observers` 多字段逗号分隔 | 仅支持单字段 `observer` | `didUpdate(prevProps)` 手动 diff |
-| 纯数据字段 | 支持 `options.pureDataPattern` | 不支持 | 不支持 |
-| JS 语法 | ES6+ 完全支持 | ES6+ 完全支持 | 推荐 ES5，ES6 兼容不稳定 |
+| 特性 | 微信 / QQ / 京东 / 快手 / 百度 | 抖音小程序 | 小红书小程序 | 支付宝小程序 |
+|------|----------------------------------|------------|--------------|--------------|
+| 属性定义 | `properties`（`type`/`value`） | `properties`（`type`/`value`） | `properties`（`type`/`value`） | `props`（直接赋值默认值） |
+| 数据访问 | `this.data.xxx` | `this.data.xxx` | `this.data.xxx` | `this.props.xxx`（外部）/ `this.data.xxx`（内部） |
+| 初始化生命周期 | `lifetimes.attached()` | `lifetimes.attached()` | `lifetimes.attached()` | `didMount()` |
+| 属性变化监听 | `observers` 多字段逗号分隔 | `observers` 多字段逗号分隔 | 仅支持单字段 `observer` | `didUpdate(prevProps)` 手动 diff |
+| SVG 编码 | 标准编码 | 额外转义双引号 | 标准编码 | 标准编码 |
+| JS 语法 | ES6+ 完全支持 | ES6+ 完全支持 | ES6+ 完全支持 | 推荐 ES5，ES6 兼容不稳定 |
 
 ### 文件后缀差异
 
@@ -506,7 +463,6 @@ export interface PlatformConfig {
   label: string;       // 平台显示名
   templateExt: string; // 模板文件后缀
   styleExt: string;    // 样式文件后缀
-  reuseKey: 'behaviors' | 'mixins'; // 组件复用机制
   templateDir: string; // 模板目录名
 }
 ```
@@ -553,7 +509,7 @@ export interface PlatformConfig {
 |------|------|
 | `scripts/shared.ts` | 公共模块：路径常量、7 平台配置（`PLATFORMS`）、品牌扫描（`scanBrands()`）、SVG 加载、模板读取、代码生成函数 |
 | `scripts/generate.ts` | 生成入口：扫描品牌 → 加载 SVG → 读取模板 → 生成组件到 `packages/`（未压缩） |
-| `scripts/build.ts` | 打包入口：从 SVG 直接生成压缩产物到 `dist/`，terser 并发限制 200 |
+| `scripts/build.ts` | 打包入口：从 SVG 直接生成压缩产物到 `dist/`，生成图标组件（Icon） |
 | `scripts/release.ts` | 发布工具：交互式 TUI，支持 8 框架、semver 版本管理、dist-tag、Git Tag、失败回滚 |
 | `scripts/utils/svgTotemplate.ts` | SVG 解析引擎：xmldom 解析 → 颜色占位符替换（`normalizeColor()`）→ 模板字符串生成 |
 | `scripts/utils/const.ts` | 特殊图标常量：31 个需要特殊颜色映射的图标名列表 |
@@ -561,7 +517,6 @@ export interface PlatformConfig {
 | `packages/utils/src/clear/index.ts` | 裁剪主逻辑：品牌收集 → 数据加载 → 扫描 → 裁剪 → 统计输出 |
 | `packages/utils/src/clear/scanner.ts` | 项目扫描器：扫描 `usingComponents` JSON 引用和模板中的组件标签 |
 | `packages/utils/src/clear/icon.ts` | `icons.js` 映射表的读写与裁剪逻辑 |
-| `packages/utils/src/clear/single-icon.ts` | 单图标组件目录的枚举与删除逻辑 |
 
 ---
 
@@ -597,15 +552,10 @@ export interface PlatformConfig {
 
 ```
 scripts/template/{platform}/
-├── common/
-│   └── use-icon.js              # 公共 Behavior / Mixin
-├── single-icon/
-│   ├── index.{模板后缀}          # 单图标组件模板
-│   └── index.json               # 单图标组件配置
 └── icon/
-    ├── index.{模板后缀}          # 通用 icon 组件模板
-    ├── index.js                 # 通用 icon 组件逻辑
-    └── index.json               # 通用 icon 组件配置
+    ├── index.{模板后缀}          # 图标组件（Icon）模板
+    ├── index.js                 # 图标组件（Icon）逻辑（含颜色解析 + Data URI 生成）
+    └── index.json               # 图标组件（Icon）配置
 ```
 
 **步骤 2 — 注册平台配置**
@@ -618,7 +568,6 @@ newplatform: {
   label: '新平台小程序',
   templateExt: '.nxml',
   styleExt: '.ncss',
-  reuseKey: 'behaviors',  // 或 'mixins'
   templateDir: 'newplatform',
 },
 ```

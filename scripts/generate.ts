@@ -2,7 +2,6 @@ import fs from 'fs-extra';
 import path from 'path';
 import {
   PACKAGES_DIR,
-  TEMPLATE_DIR,
   PlatformConfig,
   BrandInfo,
   IconEntry,
@@ -12,7 +11,7 @@ import {
   parseArgs,
   getPlatformConfig,
   loadAndFilterIcons,
-  loadPlatformTemplates,
+  generatePlatformTemplates,
   generateIconsJS,
   cleanOutputDir,
 } from './shared';
@@ -95,7 +94,6 @@ export async function generate(platformId: string = 'wechat'): Promise<GenerateR
 
   const start = Date.now();
   const platformOutputDir = path.resolve(PACKAGES_DIR, platformId);
-  const platformTemplateDir = path.join(TEMPLATE_DIR, platform.templateDir);
 
   console.log(`\n🏗️  生成平台: ${platform.label} (${platformId})`);
   console.log(`📁 平台输出目录: ${platformOutputDir}`);
@@ -119,8 +117,8 @@ export async function generate(platformId: string = 'wechat'): Promise<GenerateR
     brandsIcons[result.brand] = result.icons;
   }
 
-  // -------- 生成图标组件（Icon）（包含 icons.js） --------
-  const templates = loadPlatformTemplates(platformTemplateDir, platform);
+  // -------- 动态生成模板并输出图标组件（Icon）（包含 icons.js） --------
+  const templates = generatePlatformTemplates(platform);
   await generateIconComponent(platformOutputDir, platform, brandsIcons, templates);
 
   const duration = (Date.now() - start) / 1000;

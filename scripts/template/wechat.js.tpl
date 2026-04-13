@@ -34,7 +34,7 @@ Component({
 
       this.setData({
         rootStyle: `width: ${s}; height: ${s}`,
-        svgDataUri: svg ? `data:image/svg+xml;charset=utf-8,${svg.replace(/"/g, "'").replace(/<|>|#/g, (m) => encodeURIComponent(m))}` : '',
+        svgDataUri: svg ? `data:image/svg+xml;charset=utf-8,${svg{{EXTRA_REPLACE}}.replace(/<|>|#/g, (m) => encodeURIComponent(m))}` : '',
       });
     },
 

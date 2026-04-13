@@ -1,30 +1,40 @@
 const iconsMap = require("./icons");
 
 Component({
-  properties: {
-    name: { type: String, value: '' },
-    brand: { type: String, value: 'tdesign' },
-    size: { type: null, value: 24 },
-    strokeWidth: { type: String, value: 2 },
-    strokeColor: { type: null },
-    fillColor: { type: null },
+  props: {
+    name: '',
+    brand: 'tdesign',
+    size: 24,
+    strokeWidth: '2',
+    strokeColor: null,
+    fillColor: null,
   },
 
-  observers: {
-    'name, brand, size, strokeWidth, strokeColor, fillColor'() {
-      this.updateIcon();
-    },
+  data: {
+    rootStyle: '',
+    svgDataUri: '',
   },
 
-  lifetimes: {
-    attached() {
+  didMount() {
+    this.updateIcon();
+  },
+
+  didUpdate(prevProps) {
+    if (
+      prevProps.name !== this.props.name ||
+      prevProps.brand !== this.props.brand ||
+      prevProps.size !== this.props.size ||
+      prevProps.strokeWidth !== this.props.strokeWidth ||
+      prevProps.strokeColor !== this.props.strokeColor ||
+      prevProps.fillColor !== this.props.fillColor
+    ) {
       this.updateIcon();
-    },
+    }
   },
 
   methods: {
     updateIcon() {
-      const { name, brand, size, strokeWidth, strokeColor, fillColor } = this.data;
+      const { name, brand, size, strokeWidth, strokeColor, fillColor } = this.props;
       const iconsData = iconsMap[brand] || {};
       const svgContent = iconsData[name] || '';
       const s = typeof size === 'number' ? `${size}px` : size;
@@ -34,7 +44,7 @@ Component({
 
       this.setData({
         rootStyle: `width: ${s}; height: ${s}`,
-        svgDataUri: svg ? `data:image/svg+xml;charset=utf-8,${svg.replace(/"/g, "'").replace(/<|>|#/g, (m) => encodeURIComponent(m))}` : '',
+        svgDataUri: svg ? `data:image/svg+xml;charset=utf-8,${svg{{EXTRA_REPLACE}}.replace(/<|>|#/g, (m) => encodeURIComponent(m))}` : '',
       });
     },
 

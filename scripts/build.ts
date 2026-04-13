@@ -4,7 +4,6 @@ import path from 'path';
 import {
   ROOT_DIR,
   DIST_DIR,
-  TEMPLATE_DIR,
   PlatformConfig,
   BrandInfo,
   IconEntry,
@@ -14,7 +13,7 @@ import {
   parseArgs,
   getPlatformConfig,
   loadAndFilterIcons,
-  loadPlatformTemplates,
+  generatePlatformTemplates,
   generateIconsJS,
   cleanDistDir,
 } from './shared';
@@ -140,7 +139,6 @@ export async function build(platformId: string = 'wechat'): Promise<BuildResult>
 
   const start = Date.now();
   const platformDistDir = path.resolve(DIST_DIR, platformId);
-  const platformTemplateDir = path.join(TEMPLATE_DIR, platform.templateDir);
 
   console.log(`\n📦 编译打包平台: ${platform.label} (${platformId})`);
   console.log(`📁 输出目录: ${platformDistDir}`);
@@ -152,8 +150,8 @@ export async function build(platformId: string = 'wechat'): Promise<BuildResult>
   const brands = scanBrands();
   console.log(`🔍 发现 ${brands.length} 个品牌: ${brands.map((b) => b.name).join(', ')}`);
 
-  // -------- 2. 读取模板文件 --------
-  const templates = loadPlatformTemplates(platformTemplateDir, platform);
+  // -------- 2. 动态生成模板 --------
+  const templates = generatePlatformTemplates(platform);
 
   // -------- 3. 为每个品牌加载图标数据 --------
   let totalIconCount = 0;
@@ -170,14 +168,17 @@ export async function build(platformId: string = 'wechat'): Promise<BuildResult>
   // -------- 4. 生成并压缩图标组件（Icon）（包含 icons.js） --------
   await buildIconComponent(platformDistDir, platform, brandsIcons, templates);
 
-  // -------- 5. 复制 package.json 到产物目录 --------
-  const sourcePackageJsonPath = path.resolve(ROOT_DIR, 'packages', platformId, 'package.json');
-  const distPackageJsonPath = path.resolve(platformDistDir, 'package.json');
-  if (fs.existsSync(sourcePackageJsonPath)) {
-    fs.copyFileSync(sourcePackageJsonPath, distPackageJsonPath);
-    console.log(`📄 已复制 package.json 到产物目录`);
-  } else {
-    console.log(`⚠️  未找到 ${sourcePackageJsonPath}，跳过 package.json 复制`);
+  // -------- 5. 复制 package.json 和 README.md 到产物目录 --------
+  const sourcePkgDir = path.resolve(ROOT_DIR, 'packages', platformId);
+  for (const file of ['package.json', 'README.md']) {
+    const src = path.resolve(sourcePkgDir, file);
+    const dest = path.resolve(platformDistDir, file);
+    if (fs.existsSync(src)) {
+      fs.copyFileSync(src, dest);
+      console.log(`📄 已复制 ${file} 到产物目录`);
+    } else {
+      console.log(`⚠️  未找到 ${src}，跳过 ${file} 复制`);
+    }
   }
 
   const duration = (Date.now() - start) / 1000;

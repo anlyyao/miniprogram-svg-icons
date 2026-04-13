@@ -30,9 +30,29 @@ pnpm add @mp-svg-icons/alipay
 
 ## 使用方式
 
+### 前置配置
+
+支付宝小程序默认要求所有代码符合 ES5 语法规范，本包使用了 ES6 语法，因此需要显式配置支付宝小程序，将相关第三方包加入到编译转译列表中。
+
+在 `mini.project.json` 文件中添加或更新以下配置项：
+
+```json
+{
+  "compileOptions": {
+    "transpile": [
+      "@mp-svg-icons/alipay"
+    ]
+  }
+}
+```
+
 ### 图标组件（Icon）
 
-通过 `name` 属性指定图标名称，支持**动态切换图标**：
+通过 `name` 属性指定图标名称，支持**动态切换图标**。
+
+#### 1. 注册组件
+
+在页面或组件的 `.json` 文件中引入：
 
 ```json
 {
@@ -41,6 +61,10 @@ pnpm add @mp-svg-icons/alipay
   }
 }
 ```
+
+#### 2. 使用组件
+
+在 `.axml` 文件中使用：
 
 ```xml
 <t-icon name="add" size="{{48}}" />

@@ -32,7 +32,11 @@ pnpm add @mp-svg-icons/jd
 
 ### 图标组件（Icon）
 
-通过 `name` 属性指定图标名称，支持**动态切换图标**：
+通过 `name` 属性指定图标名称，支持**动态切换图标**。
+
+#### 1. 注册组件
+
+在页面或组件的 `.json` 文件中引入：
 
 ```json
 {
@@ -41,6 +45,10 @@ pnpm add @mp-svg-icons/jd
   }
 }
 ```
+
+#### 2. 使用组件
+
+在 `.jxml` 文件中使用：
 
 ```xml
 <t-icon name="add" size="{{48}}" />

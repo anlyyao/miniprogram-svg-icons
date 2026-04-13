@@ -16,7 +16,7 @@ Component({
   },
 
   didMount() {
-    this._update();
+    this.updateIcon();
   },
 
   didUpdate(prevProps) {
@@ -28,12 +28,12 @@ Component({
       prevProps.strokeColor !== this.props.strokeColor ||
       prevProps.fillColor !== this.props.fillColor
     ) {
-      this._update();
+      this.updateIcon();
     }
   },
 
   methods: {
-    _update() {
+    updateIcon() {
       var name = this.props.name;
       var brand = this.props.brand;
       var size = this.props.size;
@@ -44,9 +44,9 @@ Component({
       var iconsData = iconsMap[brand] || {};
       var svgContent = iconsData[name] || '';
       var s = typeof size === 'number' ? size + 'px' : size;
-      var strokeColors = this._normalizeColor(strokeColor);
-      var fillColors = this._normalizeColor(fillColor);
-      var svg = this._buildSvg(svgContent, strokeWidth, strokeColors, fillColors);
+      var strokeColors = this.normalizeColor(strokeColor);
+      var fillColors = this.normalizeColor(fillColor);
+      var svg = this.buildSvg(svgContent, strokeWidth, strokeColors, fillColors);
 
       this.setData({
         rootStyle: 'width: ' + s + '; height: ' + s,
@@ -54,13 +54,13 @@ Component({
       });
     },
 
-    _normalizeColor(color) {
+    normalizeColor(color) {
       if (!color) return null;
-      if (typeof color === 'string') return this._hex2rgb(color);
-      return color.map(function (c) { return this._hex2rgb(c); }.bind(this));
+      if (typeof color === 'string') return this.hex2rgb(color);
+      return color.map(function (c) { return this.hex2rgb(c); }.bind(this));
     },
 
-    _hex2rgb(hex) {
+    hex2rgb(hex) {
       if (hex.indexOf('#') !== 0) return hex;
       hex = hex.slice(1);
       if (hex.length === 3) hex = hex.replace(/(.)/g, '$1$1');
@@ -72,7 +72,7 @@ Component({
       return 'rgb(' + rgb.join(',') + ')';
     },
 
-    _buildSvg(svgContent, strokeWidth, strokeColors, fillColors) {
+    buildSvg(svgContent, strokeWidth, strokeColors, fillColors) {
       if (!svgContent) return '';
       var fill = [].concat(fillColors || []);
       var stroke = [].concat(strokeColors || []);

@@ -12,25 +12,25 @@ Component({
 
   observers: {
     'name, brand, size, strokeWidth, strokeColor, fillColor'() {
-      this._update();
+      this.updateIcon();
     },
   },
 
   lifetimes: {
     attached() {
-      this._update();
+      this.updateIcon();
     },
   },
 
   methods: {
-    _update() {
+    updateIcon() {
       const { name, brand, size, strokeWidth, strokeColor, fillColor } = this.data;
       const iconsData = iconsMap[brand] || {};
       const svgContent = iconsData[name] || '';
       const s = typeof size === 'number' ? `${size}px` : size;
-      const strokeColors = this._normalizeColor(strokeColor);
-      const fillColors = this._normalizeColor(fillColor);
-      const svg = this._buildSvg(svgContent, strokeWidth, strokeColors, fillColors);
+      const strokeColors = this.normalizeColor(strokeColor);
+      const fillColors = this.normalizeColor(fillColor);
+      const svg = this.buildSvg(svgContent, strokeWidth, strokeColors, fillColors);
 
       this.setData({
         rootStyle: `width: ${s}; height: ${s}`,
@@ -38,13 +38,13 @@ Component({
       });
     },
 
-    _normalizeColor(color) {
+    normalizeColor(color) {
       if (!color) return null;
-      if (typeof color === 'string') return this._hex2rgb(color);
-      return color.map((c) => this._hex2rgb(c));
+      if (typeof color === 'string') return this.hex2rgb(color);
+      return color.map((c) => this.hex2rgb(c));
     },
 
-    _hex2rgb(hex) {
+    hex2rgb(hex) {
       if (hex[0] !== '#') return hex;
       hex = hex.slice(1);
       if (hex.length === 3) hex = hex.replace(/(.)/g, '$1$1');
@@ -52,7 +52,7 @@ Component({
       return `rgb(${r},${g},${b})`;
     },
 
-    _buildSvg(svgContent, strokeWidth, strokeColors, fillColors) {
+    buildSvg(svgContent, strokeWidth, strokeColors, fillColors) {
       if (!svgContent) return '';
       const fill = [].concat(fillColors || []);
       const stroke = [].concat(strokeColors || []);

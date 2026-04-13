@@ -9,9 +9,12 @@ export const ROOT_DIR = path.resolve(SCRIPTS_DIR, '..');
 export const PACKAGES_DIR = path.resolve(ROOT_DIR, 'packages');
 export const DIST_DIR = path.resolve(ROOT_DIR, 'dist');
 export const RESOURCES_DIR = path.resolve(ROOT_DIR, 'resources');
-export const TEMPLATE_DIR = path.resolve(SCRIPTS_DIR, './template');
+const TEMPLATE_DIR = path.resolve(SCRIPTS_DIR, 'template');
 
 // ======================== 平台配置 ========================
+
+/** 组件 API 风格 */
+export type ComponentAPIStyle = 'wechat' | 'alipay';
 
 export interface PlatformConfig {
   /** 平台标识 */
@@ -22,8 +25,10 @@ export interface PlatformConfig {
   templateExt: string;
   /** 模板文件后缀：样式 */
   styleExt: string;
-  /** 模板目录名（对应 template/{platform}/） */
-  templateDir: string;
+  /** 组件 API 风格：wechat（properties/observers）或 alipay（props/didMount/didUpdate） */
+  componentStyle: ComponentAPIStyle;
+  /** svgDataUri 编码时是否需要额外的 .replace(/"/g, "'") */
+  escapeQuotes: boolean;
 }
 
 export const PLATFORMS: Record<string, PlatformConfig> = {
@@ -32,49 +37,56 @@ export const PLATFORMS: Record<string, PlatformConfig> = {
     label: '微信小程序',
     templateExt: '.wxml',
     styleExt: '.wxss',
-    templateDir: 'wechat',
+    componentStyle: 'wechat',
+    escapeQuotes: false,
   },
   alipay: {
     id: 'alipay',
     label: '支付宝小程序',
     templateExt: '.axml',
     styleExt: '.acss',
-    templateDir: 'alipay',
+    componentStyle: 'alipay',
+    escapeQuotes: false,
   },
   kuaishou: {
     id: 'kuaishou',
     label: '快手小程序',
     templateExt: '.ksml',
     styleExt: '.css',
-    templateDir: 'kuaishou',
+    componentStyle: 'wechat',
+    escapeQuotes: false,
   },
   xiaohongshu: {
     id: 'xiaohongshu',
     label: '小红书小程序',
     templateExt: '.xhsml',
     styleExt: '.css',
-    templateDir: 'xiaohongshu',
+    componentStyle: 'wechat',
+    escapeQuotes: false,
   },
   douyin: {
     id: 'douyin',
     label: '抖音小程序',
     templateExt: '.ttml',
     styleExt: '.ttss',
-    templateDir: 'douyin',
+    componentStyle: 'wechat',
+    escapeQuotes: true,
   },
   baidu: {
     id: 'baidu',
     label: '百度小程序',
     templateExt: '.swan',
     styleExt: '.css',
-    templateDir: 'baidu',
+    componentStyle: 'wechat',
+    escapeQuotes: true,
   },
   jd: {
     id: 'jd',
     label: '京东小程序',
     templateExt: '.jxml',
     styleExt: '.jxss',
-    templateDir: 'jd',
+    componentStyle: 'wechat',
+    escapeQuotes: false,
   },
 };
 
@@ -217,7 +229,7 @@ export function loadAndFilterIcons(brand: BrandInfo): IconEntry[] {
   return icons;
 }
 
-// ======================== 模板文件读取 ========================
+// ======================== 模板动态生成 ========================
 
 export interface PlatformTemplates {
   iconJsonTemplate: string;
@@ -225,47 +237,21 @@ export interface PlatformTemplates {
   iconJSSource: string;
 }
 
-/** 安全读取模板文件 */
-function readTemplateFile(dir: string, filename: string): string {
-  const filePath = path.join(dir, filename);
-  if (!fs.existsSync(filePath)) {
-    throw new Error(`模板文件不存在: ${filePath}`);
-  }
-  return fs.readFileSync(filePath, 'utf-8');
+/** 读取模板文件 */
+function readTemplate(filename: string): string {
+  return fs.readFileSync(path.join(TEMPLATE_DIR, filename), 'utf-8');
 }
 
-/** 查找并读取模板文件（支持动态扩展名） */
-function findAndReadTemplate(dir: string, ext: string): string {
-  const files = fs.readdirSync(dir);
-  const templateFile = files.find((f) => f.startsWith('index') && f.endsWith(ext));
+/** 根据平台配置生成所有模板内容 */
+export function generatePlatformTemplates(platform: PlatformConfig): PlatformTemplates {
+  const jsTplFile = platform.componentStyle === 'alipay' ? 'alipay.js.tpl' : 'wechat.js.tpl';
+  const extraReplace = platform.escapeQuotes ? `.replace(/"/g, "'")` : '';
 
-  if (!templateFile) {
-    throw new Error(`未找到模板文件: ${dir}/index${ext}`);
-  }
-
-  return fs.readFileSync(path.join(dir, templateFile), 'utf-8');
-}
-
-/** 读取平台模板文件 */
-export function loadPlatformTemplates(platformTemplateDir: string, platform: PlatformConfig): PlatformTemplates {
-  try {
-    const iconTemplateContent = findAndReadTemplate(
-      path.join(platformTemplateDir, 'icon'),
-      platform.templateExt
-    );
-    const iconJsonTemplate = readTemplateFile(platformTemplateDir, 'icon/index.json');
-    const iconJSSource = readTemplateFile(platformTemplateDir, 'icon/index.js');
-
-    return {
-      iconJsonTemplate,
-      iconTemplateContent,
-      iconJSSource,
-    };
-  } catch (err) {
-    throw new Error(
-      `加载平台模板失败 [${platform.label}]: ${err instanceof Error ? err.message : String(err)}`
-    );
-  }
+  return {
+    iconJsonTemplate: readTemplate('icon.json.tpl'),
+    iconTemplateContent: readTemplate('icon.tpl'),
+    iconJSSource: readTemplate(jsTplFile).replace(/\{\{EXTRA_REPLACE\}\}/g, extraReplace),
+  };
 }
 
 // ======================== 多品牌图标数据 ========================
@@ -291,8 +277,11 @@ export function generateIconsJS(brandsIcons: BrandIconsMap): string {
 
 // ======================== 目录清理 ========================
 
+/** 清理时需要保留的文件 */
+const PRESERVE_FILES = new Set(['package.json', 'README.md']);
+
 /**
- * 清理输出目录（保留 package.json）
+ * 清理输出目录（保留 package.json、README.md）
  */
 export async function cleanOutputDir(outputDir: string): Promise<void> {
   if (!fs.existsSync(outputDir)) {
@@ -304,7 +293,7 @@ export async function cleanOutputDir(outputDir: string): Promise<void> {
   const removePromises: Promise<void>[] = [];
 
   for (const item of items) {
-    if (item === 'package.json') continue;
+    if (PRESERVE_FILES.has(item)) continue;
     removePromises.push(
       fs.remove(path.join(outputDir, item)).catch((err) => {
         console.warn(`  ⚠️  清理失败: ${item}: ${err instanceof Error ? err.message : String(err)}`);

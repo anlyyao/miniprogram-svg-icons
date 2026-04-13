@@ -21,8 +21,9 @@
     "build:baidu": "tsx scripts/build.ts baidu",
     "build:jd": "tsx scripts/build.ts jd",
     "build:utils": "cd packages/utils && npm run build",
-    "build": "run-s build:*", 
-    "release": "tsx scripts/release.ts"
+    "build": "run-s build:*",
+    "release": "tsx scripts/release.ts",
+    "prepare": "husky"
   },
   "repository": {
     "type": "git",
@@ -49,14 +50,31 @@
   },
   "homepage": "https://github.com/anlyyao/miniprogram-svg-icons#readme",
   "devDependencies": {
+    "@commitlint/cli": "^19.0.0",
+    "@commitlint/config-conventional": "^19.0.0",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^20.11.0",
     "@types/xmldom": "^0.1.34",
+    "commitizen": "^4.3.0",
+    "cz-conventional-changelog": "^3.3.0",
     "fs-extra": "^11.3.0",
+    "husky": "^9.0.0",
+    "lint-staged": "^15.0.0",
     "npm-run-all2": "^6.2.0",
+    "prettier": "^3.0.0",
     "terser": "^5.46.1",
     "tsx": "^4.7.0",
     "typescript": "^5.3.0",
     "xmldom": "^0.6.0"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "lint-staged": {
+    "*.{ts,js,json,md}": [
+      "prettier --write"
+    ]
   }
 }

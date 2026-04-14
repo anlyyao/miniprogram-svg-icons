@@ -10,13 +10,13 @@ export const JSON_EXTENSIONS = new Set(['.json']);
 
 /** 模板文件扩展名（各小程序平台） */
 export const TEMPLATE_EXTENSIONS = new Set([
-  '.wxml',   // 微信
-  '.axml',   // 支付宝
-  '.swan',   // 百度
-  '.ttml',   // 抖音
-  '.ksml',   // 快手
-  '.xhsml',  // 小红书
-  '.jxml',   // 京东
+  '.wxml', // 微信
+  '.axml', // 支付宝
+  '.swan', // 百度
+  '.ttml', // 抖音
+  '.ksml', // 快手
+  '.xhsml', // 小红书
+  '.jxml', // 京东
 ]);
 
 /** 源文件匹配的扩展名（由 TEMPLATE_EXTENSIONS + JSON_EXTENSIONS 动态组合） */

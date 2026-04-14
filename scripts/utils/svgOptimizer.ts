@@ -1,4 +1,4 @@
-import { optimize, Config } from "svgo";
+import { optimize, Config } from 'svgo';
 
 /**
  * SVGO 配置
@@ -13,35 +13,35 @@ const svgoConfig: Config = {
   multipass: true,
   plugins: [
     // 基础清理
-    "removeDoctype",
-    "removeXMLProcInst",
-    "removeComments",
-    "removeMetadata",
-    "removeEditorsNSData",
-    "removeEmptyAttrs",
-    "removeEmptyContainers",
-    "removeEmptyText",
-    "removeHiddenElems",
-    "removeUselessStrokeAndFill",
-    "removeUnusedNS",
-    "cleanupNumericValues",
-    "sortAttrs",
-    "convertStyleToAttrs",
-    "mergePaths",
-    "convertPathData",
-    "minifyStyles",
-    "removeTitle",
-    "removeDesc",
-    "collapseGroups",
+    'removeDoctype',
+    'removeXMLProcInst',
+    'removeComments',
+    'removeMetadata',
+    'removeEditorsNSData',
+    'removeEmptyAttrs',
+    'removeEmptyContainers',
+    'removeEmptyText',
+    'removeHiddenElems',
+    'removeUselessStrokeAndFill',
+    'removeUnusedNS',
+    'cleanupNumericValues',
+    'sortAttrs',
+    'convertStyleToAttrs',
+    'mergePaths',
+    'convertPathData',
+    'minifyStyles',
+    'removeTitle',
+    'removeDesc',
+    'collapseGroups',
     // 移除 width 和 height 属性
     {
-      name: "removeAttrs",
+      name: 'removeAttrs',
       params: {
-        attrs: ["width", "height"],
+        attrs: ['width', 'height'],
       },
     },
     {
-      name: "removeUnknownsAndDefaults",
+      name: 'removeUnknownsAndDefaults',
       params: {
         keepDataAttrs: true,
         keepAriaAttrs: true,
@@ -49,13 +49,13 @@ const svgoConfig: Config = {
       },
     },
     {
-      name: "convertShapeToPath",
+      name: 'convertShapeToPath',
       params: {
         convertArcs: true,
       },
     },
     {
-      name: "convertColors",
+      name: 'convertColors',
       params: {
         shorthex: true,
         shortname: true,

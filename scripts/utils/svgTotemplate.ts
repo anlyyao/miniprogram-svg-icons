@@ -1,5 +1,5 @@
-import { DOMParser } from "xmldom";
-import { specifiedIcons } from "./const";
+import { DOMParser } from 'xmldom';
+import { specifiedIcons } from './const';
 
 export interface SvgAttrs {
   [key: string]: string;
@@ -10,7 +10,7 @@ export interface SvgNode {
   children: Record<string, SvgNode[]>;
 }
 
-const CONTEXT_IDS = ["fill1", "fill2", "stroke1", "stroke2"] as const;
+const CONTEXT_IDS = ['fill1', 'fill2', 'stroke1', 'stroke2'] as const;
 const CONTEXT_ID_SET = new Set<string>(CONTEXT_IDS);
 
 const SPECIFIED_ICONS_SET = new Set(specifiedIcons);
@@ -41,9 +41,7 @@ function convertXmlNodeToObject(node: Element): SvgNode {
 }
 
 function getFillFallback(fill: string): string {
-  return fill === "black" || fill === "#000" || fill === "#000000"
-    ? "currentColor"
-    : "transparent";
+  return fill === 'black' || fill === '#000' || fill === '#000000' ? 'currentColor' : 'transparent';
 }
 
 function resolveFillVar(index: string, fallback: string): string {
@@ -54,14 +52,10 @@ function resolveStrokeVar(index: string): string {
   return `{strokeColor${index} || 'currentColor'}`;
 }
 
-function normalizeColor(
-  attrs: SvgAttrs,
-  isSpecified: boolean,
-  parentId?: string,
-): void {
+function normalizeColor(attrs: SvgAttrs, isSpecified: boolean, parentId?: string): void {
   const id = attrs.id;
 
-  if (attrs.fill && attrs.fill !== "none") {
+  if (attrs.fill && attrs.fill !== 'none') {
     const fallback = getFillFallback(attrs.fill);
 
     // 对齐桌面端逻辑：specifiedIcons 先将 fill 绑定到 strokeColor1
@@ -70,26 +64,26 @@ function normalizeColor(
     }
 
     // 有明确 id 时，覆盖为对应的 fillColor
-    if (id === "fill1" || id === "fill2") {
+    if (id === 'fill1' || id === 'fill2') {
       attrs.fill = resolveFillVar(id.slice(-1), fallback);
     } else if (!id) {
-      if (parentId === "fill1" || parentId === "fill2") {
+      if (parentId === 'fill1' || parentId === 'fill2') {
         attrs.fill = resolveFillVar(parentId.slice(-1), fallback);
       } else if (!isSpecified) {
         // 非 specifiedIcons 且无 id 时，默认绑定到 fillColor1
-        attrs.fill = resolveFillVar("1", fallback);
+        attrs.fill = resolveFillVar('1', fallback);
       }
       // isSpecified 且无 id 且无 fill 系 parentId 时，保留上面设置的 strokeColor1
     }
   }
 
-  if (attrs.stroke && attrs.stroke !== "none") {
-    attrs["stroke-width"] = "{strokeWidth}";
+  if (attrs.stroke && attrs.stroke !== 'none') {
+    attrs['stroke-width'] = '{strokeWidth}';
 
-    if (id === "stroke1" || id === "stroke2") {
+    if (id === 'stroke1' || id === 'stroke2') {
       attrs.stroke = resolveStrokeVar(id.slice(-1));
     } else if (!id) {
-      if (parentId === "stroke1" || parentId === "stroke2") {
+      if (parentId === 'stroke1' || parentId === 'stroke2') {
         attrs.stroke = resolveStrokeVar(parentId.slice(-1));
       } else {
         attrs.stroke = `{strokeColor1 || 'currentColor'}`;
@@ -98,33 +92,29 @@ function normalizeColor(
   }
 }
 
-function buildAttrString(
-  node: SvgNode,
-  isSpecified: boolean,
-  parentId?: string,
-): string {
-  if (!node?.$) return "";
+function buildAttrString(node: SvgNode, isSpecified: boolean, parentId?: string): string {
+  if (!node?.$) return '';
 
   const attrs = { ...node.$ };
   normalizeColor(attrs, isSpecified, parentId);
 
   return Object.entries(attrs)
-    .filter(([k]) => k !== "id")
+    .filter(([k]) => k !== 'id')
     .map(([k, v]) => ` ${k}="${v}"`)
-    .join("");
+    .join('');
 }
 
 export function parseSvg(svgContent: string): SvgNode {
-  const xmlDoc = domParser.parseFromString(svgContent, "image/svg+xml");
+  const xmlDoc = domParser.parseFromString(svgContent, 'image/svg+xml');
 
-  const errors = xmlDoc.getElementsByTagName("parsererror");
+  const errors = xmlDoc.getElementsByTagName('parsererror');
   if (errors.length > 0) {
     throw new Error(`Failed to parse SVG: ${errors[0].textContent}`);
   }
 
   const root = xmlDoc.documentElement;
-  if (!root || root.tagName.toLowerCase() !== "svg") {
-    throw new Error("<svg> element not found.");
+  if (!root || root.tagName.toLowerCase() !== 'svg') {
+    throw new Error('<svg> element not found.');
   }
 
   return convertXmlNodeToObject(root);
@@ -135,7 +125,7 @@ function generateChildrenTemplate(
   isSpecified: boolean,
   parentId?: string,
 ): string {
-  let tpl = "";
+  let tpl = '';
 
   for (const [tag, children] of Object.entries(childrenMap)) {
     if (!children) continue;
@@ -158,13 +148,13 @@ function generateChildrenTemplate(
   return tpl;
 }
 
-const OMIT_SVG_ATTRS = new Set(["width", "height"]);
+const OMIT_SVG_ATTRS = new Set(['width', 'height']);
 
 function buildSvgAttrString(data: SvgNode): string {
   return Object.entries(data.$)
     .filter(([k]) => !OMIT_SVG_ATTRS.has(k))
     .map(([k, v]) => ` ${k}="${v}"`)
-    .join("");
+    .join('');
 }
 
 export function generateSvg(data: SvgNode, iconName: string): string {

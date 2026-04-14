@@ -114,9 +114,7 @@ interface BrandBuildResult {
 /**
  * 加载单个品牌的图标数据（从 SVG 直接加载）
  */
-async function buildBrand(
-  brand: BrandInfo,
-): Promise<BrandBuildResult> {
+async function buildBrand(brand: BrandInfo): Promise<BrandBuildResult> {
   console.log(`\n  🎨 品牌: ${brand.name}`);
 
   const icons = loadAndFilterIcons(brand);
@@ -185,7 +183,13 @@ export async function build(platformId: string = 'wechat'): Promise<BuildResult>
   console.log(`\n✅ [${platform.label}] 全部品牌打包完成，共 ${totalIconCount} 个图标`);
   console.log(`⏱️  耗时: ${duration.toFixed(1)}s\n`);
 
-  return { duration, platform: platformId, distDir: platformDistDir, brands: brandNames, iconCount: totalIconCount };
+  return {
+    duration,
+    platform: platformId,
+    distDir: platformDistDir,
+    brands: brandNames,
+    iconCount: totalIconCount,
+  };
 }
 
 // ======================== CLI 入口 ========================

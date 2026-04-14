@@ -17,9 +17,7 @@
  */
 
 import type { ClearOptions } from './types';
-import {
-  CLI_BIN_NAME,
-} from './constants';
+import { CLI_BIN_NAME } from './constants';
 import { clear } from './index';
 
 // ======================== CLI 帮助信息 ========================
@@ -95,7 +93,10 @@ function parseCLIArgs(): ClearOptions {
       case '--icons': {
         i++;
         if (i < args.length) {
-          icons = args[i].split(',').map((s) => s.trim()).filter(Boolean);
+          icons = args[i]
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean);
           i++;
         }
         break;

@@ -18,10 +18,7 @@ import { walkDir, isExcluded } from './path-utils';
  * 解析 usingComponents，匹配指向 icon 通用组件的路径，
  * 收集对应的自定义标签名（如 t-icon、my-icon）。
  */
-function extractIconTagNames(
-  content: string,
-  iconPathRegex: RegExp,
-): Set<string> {
+function extractIconTagNames(content: string, iconPathRegex: RegExp): Set<string> {
   const tagNames = new Set<string>();
 
   try {
@@ -98,10 +95,7 @@ function extractIconNamesFromTemplate(
 /**
  * 扫描所有源文件，提取图标使用信息
  */
-export function scanAllFiles(
-  scanDirs: readonly string[],
-  ctx: ScanContext,
-): ScanResult {
+export function scanAllFiles(scanDirs: readonly string[], ctx: ScanContext): ScanResult {
   const { excludeDirs, allIconNameSet, iconPathRegex, brandNameSet, defaultBrand } = ctx;
 
   const iconsByBrand = new Map<string, Set<string>>();
@@ -177,7 +171,11 @@ export function scanAllFiles(
   // 阶段二：从模板文件提取图标使用
   for (const { content } of templateFiles) {
     const foundByBrand = extractIconNamesFromTemplate(
-      content, allIconNameSet, allIconTagNames, brandNameSet, defaultBrand,
+      content,
+      allIconNameSet,
+      allIconTagNames,
+      brandNameSet,
+      defaultBrand,
     );
     for (const [brand, icons] of foundByBrand) {
       if (!iconsByBrand.has(brand)) {

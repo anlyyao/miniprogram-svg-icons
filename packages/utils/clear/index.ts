@@ -216,10 +216,7 @@ function performClear(
 /**
  * 打印裁剪统计和结果汇总
  */
-function printSummary(
-  dryRun: boolean,
-  clearResult: PerformClearResult,
-): void {
+function printSummary(dryRun: boolean, clearResult: PerformClearResult): void {
   const { brandResults, savedBytes } = clearResult;
 
   // 检查是否有裁剪
@@ -299,7 +296,7 @@ export function clear(options: ClearOptions): ClearResult {
   if (brands.length === 0) {
     throw new Error(
       `图标包目录中未找到任何品牌数据: ${pkgDir}\n` +
-      '请确认 --pkg-dir 指向正确的 @mp-svg-icons/xx 图标包目录，且 icon/icons.js 文件存在',
+        '请确认 --pkg-dir 指向正确的 @mp-svg-icons/xx 图标包目录，且 icon/icons.js 文件存在',
     );
   }
   console.log(`🏷️ 发现 ${brands.length} 个品牌: ${brands.map((b) => b.name).join(', ')}`);
@@ -309,10 +306,7 @@ export function clear(options: ClearOptions): ClearResult {
   const { allIconNameSet } = loadResult;
 
   if (allIconNameSet.size === 0) {
-    throw new Error(
-      `图标包目录中未找到任何图标组件: ${pkgDir}\n` +
-      '请确认 --pkg-dir 指向正确的图标包构建产物目录',
-    );
+    throw new Error(`图标包目录中未找到任何图标组件: ${pkgDir}\n` + '请确认 --pkg-dir 指向正确的图标包构建产物目录');
   }
 
   // 2. 构建扫描上下文(预编译路径匹配正则,避免在循环中重复创建)
@@ -340,9 +334,7 @@ export function clear(options: ClearOptions): ClearResult {
   };
 
   // 3. 收集使用中的图标
-  const iconUsedByBrand = collectUsedIcons(
-    scanDirs, icons, ctx, loadResult,
-  );
+  const iconUsedByBrand = collectUsedIcons(scanDirs, icons, ctx, loadResult);
 
   // 提前检查:如果扫描目录下没有找到任何使用中的图标,给出警告但继续执行裁剪
   let hasUsedIcons = false;
@@ -356,7 +348,7 @@ export function clear(options: ClearOptions): ClearResult {
   if (!hasUsedIcons) {
     console.warn(
       '⚠️ 扫描目录中未发现任何正在使用的图标,所有图标将被移除。\n' +
-      '  如果这不符合预期,可通过 --icons 参数手动指定需要保留的图标名。',
+        '  如果这不符合预期,可通过 --icons 参数手动指定需要保留的图标名。',
     );
   }
 

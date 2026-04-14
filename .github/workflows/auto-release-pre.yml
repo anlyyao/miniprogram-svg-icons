@@ -1,0 +1,174 @@
+name: Auto Release Pre
+
+on:
+  pull_request:
+    branches: [develop]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  # ============================================================
+  # PR 创建/更新时，解析 release 分支名称
+  # 获取发布包和版本号，更新对应子包的 package.json version
+  # ============================================================
+  preview:
+    runs-on: ubuntu-latest
+    # 跳过非 release 分支 和 bot 自动推送触发的 synchronize
+    if: >
+      startsWith(github.head_ref, 'release/') &&
+      github.event.sender.login != 'github-actions[bot]'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.ACCESS_TOKEN }}
+
+      - name: Parse release branch info
+        id: parse
+        uses: ./.github/actions/parse-release-branch
+
+      - name: Update package.json versions
+        id: update
+        run: |
+          VERSION="${{ steps.parse.outputs.version }}"
+          FRAMEWORKS="${{ steps.parse.outputs.frameworks }}"
+          UPDATED_PACKAGES=""
+          HAS_CHANGES="false"
+
+          for FRAMEWORK in $FRAMEWORKS; do
+            PKG_PATH="packages/$FRAMEWORK/package.json"
+
+            if [ ! -f "$PKG_PATH" ]; then
+              echo "❌ Package file not found: $PKG_PATH"
+              exit 1
+            fi
+
+            CURRENT_VERSION=$(node -p "require('./$PKG_PATH').version")
+
+            if [ "$CURRENT_VERSION" != "$VERSION" ]; then
+              # 使用 node 更新 version 字段，保持 JSON 格式
+              node -e "
+                const fs = require('fs');
+                const pkg = JSON.parse(fs.readFileSync('$PKG_PATH', 'utf8'));
+                pkg.version = '$VERSION';
+                fs.writeFileSync('$PKG_PATH', JSON.stringify(pkg, null, 2) + '\n');
+              "
+              echo "✅ Updated $PKG_PATH: $CURRENT_VERSION → $VERSION"
+              UPDATED_PACKAGES="$UPDATED_PACKAGES\n- \`@mp-svg-icons/$FRAMEWORK\`: \`$CURRENT_VERSION\` → \`$VERSION\`"
+              HAS_CHANGES="true"
+            else
+              echo "⏭️ $PKG_PATH already at version $VERSION"
+              UPDATED_PACKAGES="$UPDATED_PACKAGES\n- \`@mp-svg-icons/$FRAMEWORK\`: \`$VERSION\` (unchanged)"
+            fi
+          done
+
+          echo "has_changes=$HAS_CHANGES" >> $GITHUB_OUTPUT
+          echo "updated_packages<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$UPDATED_PACKAGES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Commit and push version changes
+        if: steps.update.outputs.has_changes == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+          git add packages/*/package.json
+          git commit -m "chore: update package versions to ${{ steps.parse.outputs.version }}"
+          git push
+
+          echo "✅ Version changes committed and pushed"
+
+      - name: Add PR comment
+        uses: actions/github-script@v7
+        env:
+          RELEASE_NAME: ${{ steps.parse.outputs.name }}
+          RELEASE_VERSION: ${{ steps.parse.outputs.version }}
+          RELEASE_TAG_NAME: ${{ steps.parse.outputs.tag_name }}
+          RELEASE_DIST_TAG: ${{ steps.parse.outputs.dist_tag }}
+          RELEASE_FRAMEWORKS: ${{ steps.parse.outputs.frameworks }}
+          UPDATED_PACKAGES: ${{ steps.update.outputs.updated_packages }}
+        with:
+          script: |
+            const name = process.env.RELEASE_NAME;
+            const version = process.env.RELEASE_VERSION;
+            const tagName = process.env.RELEASE_TAG_NAME;
+            const distTag = process.env.RELEASE_DIST_TAG;
+            const frameworks = process.env.RELEASE_FRAMEWORKS.split(' ');
+            const updatedPackages = process.env.UPDATED_PACKAGES;
+
+            const scope = name === 'miniprogram' ? 'All miniprogram packages' : '@mp-svg-icons/' + name;
+            const pkgList = frameworks.map(function(f) { return '`@mp-svg-icons/' + f + '`'; }).join(', ');
+
+            const body = '## 🚀 Release Pre\n'
+              + '\n'
+              + '| Item | Value |\n'
+              + '| ---- | ----- |\n'
+              + '| 📦 Scope | `' + scope + '` |\n'
+              + '| 📌 Version | `' + version + '` |\n'
+              + '| 🏷️ Git Tag | `' + tagName + '` |\n'
+              + '| 🏷️ npm Tag | `' + distTag + '` |\n'
+              + '| 📋 Packages | ' + pkgList + ' |\n'
+              + '\n'
+              + '### Version Updates\n'
+              + updatedPackages + '\n'
+              + '\n'
+              + '> ⚠️ Merging this PR will trigger the auto-release workflow to publish the packages to npm.';
+
+            // 查找已有的 bot 评论
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(function(c) {
+              return c.user.type === 'Bot' && c.body.includes('Release Pre');
+            });
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body,
+              });
+            }
+
+      - name: Release pre summary
+        run: |
+          NAME="${{ steps.parse.outputs.name }}"
+          VERSION="${{ steps.parse.outputs.version }}"
+          DIST_TAG="${{ steps.parse.outputs.dist_tag }}"
+          TAG_NAME="${{ steps.parse.outputs.tag_name }}"
+          FRAMEWORKS="${{ steps.parse.outputs.frameworks }}"
+
+          echo "## 🚀 Release Pre" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "| ---- | ----- |" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$NAME" = "miniprogram" ]; then
+            echo "| 📦 Scope | All miniprogram packages |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| 📦 Scope | \`@mp-svg-icons/$NAME\` |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "| 📌 Version | \`$VERSION\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🏷️ Git Tag | \`$TAG_NAME\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🏷️ npm Tag | \`$DIST_TAG\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Packages to publish" >> $GITHUB_STEP_SUMMARY
+          for FRAMEWORK in $FRAMEWORKS; do
+            echo "- \`@mp-svg-icons/$FRAMEWORK\`" >> $GITHUB_STEP_SUMMARY
+          done

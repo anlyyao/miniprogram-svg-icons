@@ -1,0 +1,84 @@
+name: 'Parse Release Branch'
+description: '解析 release 分支名称，获取发布包名、版本号、dist-tag 等信息'
+
+outputs:
+  name:
+    description: '包名（如 miniprogram / wechat / utils）'
+    value: ${{ steps.parse.outputs.name }}
+  version:
+    description: '版本号'
+    value: ${{ steps.parse.outputs.version }}
+  frameworks:
+    description: '需要处理的包列表（空格分隔）'
+    value: ${{ steps.parse.outputs.frameworks }}
+  tag_name:
+    description: 'Git tag 名称'
+    value: ${{ steps.parse.outputs.tag_name }}
+  dist_tag:
+    description: 'npm dist-tag（latest / beta / alpha 等）'
+    value: ${{ steps.parse.outputs.dist_tag }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Parse release branch info
+      id: parse
+      shell: bash
+      run: |
+        BRANCH_NAME="${{ github.head_ref }}"
+
+        # 分支名格式: release/@mp-svg-icons/<name>@<version>
+        if [[ "$BRANCH_NAME" =~ ^release/@mp-svg-icons/([^@]+)@(.+)$ ]]; then
+          NAME="${BASH_REMATCH[1]}"
+          VERSION="${BASH_REMATCH[2]}"
+        else
+          echo "❌ Invalid branch name format: $BRANCH_NAME"
+          echo "   Expected: release/@mp-svg-icons/<name>@<version>"
+          exit 1
+        fi
+
+        # 7 个小程序平台
+        MINIPROGRAM_FRAMEWORKS="wechat alipay kuaishou douyin baidu jd xiaohongshu"
+        # 所有支持的包名
+        ALL_FRAMEWORKS="$MINIPROGRAM_FRAMEWORKS utils"
+
+        # 判断发布范围
+        if [ "$NAME" = "miniprogram" ]; then
+          FRAMEWORKS="$MINIPROGRAM_FRAMEWORKS"
+          TAG_NAME="miniprogram@$VERSION"
+          echo "📦 Release scope: All miniprogram packages"
+        elif [[ " $ALL_FRAMEWORKS " =~ " $NAME " ]]; then
+          FRAMEWORKS="$NAME"
+          TAG_NAME="@mp-svg-icons/$NAME@$VERSION"
+          echo "📦 Release scope: $NAME only"
+        else
+          echo "❌ Invalid package name: $NAME"
+          echo "   Supported: miniprogram (all), $ALL_FRAMEWORKS"
+          exit 1
+        fi
+
+        # 根据版本号判断 npm dist-tag
+        if [[ "$VERSION" == *"-beta"* ]]; then
+          DIST_TAG="beta"
+        elif [[ "$VERSION" == *"-alpha"* ]]; then
+          DIST_TAG="alpha"
+        elif [[ "$VERSION" == *"-rc"* ]]; then
+          DIST_TAG="rc"
+        elif [[ "$VERSION" == *"-next"* ]]; then
+          DIST_TAG="next"
+        elif [[ "$VERSION" == *"-"* ]]; then
+          DIST_TAG="next"
+        else
+          DIST_TAG="latest"
+        fi
+
+        echo "name=$NAME" >> $GITHUB_OUTPUT
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "frameworks=$FRAMEWORKS" >> $GITHUB_OUTPUT
+        echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+        echo "dist_tag=$DIST_TAG" >> $GITHUB_OUTPUT
+
+        echo "📌 Version: $VERSION"
+        echo "🏷️ Tag: $TAG_NAME"
+        echo "🏷️ npm Tag: $DIST_TAG"
+        echo "📋 Packages: $FRAMEWORKS"

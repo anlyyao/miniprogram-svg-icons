@@ -31,13 +31,13 @@ function processSvgContent(svgContent: string, iconName: string): string {
 
   // 获取 viewBox
   const viewBox = svgElement.getAttribute('viewBox') || '0 0 24 24';
-  
+
   // 递归处理所有元素（对齐 tdesign-icons 的 traverseNodes 逻辑）
   const processElement = (element: Element, inheritedId?: string) => {
     if (!element || element.nodeType !== 1) return;
-    
+
     const tagName = element.tagName?.toLowerCase?.() || '';
-    
+
     // 如果是 <g> 节点且有 id，将 id 传递给子元素
     if (tagName === 'g' && element.getAttribute('id')) {
       const gId = element.getAttribute('id')!;
@@ -50,18 +50,18 @@ function processSvgContent(svgContent: string, iconName: string): string {
       }
       return;
     }
-    
+
     // 获取元素的 id（优先使用自身 id，否则使用继承的 id）
     const nodeId = element.getAttribute('id') || inheritedId || '';
-    
+
     // 使用与 tdesign-icons 相同的正则表达式：匹配以 stroke + 数字结尾
     if (/^.*?(stroke\d+)$/.test(nodeId)) {
       // 处理描边路径
       const strokeId = nodeId.replace(/^.*?(stroke\d+)$/, '$1');
       const strokeIndex = strokeId.replace('stroke', '');
-      
+
       element.setAttribute('id', strokeId);
-      
+
       if (element.hasAttribute('stroke')) {
         element.setAttribute('stroke', `var(--svg-stroke-color-${strokeIndex}, currentColor)`);
         if (element.hasAttribute('stroke-width')) {
@@ -77,9 +77,9 @@ function processSvgContent(svgContent: string, iconName: string): string {
       // 处理填充路径
       const fillId = nodeId.replace(/^.*?(fill\d+)$/, '$1');
       const fillIndex = fillId.replace('fill', '');
-      
+
       element.setAttribute('id', fillId);
-      
+
       if (element.hasAttribute('fill') && element.getAttribute('fill') !== 'none') {
         // fill 元素使用 fillColor（不是 strokeColor）
         element.setAttribute('fill', `var(--svg-fill-color-${fillIndex}, transparent)`);
@@ -91,12 +91,12 @@ function processSvgContent(svgContent: string, iconName: string): string {
       if (element.hasAttribute('stroke') && element.getAttribute('stroke') !== 'none') {
         element.setAttribute('stroke', 'var(--svg-stroke-color-1, currentColor)');
       }
-      
+
       // 处理 stroke-width 属性
       if (element.hasAttribute('stroke-width')) {
         element.setAttribute('stroke-width', 'var(--svg-stroke-width, 2)');
       }
-      
+
       // 处理 fill 属性
       if (element.hasAttribute('fill') && element.getAttribute('fill') !== 'none') {
         const currentFill = element.getAttribute('fill');
@@ -109,7 +109,7 @@ function processSvgContent(svgContent: string, iconName: string): string {
         }
       }
     }
-    
+
     // 递归处理子元素（非 g 元素）
     if (tagName !== 'g') {
       const children = element.childNodes;
@@ -121,7 +121,7 @@ function processSvgContent(svgContent: string, iconName: string): string {
       }
     }
   };
-  
+
   // 处理 SVG 内部的所有元素
   const children = svgElement.childNodes;
   for (let i = 0; i < children.length; i++) {
@@ -130,14 +130,14 @@ function processSvgContent(svgContent: string, iconName: string): string {
       processElement(child as Element);
     }
   }
-  
+
   // 序列化回字符串
   const serializer = new XMLSerializer();
   let innerContent = '';
   for (let i = 0; i < svgElement.childNodes.length; i++) {
     innerContent += serializer.serializeToString(svgElement.childNodes[i]);
   }
-  
+
   // 描边图标添加 fill="none"，防止默认填充（对齐 tdesign-icons）
   return `<symbol id="icon-${iconName}" viewBox="${viewBox}" fill="none">${innerContent}</symbol>`;
 }
@@ -152,16 +152,16 @@ function processFilledSvgContent(svgContent: string, iconName: string): string {
 
   // 获取 viewBox
   const viewBox = svgElement.getAttribute('viewBox') || '0 0 24 24';
-  
+
   // 递归处理所有元素
   const processElement = (element: Element) => {
     if (!element || element.nodeType !== 1) return;
-    
+
     // 处理 fill 属性
     if (element.hasAttribute('fill') && element.getAttribute('fill') !== 'none') {
       element.setAttribute('fill', 'var(--svg-fill-color-1, currentColor)');
     }
-    
+
     // 递归处理子元素
     const children = element.childNodes;
     for (let i = 0; i < children.length; i++) {
@@ -171,7 +171,7 @@ function processFilledSvgContent(svgContent: string, iconName: string): string {
       }
     }
   };
-  
+
   // 处理 SVG 内部的所有元素
   const children = svgElement.childNodes;
   for (let i = 0; i < children.length; i++) {
@@ -180,14 +180,14 @@ function processFilledSvgContent(svgContent: string, iconName: string): string {
       processElement(child as Element);
     }
   }
-  
+
   // 序列化回字符串
   const serializer = new XMLSerializer();
   let innerContent = '';
   for (let i = 0; i < svgElement.childNodes.length; i++) {
     innerContent += serializer.serializeToString(svgElement.childNodes[i]);
   }
-  
+
   return `<symbol id="icon-${iconName}" viewBox="${viewBox}">${innerContent}</symbol>`;
 }
 
@@ -198,11 +198,10 @@ function generateIcons() {
   }
 
   // 获取所有品牌目录
-  const brandDirs = fs.readdirSync(resourcesDir)
-    .filter(name => {
-      const fullPath = path.join(resourcesDir, name);
-      return fs.statSync(fullPath).isDirectory();
-    });
+  const brandDirs = fs.readdirSync(resourcesDir).filter((name) => {
+    const fullPath = path.join(resourcesDir, name);
+    return fs.statSync(fullPath).isDirectory();
+  });
 
   const outlineManifest: BrandManifest[] = [];
   const filledManifest: BrandManifest[] = [];
@@ -215,8 +214,7 @@ function generateIcons() {
   // 处理每个品牌目录
   for (const brand of brandDirs) {
     const brandDir = path.join(resourcesDir, brand);
-    const svgFiles = fs.readdirSync(brandDir)
-      .filter(name => name.endsWith('.svg'));
+    const svgFiles = fs.readdirSync(brandDir).filter((name) => name.endsWith('.svg'));
 
     const outlineIcons: string[] = [];
     const filledIcons: string[] = [];

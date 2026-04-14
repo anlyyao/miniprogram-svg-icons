@@ -1,6 +1,7 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { parseSvg, generateSvg } from './utils/svgTotemplate';
+import { optimizeSvg } from './utils/svgOptimizer';
 
 // ======================== 路径常量 ========================
 
@@ -175,6 +176,7 @@ export interface IconEntry {
 
 /**
  * 从 SVG 目录加载并解析所有图标
+ * 流程：读取 SVG -> SVGO 预压缩 -> 解析并生成模板
  */
 export function loadIcons(svgDir: string): IconEntry[] {
   if (!fs.existsSync(svgDir)) {
@@ -187,9 +189,14 @@ export function loadIcons(svgDir: string): IconEntry[] {
   for (const file of svgFiles) {
     try {
       const filePath = path.join(svgDir, file);
+      const originalContent = fs.readFileSync(filePath, 'utf-8');
+
+      // 使用 SVGO 进行预压缩
+      const optimizedContent = optimizeSvg(originalContent, file);
+
       rawEntries.push({
         name: path.basename(file, '.svg'),
-        content: fs.readFileSync(filePath, 'utf-8'),
+        content: optimizedContent,
         file,
       });
     } catch (err) {
@@ -200,7 +207,10 @@ export function loadIcons(svgDir: string): IconEntry[] {
   const icons: IconEntry[] = [];
   for (const entry of rawEntries) {
     try {
-      icons.push({ name: entry.name, svg: generateSvg(parseSvg(entry.content), entry.name) });
+      icons.push({
+        name: entry.name,
+        svg: generateSvg(parseSvg(entry.content), entry.name),
+      });
     } catch (err) {
       console.error(`  ⚠️  解析失败: ${entry.file}`, err instanceof Error ? err.message : String(err));
     }

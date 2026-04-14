@@ -45,11 +45,11 @@ function getFillFallback(fill: string): string {
 }
 
 function resolveFillVar(index: string, fallback: string): string {
-  return `{{fillColor${index} || '${fallback}'}}`;
+  return `{f${index} || '${fallback}'}`;
 }
 
 function resolveStrokeVar(index: string): string {
-  return `{{strokeColor${index} || 'currentColor'}}`;
+  return `{s${index} || 'currentColor'}`;
 }
 
 function normalizeColor(attrs: SvgAttrs, isSpecified: boolean, parentId?: string): void {
@@ -60,7 +60,7 @@ function normalizeColor(attrs: SvgAttrs, isSpecified: boolean, parentId?: string
 
     // 对齐桌面端逻辑：specifiedIcons 先将 fill 绑定到 strokeColor1
     if (isSpecified) {
-      attrs.fill = `{{strokeColor1 || '${fallback}'}}`;
+      attrs.fill = `{s1 || '${fallback}'}`;
     }
 
     // 有明确 id 时，覆盖为对应的 fillColor
@@ -78,15 +78,15 @@ function normalizeColor(attrs: SvgAttrs, isSpecified: boolean, parentId?: string
   }
 
   if (attrs.stroke && attrs.stroke !== 'none') {
-    attrs['stroke-width'] = '{{strokeWidth}}';
+    attrs['stroke-width'] = '{sw}';
 
     if (id === 'stroke1' || id === 'stroke2') {
       attrs.stroke = resolveStrokeVar(id.slice(-1));
     } else if (!id) {
-      if (parentId === 'stroke1' || parentId === 'stroke2') {
+      if (parentId === 's1' || parentId === 'stroke2') {
         attrs.stroke = resolveStrokeVar(parentId.slice(-1));
       } else {
-        attrs.stroke = `{{strokeColor1 || 'currentColor'}}`;
+        attrs.stroke = `{s1 || 'currentColor'}`;
       }
     }
   }
@@ -132,9 +132,7 @@ function generateChildrenTemplate(
 
     for (const node of children) {
       const currentId = node.$.id;
-      const contextId = CONTEXT_ID_SET.has(currentId)
-        ? currentId
-        : parentId;
+      const contextId = CONTEXT_ID_SET.has(currentId) ? currentId : parentId;
 
       const hasChildren = Object.keys(node.children).length > 0;
       const attrs = buildAttrString(node, isSpecified, parentId);
@@ -150,11 +148,8 @@ function generateChildrenTemplate(
   return tpl;
 }
 
-const OMIT_SVG_ATTRS = new Set(['width', 'height']);
-
 function buildSvgAttrString(data: SvgNode): string {
   return Object.entries(data.$)
-    .filter(([k]) => !OMIT_SVG_ATTRS.has(k))
     .map(([k, v]) => ` ${k}="${v}"`)
     .join('');
 }

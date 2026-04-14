@@ -86,7 +86,11 @@ export function loadIconsData(iconsFilePath: string): IconsData | null {
     return null;
   }
 
-  return { data, filePath: iconsFilePath, originalSize: Buffer.byteLength(content, 'utf-8') };
+  return {
+    data,
+    filePath: iconsFilePath,
+    originalSize: Buffer.byteLength(content, 'utf-8'),
+  };
 }
 
 /**

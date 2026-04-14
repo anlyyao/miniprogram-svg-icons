@@ -26,7 +26,6 @@ export interface GenerateResult {
   brands: string[];
 }
 
-
 /** 生成图标组件（Icon）（在平台根目录，所有品牌共用） */
 async function generateIconComponent(
   platformOutputDir: string,
@@ -55,7 +54,6 @@ async function generateIconComponent(
   console.log(`  📦 图标组件（Icon）已生成（包含 icons.js）`);
 }
 
-
 // ======================== 单品牌生成 ========================
 
 interface BrandGenerateResult {
@@ -67,10 +65,7 @@ interface BrandGenerateResult {
 /**
  * 加载单个品牌的图标数据
  */
-async function loadBrandIcons(
-  brand: BrandInfo,
-  platformOutputDir: string,
-): Promise<BrandGenerateResult> {
+async function loadBrandIcons(brand: BrandInfo, platformOutputDir: string): Promise<BrandGenerateResult> {
   console.log(`\n  🎨 品牌: ${brand.name}`);
 
   const icons = loadAndFilterIcons(brand);
@@ -125,7 +120,13 @@ export async function generate(platformId: string = 'wechat'): Promise<GenerateR
   console.log(`\n✅ [${platform.label}] 全部品牌生成完成，共 ${totalIconCount} 个图标`);
   console.log(`⏱️  耗时: ${duration.toFixed(1)}s\n`);
 
-  return { iconCount: totalIconCount, duration, platform: platformId, outputDir: platformOutputDir, brands: brandNames };
+  return {
+    iconCount: totalIconCount,
+    duration,
+    platform: platformId,
+    outputDir: platformOutputDir,
+    brands: brandNames,
+  };
 }
 
 // ======================== 入口 ========================

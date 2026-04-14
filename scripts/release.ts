@@ -17,14 +17,42 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 /** 获取指定框架的子包信息 */
 function getPackageConfig(framework: Framework) {
   const configs: Record<Framework, { pkgDir: string; distDir: string; buildCmd: string }> = {
-    wechat: { pkgDir: 'packages/wechat', distDir: 'dist/wechat', buildCmd: 'build:wechat' },
-    alipay: { pkgDir: 'packages/alipay', distDir: 'dist/alipay', buildCmd: 'build:alipay' },
-    kuaishou: { pkgDir: 'packages/kuaishou', distDir: 'dist/kuaishou', buildCmd: 'build:kuaishou' },
-    douyin: { pkgDir: 'packages/douyin', distDir: 'dist/douyin', buildCmd: 'build:douyin' },
-    baidu: { pkgDir: 'packages/baidu', distDir: 'dist/baidu', buildCmd: 'build:baidu' },
+    wechat: {
+      pkgDir: 'packages/wechat',
+      distDir: 'dist/wechat',
+      buildCmd: 'build:wechat',
+    },
+    alipay: {
+      pkgDir: 'packages/alipay',
+      distDir: 'dist/alipay',
+      buildCmd: 'build:alipay',
+    },
+    kuaishou: {
+      pkgDir: 'packages/kuaishou',
+      distDir: 'dist/kuaishou',
+      buildCmd: 'build:kuaishou',
+    },
+    douyin: {
+      pkgDir: 'packages/douyin',
+      distDir: 'dist/douyin',
+      buildCmd: 'build:douyin',
+    },
+    baidu: {
+      pkgDir: 'packages/baidu',
+      distDir: 'dist/baidu',
+      buildCmd: 'build:baidu',
+    },
     jd: { pkgDir: 'packages/jd', distDir: 'dist/jd', buildCmd: 'build:jd' },
-    xiaohongshu: { pkgDir: 'packages/xiaohongshu', distDir: 'dist/xiaohongshu', buildCmd: 'build:xiaohongshu' },
-    utils: { pkgDir: 'packages/utils', distDir: 'dist/utils', buildCmd: 'build:utils' },
+    xiaohongshu: {
+      pkgDir: 'packages/xiaohongshu',
+      distDir: 'dist/xiaohongshu',
+      buildCmd: 'build:xiaohongshu',
+    },
+    utils: {
+      pkgDir: 'packages/utils',
+      distDir: 'dist/utils',
+      buildCmd: 'build:utils',
+    },
   };
   return configs[framework];
 }
@@ -173,7 +201,10 @@ function confirm(message: string, defaultYes = false): Promise<boolean> {
  */
 function textInput(message: string, defaultValue?: string): Promise<string> {
   return new Promise((resolve) => {
-    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
     const hint = defaultValue ? ` ${DIM}(${defaultValue})${RESET}` : '';
     rl.question(`${BOLD}${message}${RESET}${hint} `, (answer) => {
       rl.close();
@@ -189,7 +220,11 @@ function run(cmd: string, cwd: string = ROOT_DIR): string {
   return execSync(cmd, { cwd, stdio: 'inherit', encoding: 'utf-8' }) ?? '';
 }
 
-function readPkg(pkgDir: string): { name: string; version: string; [k: string]: unknown } {
+function readPkg(pkgDir: string): {
+  name: string;
+  version: string;
+  [k: string]: unknown;
+} {
   return fs.readJSONSync(path.join(pkgDir, 'package.json'));
 }
 
@@ -306,7 +341,9 @@ async function main(): Promise<void> {
           const bumped = bumpVersion(pkgJson.version, b);
           preview = ` ${DIM}(${pkgJson.version} → ${bumped})${RESET}`;
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
       return { label: `${b}${preview}`, value: b };
     });
 

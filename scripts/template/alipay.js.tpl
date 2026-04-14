@@ -67,9 +67,9 @@ Component({
       const fill = [].concat(fillColors || []);
       const stroke = [].concat(strokeColors || []);
       return svgContent
-        .replace(/\{\{fillColor(\d+)\s*\|\|\s*'([^']+)'\}\}/g, (_, i, d) => fill[i - 1] || d)
-        .replace(/\{\{strokeColor(\d+)\s*\|\|\s*'([^']+)'\}\}/g, (_, i, d) => stroke[i - 1] || d)
-        .replace(/\{\{strokeWidth\}\}/g, strokeWidth);
+        .replace(/\{fillColor(\d+)\s*\|\|\s*'([^']+)'\}/g, (_, i, d) => fill[i - 1] || d)
+        .replace(/\{strokeColor(\d+)\s*\|\|\s*'([^']+)'\}/g, (_, i, d) => stroke[i - 1] || d)
+        .replace(/\{strokeWidth\}/g, strokeWidth);
     },
   },
 });

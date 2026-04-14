@@ -1,20 +1,21 @@
-import fs from 'fs-extra';
-import path from 'path';
-import { parseSvg, generateSvg } from './utils/svgTotemplate';
+import fs from "fs-extra";
+import path from "path";
+import { parseSvg, generateSvg } from "./utils/svgTotemplate";
+import { optimizeSvg } from "./utils/svgOptimizer";
 
 // ======================== 路径常量 ========================
 
 const SCRIPTS_DIR = __dirname;
-export const ROOT_DIR = path.resolve(SCRIPTS_DIR, '..');
-export const PACKAGES_DIR = path.resolve(ROOT_DIR, 'packages');
-export const DIST_DIR = path.resolve(ROOT_DIR, 'dist');
-export const RESOURCES_DIR = path.resolve(ROOT_DIR, 'resources');
-const TEMPLATE_DIR = path.resolve(SCRIPTS_DIR, 'template');
+export const ROOT_DIR = path.resolve(SCRIPTS_DIR, "..");
+export const PACKAGES_DIR = path.resolve(ROOT_DIR, "packages");
+export const DIST_DIR = path.resolve(ROOT_DIR, "dist");
+export const RESOURCES_DIR = path.resolve(ROOT_DIR, "resources");
+const TEMPLATE_DIR = path.resolve(SCRIPTS_DIR, "template");
 
 // ======================== 平台配置 ========================
 
 /** 组件 API 风格 */
-export type ComponentAPIStyle = 'wechat' | 'alipay';
+export type ComponentAPIStyle = "wechat" | "alipay";
 
 export interface PlatformConfig {
   /** 平台标识 */
@@ -33,59 +34,59 @@ export interface PlatformConfig {
 
 export const PLATFORMS: Record<string, PlatformConfig> = {
   wechat: {
-    id: 'wechat',
-    label: '微信小程序',
-    templateExt: '.wxml',
-    styleExt: '.wxss',
-    componentStyle: 'wechat',
+    id: "wechat",
+    label: "微信小程序",
+    templateExt: ".wxml",
+    styleExt: ".wxss",
+    componentStyle: "wechat",
     escapeQuotes: false,
   },
   alipay: {
-    id: 'alipay',
-    label: '支付宝小程序',
-    templateExt: '.axml',
-    styleExt: '.acss',
-    componentStyle: 'alipay',
+    id: "alipay",
+    label: "支付宝小程序",
+    templateExt: ".axml",
+    styleExt: ".acss",
+    componentStyle: "alipay",
     escapeQuotes: false,
   },
   kuaishou: {
-    id: 'kuaishou',
-    label: '快手小程序',
-    templateExt: '.ksml',
-    styleExt: '.css',
-    componentStyle: 'wechat',
+    id: "kuaishou",
+    label: "快手小程序",
+    templateExt: ".ksml",
+    styleExt: ".css",
+    componentStyle: "wechat",
     escapeQuotes: false,
   },
   xiaohongshu: {
-    id: 'xiaohongshu',
-    label: '小红书小程序',
-    templateExt: '.xhsml',
-    styleExt: '.css',
-    componentStyle: 'wechat',
+    id: "xiaohongshu",
+    label: "小红书小程序",
+    templateExt: ".xhsml",
+    styleExt: ".css",
+    componentStyle: "wechat",
     escapeQuotes: false,
   },
   douyin: {
-    id: 'douyin',
-    label: '抖音小程序',
-    templateExt: '.ttml',
-    styleExt: '.ttss',
-    componentStyle: 'wechat',
+    id: "douyin",
+    label: "抖音小程序",
+    templateExt: ".ttml",
+    styleExt: ".ttss",
+    componentStyle: "wechat",
     escapeQuotes: true,
   },
   baidu: {
-    id: 'baidu',
-    label: '百度小程序',
-    templateExt: '.swan',
-    styleExt: '.css',
-    componentStyle: 'wechat',
+    id: "baidu",
+    label: "百度小程序",
+    templateExt: ".swan",
+    styleExt: ".css",
+    componentStyle: "wechat",
     escapeQuotes: true,
   },
   jd: {
-    id: 'jd',
-    label: '京东小程序',
-    templateExt: '.jxml',
-    styleExt: '.jxss',
-    componentStyle: 'wechat',
+    id: "jd",
+    label: "京东小程序",
+    templateExt: ".jxml",
+    styleExt: ".jxss",
+    componentStyle: "wechat",
     escapeQuotes: false,
   },
 };
@@ -116,7 +117,7 @@ export function scanBrands(): BrandInfo[] {
 
     const svgDir = path.join(RESOURCES_DIR, entry.name);
     // 检查目录下是否有 SVG 文件
-    const hasSvg = fs.readdirSync(svgDir).some((f) => f.endsWith('.svg'));
+    const hasSvg = fs.readdirSync(svgDir).some((f) => f.endsWith(".svg"));
     if (hasSvg) {
       brands.push({ name: entry.name, svgDir });
     }
@@ -141,10 +142,10 @@ export interface CLIArgs {
  */
 export function parseArgs(): CLIArgs {
   const args = process.argv.slice(2);
-  let platform = 'wechat';
+  let platform = "wechat";
 
   for (const arg of args) {
-    if (arg === '--') continue;
+    if (arg === "--") continue;
     if (PLATFORMS[arg]) {
       platform = arg;
     }
@@ -161,7 +162,9 @@ export function parseArgs(): CLIArgs {
 export function getPlatformConfig(platformId: string): PlatformConfig {
   const platform = PLATFORMS[platformId];
   if (!platform) {
-    throw new Error(`未知平台: ${platformId}，可选: ${Object.keys(PLATFORMS).join(', ')}`);
+    throw new Error(
+      `未知平台: ${platformId}，可选: ${Object.keys(PLATFORMS).join(", ")}`,
+    );
   }
   return platform;
 }
@@ -175,34 +178,49 @@ export interface IconEntry {
 
 /**
  * 从 SVG 目录加载并解析所有图标
+ * 流程：读取 SVG -> SVGO 预压缩 -> 解析并生成模板
  */
 export function loadIcons(svgDir: string): IconEntry[] {
   if (!fs.existsSync(svgDir)) {
     throw new Error(`SVG directory not found: ${svgDir}`);
   }
 
-  const svgFiles = fs.readdirSync(svgDir).filter((f) => f.endsWith('.svg'));
+  const svgFiles = fs.readdirSync(svgDir).filter((f) => f.endsWith(".svg"));
 
   const rawEntries: { name: string; content: string; file: string }[] = [];
   for (const file of svgFiles) {
     try {
       const filePath = path.join(svgDir, file);
+      const originalContent = fs.readFileSync(filePath, "utf-8");
+
+      // 使用 SVGO 进行预压缩
+      const optimizedContent = optimizeSvg(originalContent, file);
+
       rawEntries.push({
-        name: path.basename(file, '.svg'),
-        content: fs.readFileSync(filePath, 'utf-8'),
+        name: path.basename(file, ".svg"),
+        content: optimizedContent,
         file,
       });
     } catch (err) {
-      console.error(`  ⚠️  读取失败: ${file}`, err instanceof Error ? err.message : String(err));
+      console.error(
+        `  ⚠️  读取失败: ${file}`,
+        err instanceof Error ? err.message : String(err),
+      );
     }
   }
 
   const icons: IconEntry[] = [];
   for (const entry of rawEntries) {
     try {
-      icons.push({ name: entry.name, svg: generateSvg(parseSvg(entry.content), entry.name) });
+      icons.push({
+        name: entry.name,
+        svg: generateSvg(parseSvg(entry.content), entry.name),
+      });
     } catch (err) {
-      console.error(`  ⚠️  解析失败: ${entry.file}`, err instanceof Error ? err.message : String(err));
+      console.error(
+        `  ⚠️  解析失败: ${entry.file}`,
+        err instanceof Error ? err.message : String(err),
+      );
     }
   }
 
@@ -215,7 +233,9 @@ export function loadIcons(svgDir: string): IconEntry[] {
 export function loadAndFilterIcons(brand: BrandInfo): IconEntry[] {
   console.log(`📂 读取 SVG 图标: ${brand.svgDir}`);
 
-  const svgFiles = fs.readdirSync(brand.svgDir).filter((f) => f.endsWith('.svg'));
+  const svgFiles = fs
+    .readdirSync(brand.svgDir)
+    .filter((f) => f.endsWith(".svg"));
   console.log(`📄 发现 ${svgFiles.length} 个 SVG 文件`);
 
   const icons = loadIcons(brand.svgDir);
@@ -239,18 +259,24 @@ export interface PlatformTemplates {
 
 /** 读取模板文件 */
 function readTemplate(filename: string): string {
-  return fs.readFileSync(path.join(TEMPLATE_DIR, filename), 'utf-8');
+  return fs.readFileSync(path.join(TEMPLATE_DIR, filename), "utf-8");
 }
 
 /** 根据平台配置生成所有模板内容 */
-export function generatePlatformTemplates(platform: PlatformConfig): PlatformTemplates {
-  const jsTplFile = platform.componentStyle === 'alipay' ? 'alipay.js.tpl' : 'wechat.js.tpl';
-  const extraReplace = platform.escapeQuotes ? `.replace(/"/g, "'")` : '';
+export function generatePlatformTemplates(
+  platform: PlatformConfig,
+): PlatformTemplates {
+  const jsTplFile =
+    platform.componentStyle === "alipay" ? "alipay.js.tpl" : "wechat.js.tpl";
+  const extraReplace = platform.escapeQuotes ? `.replace(/"/g, "'")` : "";
 
   return {
-    iconJsonTemplate: readTemplate('icon.json.tpl'),
-    iconTemplateContent: readTemplate('icon.tpl'),
-    iconJSSource: readTemplate(jsTplFile).replace(/\{\{EXTRA_REPLACE\}\}/g, extraReplace),
+    iconJsonTemplate: readTemplate("icon.json.tpl"),
+    iconTemplateContent: readTemplate("icon.tpl"),
+    iconJSSource: readTemplate(jsTplFile).replace(
+      /\{\{EXTRA_REPLACE\}\}/g,
+      extraReplace,
+    ),
   };
 }
 
@@ -268,17 +294,21 @@ export function generateIconsJS(brandsIcons: BrandIconsMap): string {
   const brandEntries: string[] = [];
 
   for (const [brandName, icons] of Object.entries(brandsIcons)) {
-    const iconEntries = icons.map((icon) => `    ${JSON.stringify(icon.name)}: \`${icon.svg}\``);
-    brandEntries.push(`  ${JSON.stringify(brandName)}: {\n${iconEntries.join(',\n')}\n  }`);
+    const iconEntries = icons.map(
+      (icon) => `    ${JSON.stringify(icon.name)}: \`${icon.svg}\``,
+    );
+    brandEntries.push(
+      `  ${JSON.stringify(brandName)}: {\n${iconEntries.join(",\n")}\n  }`,
+    );
   }
 
-  return `module.exports = {\n${brandEntries.join(',\n')}\n};\n`;
+  return `module.exports = {\n${brandEntries.join(",\n")}\n};\n`;
 }
 
 // ======================== 目录清理 ========================
 
 /** 清理时需要保留的文件 */
-const PRESERVE_FILES = new Set(['package.json', 'README.md']);
+const PRESERVE_FILES = new Set(["package.json", "README.md"]);
 
 /**
  * 清理输出目录（保留 package.json、README.md）
@@ -296,7 +326,9 @@ export async function cleanOutputDir(outputDir: string): Promise<void> {
     if (PRESERVE_FILES.has(item)) continue;
     removePromises.push(
       fs.remove(path.join(outputDir, item)).catch((err) => {
-        console.warn(`  ⚠️  清理失败: ${item}: ${err instanceof Error ? err.message : String(err)}`);
+        console.warn(
+          `  ⚠️  清理失败: ${item}: ${err instanceof Error ? err.message : String(err)}`,
+        );
       }),
     );
   }

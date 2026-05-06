@@ -23,6 +23,9 @@
     "build:utils": "cd packages/utils && npm run build",
     "build": "run-s build:*",
     "release": "tsx scripts/release.ts",
+    "web:dev": "pnpm --filter mp-svg-icons-preview dev",
+    "web:build": "pnpm --filter mp-svg-icons-preview build",
+    "web:preview": "pnpm --filter mp-svg-icons-preview preview",
     "prepare": "husky",
     "format": "prettier --write \"**/*.{js,ts,json,css,less,wxss,wxml,axml,wxs}\""
   },

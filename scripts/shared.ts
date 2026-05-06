@@ -169,7 +169,7 @@ export function getPlatformConfig(platformId: string): PlatformConfig {
 
 // ======================== SVG 图标加载 ========================
 
-export interface IconEntry {
+export interface SvgEntry {
   name: string;
   svg: string;
 }
@@ -178,7 +178,7 @@ export interface IconEntry {
  * 从 SVG 目录加载并解析所有图标
  * 流程：读取 SVG -> SVGO 预压缩 -> 解析并生成模板
  */
-export function loadIcons(svgDir: string): IconEntry[] {
+export function loadSvgs(svgDir: string): SvgEntry[] {
   if (!fs.existsSync(svgDir)) {
     throw new Error(`SVG directory not found: ${svgDir}`);
   }
@@ -204,7 +204,7 @@ export function loadIcons(svgDir: string): IconEntry[] {
     }
   }
 
-  const icons: IconEntry[] = [];
+  const icons: SvgEntry[] = [];
   for (const entry of rawEntries) {
     try {
       icons.push({
@@ -222,13 +222,13 @@ export function loadIcons(svgDir: string): IconEntry[] {
 /**
  * 加载品牌的所有图标，并打印日志
  */
-export function loadAndFilterIcons(brand: BrandInfo): IconEntry[] {
+export function loadAllSvgs(brand: BrandInfo): SvgEntry[] {
   console.log(`📂 读取 SVG 图标: ${brand.svgDir}`);
 
   const svgFiles = fs.readdirSync(brand.svgDir).filter((f) => f.endsWith('.svg'));
   console.log(`📄 发现 ${svgFiles.length} 个 SVG 文件`);
 
-  const icons = loadIcons(brand.svgDir);
+  const icons = loadSvgs(brand.svgDir);
 
   if (icons.length < svgFiles.length) {
     const missing = svgFiles.length - icons.length;
@@ -267,7 +267,7 @@ export function generatePlatformTemplates(platform: PlatformConfig): PlatformTem
 // ======================== 多品牌图标数据 ========================
 
 export interface BrandIconsMap {
-  [brandName: string]: IconEntry[];
+  [brandName: string]: SvgEntry[];
 }
 
 /**

@@ -6,13 +6,13 @@ import {
   DIST_DIR,
   PlatformConfig,
   BrandInfo,
-  IconEntry,
+  SvgEntry,
   PlatformTemplates,
   BrandIconsMap,
   scanBrands,
   parseArgs,
   getPlatformConfig,
-  loadAndFilterIcons,
+  loadAllSvgs,
   generatePlatformTemplates,
   generateIconsJS,
   cleanDistDir,
@@ -108,7 +108,7 @@ async function buildIconComponent(
 
 interface BrandBuildResult {
   brand: string;
-  icons: IconEntry[];
+  icons: SvgEntry[];
 }
 
 /**
@@ -117,7 +117,7 @@ interface BrandBuildResult {
 async function buildBrand(brand: BrandInfo): Promise<BrandBuildResult> {
   console.log(`\n  🎨 品牌: ${brand.name}`);
 
-  const icons = loadAndFilterIcons(brand);
+  const icons = loadAllSvgs(brand);
 
   console.log(`  ✅ [${brand.name}] 共加载 ${icons.length} 个图标`);
 

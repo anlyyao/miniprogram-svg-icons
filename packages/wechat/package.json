@@ -1,6 +1,6 @@
 {
   "name": "@mp-svg-icons/wechat",
-  "version": "0.0.1",
+  "version": "0.0.1-beta",
   "description": "SVG 多色图标 - 微信小程序组件库",
   "miniprogram": "./",
   "keywords": [

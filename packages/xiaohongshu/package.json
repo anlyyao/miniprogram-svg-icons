@@ -1,6 +1,6 @@
 {
   "name": "@mp-svg-icons/xiaohongshu",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "description": "SVG 多色图标 - 小红书小程序组件库",
   "miniprogram": "./",
   "keywords": [

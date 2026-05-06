@@ -13,6 +13,7 @@ permissions:
 jobs:
   preview-context:
     runs-on: ubuntu-latest
+    if: ${{ !startsWith(github.head_ref, 'release/') }}
     outputs:
       pr_id: ${{ github.event.number }}
       svg_icons_domain: ${{ steps.miniprogram-svg-icons-domain.outputs.svg_icons_domain }}
@@ -44,7 +45,7 @@ jobs:
           npx surge --project ./dist/web --domain $DEPLOY_DOMAIN --token ${{ secrets.SURGE_TOKEN }}
 
   preview-comment:
-    if: always()
+    if: ${{ always() && !startsWith(github.head_ref, 'release/') }}
     needs:
       - preview-context
       - miniprogram-svg-icons

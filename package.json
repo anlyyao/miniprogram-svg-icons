@@ -1,6 +1,5 @@
 {
   "name": "miniprogram-svg-icons",
-  "version": "0.0.1",
   "private": true,
   "packageManager": "pnpm@10.27.0",
   "description": "小程序多色图标解决方案 - 支持微信、支付宝、快手、抖音等多平台小程序",

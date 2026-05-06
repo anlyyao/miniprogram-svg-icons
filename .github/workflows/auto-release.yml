@@ -3,174 +3,218 @@ name: Auto Release
 on:
   pull_request:
     branches: [develop]
-    types: [closed]
+    types: [opened, synchronize, reopened, closed]
 
 permissions:
   contents: write
+  pull-requests: write
   id-token: write
 
+env:
+  ALL_PACKAGES: "wechat alipay kuaishou douyin baidu jd xiaohongshu utils"
+
 jobs:
-  # ============================================================
-  # PR 合并后打 tag 并发布 npm
-  # 支持: miniprogram(所有小程序包) / 单个包发布
-  # 版本类型: latest, beta, alpha, patch, rc, next 等
-  # ============================================================
+  preview:
+    runs-on: ubuntu-latest
+    if: github.event.action != 'closed' && startsWith(github.head_ref, 'release/')
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Detect packages
+        id: detect
+        run: |
+          PACKAGES_INFO=""
+          TO_PUBLISH=""
+
+          git fetch origin develop --quiet
+
+          for PKG in $ALL_PACKAGES; do
+            PKG_PATH="packages/$PKG/package.json"
+            PKG_NAME="@mp-svg-icons/$PKG"
+
+            [ ! -f "$PKG_PATH" ] && continue
+
+            RELEASE_VERSION=$(node -p "require('./$PKG_PATH').version")
+            DEVELOP_VERSION=$(git show origin/develop:$PKG_PATH 2>/dev/null | node -p "JSON.parse(require('fs').readFileSync('/dev/stdin', 'utf8')).version" 2>/dev/null || echo "")
+
+            if [ -z "$DEVELOP_VERSION" ]; then
+              PACKAGES_INFO="$PACKAGES_INFO\n- \`$PKG_NAME@$RELEASE_VERSION\` ✅ will publish (new)"
+              TO_PUBLISH="$TO_PUBLISH $PKG_NAME@$RELEASE_VERSION"
+            elif [ "$RELEASE_VERSION" != "$DEVELOP_VERSION" ]; then
+              PACKAGES_INFO="$PACKAGES_INFO\n- \`$PKG_NAME@$RELEASE_VERSION\` ✅ will publish (from $DEVELOP_VERSION)"
+              TO_PUBLISH="$TO_PUBLISH $PKG_NAME@$RELEASE_VERSION"
+            else
+              PACKAGES_INFO="$PACKAGES_INFO\n- \`$PKG_NAME@$RELEASE_VERSION\` ⏭️ unpublish"
+            fi
+          done
+
+          echo "packages_info<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$PACKAGES_INFO" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "to_publish=$(echo $TO_PUBLISH | xargs)" >> $GITHUB_OUTPUT
+
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        env:
+          PACKAGES_INFO: ${{ steps.detect.outputs.packages_info }}
+          TO_PUBLISH: ${{ steps.detect.outputs.to_publish }}
+        with:
+          script: |
+            const packagesInfo = process.env.PACKAGES_INFO;
+            const toPublish = process.env.TO_PUBLISH;
+            const note = toPublish
+              ? '> ⚠️ Merging this PR will publish packages marked with ✅ to npm.'
+              : '> ℹ️ No packages will be published.';
+            const body = '## 🚀 Release Preview\n\n### Package Status\n' + packagesInfo + '\n\n' + note;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const botComment = comments.find(c => c.user.type === 'Bot' && c.body.includes('Release Preview'));
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
   release:
     runs-on: ubuntu-latest
-    if: >
-      github.event.pull_request.merged == true &&
-      startsWith(github.head_ref, 'release/')
+    if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/')
     steps:
       - uses: actions/checkout@v6
         with:
           ref: develop
+          fetch-depth: 0
           token: ${{ secrets.ACCESS_TOKEN }}
 
-      - name: Parse release branch info
-        id: parse
-        uses: ./.github/actions/parse-release-branch
-
-      - name: Verify package versions
+      - name: Detect packages
+        id: detect
         run: |
-          VERSION="${{ steps.parse.outputs.version }}"
-          FRAMEWORKS="${{ steps.parse.outputs.frameworks }}"
+          TO_PUBLISH=""
+          PREV_DEVELOP=$(git rev-parse HEAD^1 2>/dev/null || echo "")
 
-          MISMATCH="false"
-          for FRAMEWORK in $FRAMEWORKS; do
-            PKG_VERSION=$(node -p "require('./packages/$FRAMEWORK/package.json').version")
+          for PKG in $ALL_PACKAGES; do
+            PKG_PATH="packages/$PKG/package.json"
+            [ ! -f "$PKG_PATH" ] && continue
 
-            if [ "$PKG_VERSION" != "$VERSION" ]; then
-              echo "❌ Version mismatch for @mp-svg-icons/$FRAMEWORK!"
-              echo "   Expected: $VERSION"
-              echo "   Found: $PKG_VERSION"
-              MISMATCH="true"
-            else
-              echo "✅ @mp-svg-icons/$FRAMEWORK version verified: $VERSION"
+            CURRENT_VERSION=$(node -p "require('./$PKG_PATH').version")
+            PREV_VERSION=""
+            [ -n "$PREV_DEVELOP" ] && PREV_VERSION=$(git show $PREV_DEVELOP:$PKG_PATH 2>/dev/null | node -p "JSON.parse(require('fs').readFileSync('/dev/stdin', 'utf8')).version" 2>/dev/null || echo "")
+
+            if [ -z "$PREV_VERSION" ] || [ "$CURRENT_VERSION" != "$PREV_VERSION" ]; then
+              TO_PUBLISH="$TO_PUBLISH $PKG"
             fi
           done
 
-          if [ "$MISMATCH" = "true" ]; then
-            echo ""
-            echo "💡 Hint: Please check if the 'Auto Release Pre' workflow ran successfully on this PR."
-            echo "   The pre-release workflow should have updated the package.json versions automatically."
-            exit 1
-          fi
+          echo "to_publish=$(echo $TO_PUBLISH | xargs)" >> $GITHUB_OUTPUT
 
       - name: Setup pnpm
+        if: steps.detect.outputs.to_publish != ''
         uses: pnpm/action-setup@v4
 
       - name: Setup Node.js
+        if: steps.detect.outputs.to_publish != ''
         uses: actions/setup-node@v6
         with:
           node-version: 22
           registry-url: 'https://registry.npmjs.org'
           cache: 'pnpm'
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build
-        run: pnpm run build
+      - name: Install & Build
+        if: steps.detect.outputs.to_publish != ''
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build
 
       - name: Publish to npm
         id: publish
+        if: steps.detect.outputs.to_publish != ''
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          FRAMEWORKS="${{ steps.parse.outputs.frameworks }}"
-          DIST_TAG="${{ steps.parse.outputs.dist_tag }}"
-          VERSION="${{ steps.parse.outputs.version }}"
-
+          TO_PUBLISH="${{ steps.detect.outputs.to_publish }}"
           PUBLISHED=""
           FAILED=""
 
-          for FRAMEWORK in $FRAMEWORKS; do
-            DIST_PATH="dist/$FRAMEWORK"
+          for PKG in $TO_PUBLISH; do
+            PKG_PATH="packages/$PKG/package.json"
+            DIST_PATH="dist/$PKG"
+            VERSION=$(node -p "require('./$PKG_PATH').version")
+
+            # Determine dist-tag
+            case "$VERSION" in
+              *-beta*)  DIST_TAG="beta" ;;
+              *-alpha*) DIST_TAG="alpha" ;;
+              *-rc*)    DIST_TAG="rc" ;;
+              *-next*)  DIST_TAG="next" ;;
+              *-*)      DIST_TAG="next" ;;
+              *)        DIST_TAG="latest" ;;
+            esac
 
             if [ ! -d "$DIST_PATH" ]; then
-              echo "❌ Build output not found: $DIST_PATH"
-              FAILED="$FAILED @mp-svg-icons/$FRAMEWORK(missing-dist)"
+              FAILED="$FAILED @mp-svg-icons/$PKG"
               continue
             fi
 
-            echo "📤 Publishing @mp-svg-icons/$FRAMEWORK@$VERSION with tag $DIST_TAG..."
             cd "$DIST_PATH"
-
             if npm publish --tag "$DIST_TAG" --access public --provenance; then
-              echo "✅ Published @mp-svg-icons/$FRAMEWORK@$VERSION"
-              PUBLISHED="$PUBLISHED @mp-svg-icons/$FRAMEWORK"
+              PUBLISHED="$PUBLISHED @mp-svg-icons/$PKG@$VERSION"
             else
-              echo "❌ Failed to publish @mp-svg-icons/$FRAMEWORK"
-              FAILED="$FAILED @mp-svg-icons/$FRAMEWORK"
+              FAILED="$FAILED @mp-svg-icons/$PKG"
             fi
-
-            cd -
+            cd - > /dev/null
           done
 
-          echo "published=$PUBLISHED" >> $GITHUB_OUTPUT
-          echo "failed=$FAILED" >> $GITHUB_OUTPUT
+          echo "published=$(echo $PUBLISHED | xargs)" >> $GITHUB_OUTPUT
+          echo "failed=$(echo $FAILED | xargs)" >> $GITHUB_OUTPUT
+          [ -n "$FAILED" ] && exit 1 || true
 
-          if [ -n "$FAILED" ]; then
-            echo ""
-            echo "⚠️ Some packages failed to publish:$FAILED"
-            echo "✅ Successfully published:$PUBLISHED"
-            exit 1
-          fi
-
-      - name: Create and push tag
+      - name: Create tags
+        if: steps.publish.outputs.published != ''
         run: |
-          TAG_NAME="${{ steps.parse.outputs.tag_name }}"
-
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git tag "$TAG_NAME"
-          git push origin "$TAG_NAME"
+          for TAG in ${{ steps.publish.outputs.published }}; do
+            git tag "$TAG"
+          done
+          git push origin --tags
 
-          echo "🏷️ Pushed tag: $TAG_NAME"
-
-      - name: Release summary
+      - name: Summary
         if: always()
         run: |
-          NAME="${{ steps.parse.outputs.name }}"
-          VERSION="${{ steps.parse.outputs.version }}"
-          DIST_TAG="${{ steps.parse.outputs.dist_tag }}"
-          TAG_NAME="${{ steps.parse.outputs.tag_name }}"
-          FRAMEWORKS="${{ steps.parse.outputs.frameworks }}"
           PUBLISHED="${{ steps.publish.outputs.published }}"
           FAILED="${{ steps.publish.outputs.failed }}"
 
-          if [ -n "$FAILED" ]; then
+          if [ -z "${{ steps.detect.outputs.to_publish }}" ]; then
+            echo "## ℹ️ No Packages Published" >> $GITHUB_STEP_SUMMARY
+          elif [ -n "$FAILED" ]; then
             echo "## ⚠️ Release Partially Failed" >> $GITHUB_STEP_SUMMARY
           else
-            echo "## 🎉 Release Published Successfully!" >> $GITHUB_STEP_SUMMARY
+            echo "## 🎉 Release Success" >> $GITHUB_STEP_SUMMARY
           fi
-
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "| ---- | ----- |" >> $GITHUB_STEP_SUMMARY
-
-          if [ "$NAME" = "miniprogram" ]; then
-            echo "| 📦 Scope | All miniprogram packages |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| 📦 Scope | \`@mp-svg-icons/$NAME\` |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          echo "| 📌 Version | \`$VERSION\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🏷️ Git Tag | \`$TAG_NAME\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🏷️ npm Tag | \`$DIST_TAG\` |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ -n "$PUBLISHED" ]; then
-            echo "### ✅ Published Packages" >> $GITHUB_STEP_SUMMARY
-            for PKG in $PUBLISHED; do
-              echo "- $PKG@$VERSION — [npm](https://www.npmjs.com/package/$PKG/v/$VERSION)" >> $GITHUB_STEP_SUMMARY
-            done
-            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### ✅ Published" >> $GITHUB_STEP_SUMMARY
+            for PKG in $PUBLISHED; do echo "- \`$PKG\`" >> $GITHUB_STEP_SUMMARY; done
           fi
 
           if [ -n "$FAILED" ]; then
-            echo "### ❌ Failed Packages" >> $GITHUB_STEP_SUMMARY
-            for PKG in $FAILED; do
-              echo "- $PKG" >> $GITHUB_STEP_SUMMARY
-            done
+            echo "### ❌ Failed" >> $GITHUB_STEP_SUMMARY
+            for PKG in $FAILED; do echo "- \`$PKG\`" >> $GITHUB_STEP_SUMMARY; done
           fi

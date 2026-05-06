@@ -1,6 +1,6 @@
 {
   "name": "@mp-svg-icons/kuaishou",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "SVG 多色图标 - 快手小程序组件库",
   "miniprogram": "./",
   "keywords": [

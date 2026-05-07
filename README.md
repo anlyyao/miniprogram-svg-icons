@@ -24,8 +24,6 @@
   <a href="./README.md">简体中文</a> | <a href="./README_EN.md">English</a>
 </p>
 
----
-
 ## ✨ 特性
 
 - 🎨 **完整色彩支持** — 单色、双色、多色图标完美渲染
@@ -34,8 +32,6 @@
 - 🌐 **8 大平台适配** — 微信 / QQ / 支付宝 / 快手 / 抖音 / 百度 / 小红书 / 京东
 - ✂️ **按需裁剪** — 内置 CLI 工具，移除未使用图标，体积减少 **99%+**
 - 🏷️ **多品牌支持** — 支持多品牌图标源（如 TDesign），易扩展
-
----
 
 ## 📦 支持的平台
 
@@ -51,8 +47,6 @@
 | `@mp-svg-icons/utils`       | 工具集       | 图标裁剪 CLI     |
 
 > 💡 QQ 小程序可直接使用微信小程序版本。
-
----
 
 ## 🚀 快速开始
 
@@ -105,8 +99,6 @@ npm install @mp-svg-icons/alipay
 | `brand`       | `String`          | `tdesign` | 品牌名称                            |
 
 > 💡 颜色值内部统一转为 `rgb()` 格式后注入 Data URI，HEX 的 `#` 无需手动转义。
-
----
 
 ## ✂️ 图标裁剪
 
@@ -166,8 +158,6 @@ npx mp-svg-icons-clear \
 | 裁剪后（50 个图标）  |   ~21.3 KB    |  50 个   | **97.9%** |
 | 裁剪后（100 个图标） |   ~42.6 KB    |  100 个  | **95.7%** |
 
----
-
 ## ⚙️ 技术方案
 
 <p align="center">
@@ -208,8 +198,6 @@ npx mp-svg-icons-clear \
 
 > ⚠️ 百度、抖音小程序的 `image` 组件在解析 Data URI 时，SVG 中的双引号会导致错误。因此这两个平台额外进行 `"` → `'` 替换处理。
 
----
-
 ## 📁 项目结构
 
 ```
@@ -243,8 +231,6 @@ miniprogram-svg-icons/
 └── pnpm-workspace.yaml           # pnpm 工作区配置
 ```
 
----
-
 ## 🛠️ 本地开发
 
 ### 环境要求
@@ -274,8 +260,6 @@ pnpm run build:wechat
 # 构建所有平台
 pnpm run build
 ```
-
----
 
 ## 🔌 扩展指南
 
@@ -311,8 +295,6 @@ newplatform: {
 
 **步骤 3** — 创建包目录 `packages/newplatform/`，添加 `package.json` 并在 `pnpm-workspace.yaml` 中注册。
 
----
-
 ## 🤝 贡献
 
 欢迎贡献代码！请阅读 [贡献指南](./CONTRIBUTING.md) 了解如何参与项目开发。
@@ -321,8 +303,6 @@ newplatform: {
 - 💡 [提交建议](https://github.com/anlyyao/miniprogram-svg-icons/issues)
 - 🔀 [提交 PR](https://github.com/anlyyao/miniprogram-svg-icons/pulls)
 
----
-
 ## 🔗 相关链接
 
 - [TDesign 官方图标库](https://github.com/Tencent/tdesign-icons)
@@ -330,13 +310,9 @@ newplatform: {
 - [演示项目源码](https://github.com/anlyyao/miniprogram-svg-icon-demo)
 - [技术分享文档](./docs/TECH_SHARING.md)
 
----
-
 ## 📄 License
 
 [MIT](./LICENSE) © [anlyyao](https://github.com/anlyyao)
-
----
 
 <p align="center">
   如果这个项目对你有帮助，请给个 ⭐️ 支持一下！

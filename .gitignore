@@ -31,3 +31,7 @@ packages/jd/*
 packages/xiaohongshu/*
 !packages/xiaohongshu/package.json
 !packages/xiaohongshu/README.md
+
+# auto-generated files
+web/auto-imports.d.ts
+web/components.d.ts

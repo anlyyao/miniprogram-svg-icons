@@ -2,14 +2,14 @@
 
 快手小程序 SVG 多色图标组件库，支持多品牌图标源（如 TDesign）。
 
-## 特性
+## ✨ 特性
 
 - ✅ **完整色彩支持** — 单色、双色、多色图标完美渲染
 - ✅ **运行时颜色控制** — 通过属性动态修改 `fill` / `stroke` 颜色
 - ✅ **零依赖运行** — Data URI 方案，无需额外资源加载
 - ✅ **多品牌支持** — 支持 TDesign 等多种图标品牌
 
-## 安装
+## 📥 安装
 
 ```bash
 npm install @mp-svg-icons/kuaishou
@@ -17,7 +17,7 @@ npm install @mp-svg-icons/kuaishou
 pnpm add @mp-svg-icons/kuaishou
 ```
 
-## 目录结构
+## 📁 目录结构
 
 ```
 @mp-svg-icons/kuaishou/
@@ -28,7 +28,7 @@ pnpm add @mp-svg-icons/kuaishou
 │   └── icons.js               # 全量图标 SVG 映射表（~1MB）
 ```
 
-## 使用方式
+## 🚀 使用方式
 
 ### 图标组件（Icon）
 
@@ -57,7 +57,7 @@ pnpm add @mp-svg-icons/kuaishou
 
 > **提示**：图标组件（Icon）包含全量图标映射（~1MB），建议配合 `@mp-svg-icons/utils` 裁剪工具使用。
 
-## 组件属性
+## ⚙️ 组件属性
 
 | 属性          | 类型              | 默认值    | 说明                                         |
 | ------------- | ----------------- | --------- | -------------------------------------------- |
@@ -70,6 +70,10 @@ pnpm add @mp-svg-icons/kuaishou
 
 > **注意**：颜色值内部统一转为 `rgb()` 格式后注入 Data URI，因此 HEX 的 `#` 无需手动转义。
 
-## License
+## 📄 License
 
-MIT
+MIT © [anlyyao](https://github.com/anlyyao)
+
+<p align="center">
+  如果这个项目对你有帮助，请给个 ⭐️ 支持一下！
+</p>

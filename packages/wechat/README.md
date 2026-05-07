@@ -2,7 +2,7 @@
 
 微信小程序 SVG 多色图标组件库，支持多品牌图标源（如 TDesign）。
 
-## 特性
+## ✨ 特性
 
 - ✅ **完整色彩支持** — 单色、双色、多色图标完美渲染
 - ✅ **运行时颜色控制** — 通过属性动态修改 `fill` / `stroke` 颜色
@@ -11,7 +11,7 @@
 
 > 💡 **QQ 小程序兼容**：QQ 小程序与微信小程序的组件规范完全一致（`Behavior`、`properties`、`observers` 等 API 相同），可直接安装本包使用，无需额外适配。
 
-## 安装
+## 📥 安装
 
 ```bash
 npm install @mp-svg-icons/wechat
@@ -21,7 +21,7 @@ pnpm add @mp-svg-icons/wechat
 
 安装后在微信开发者工具（或 QQ 小程序开发者工具）中点击「工具」→「构建 npm」。
 
-## 目录结构
+## 📁 目录结构
 
 ```
 @mp-svg-icons/wechat/
@@ -32,7 +32,7 @@ pnpm add @mp-svg-icons/wechat
 │   └── icons.js               # 全量图标 SVG 映射表（~1MB）
 ```
 
-## 使用方式
+## 🚀 使用方式
 
 ### 图标组件（Icon）
 
@@ -61,7 +61,7 @@ pnpm add @mp-svg-icons/wechat
 
 > **提示**：图标组件（Icon）包含全量图标映射（~1MB），建议配合 `@mp-svg-icons/utils` 裁剪工具使用。
 
-## 组件属性
+## ⚙️ 组件属性
 
 | 属性          | 类型              | 默认值    | 说明                                         |
 | ------------- | ----------------- | --------- | -------------------------------------------- |
@@ -74,6 +74,10 @@ pnpm add @mp-svg-icons/wechat
 
 > **注意**：颜色值内部统一转为 `rgb()` 格式后注入 Data URI，因此 HEX 的 `#` 无需手动转义。
 
-## License
+## 📄 License
 
-MIT
+MIT © [anlyyao](https://github.com/anlyyao)
+
+<p align="center">
+  如果这个项目对你有帮助，请给个 ⭐️ 支持一下！
+</p>

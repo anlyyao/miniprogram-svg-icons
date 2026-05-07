@@ -28,6 +28,7 @@ jobs:
         run: |
           PACKAGES_INFO=""
           TO_PUBLISH=""
+          TO_BUILD=""
 
           git fetch origin develop --quiet
 
@@ -40,14 +41,28 @@ jobs:
             RELEASE_VERSION=$(node -p "require('./$PKG_PATH').version")
             DEVELOP_VERSION=$(git show origin/develop:$PKG_PATH 2>/dev/null | node -p "JSON.parse(require('fs').readFileSync('/dev/stdin', 'utf8')).version" 2>/dev/null || echo "")
 
+            VERSION_CHANGED=false
             if [ -z "$DEVELOP_VERSION" ]; then
-              PACKAGES_INFO="$PACKAGES_INFO\n- \`$PKG_NAME@$RELEASE_VERSION\` ✅ will publish (new)"
-              TO_PUBLISH="$TO_PUBLISH $PKG_NAME@$RELEASE_VERSION"
+              VERSION_CHANGED=true
+              CHANGE_REASON="new package"
             elif [ "$RELEASE_VERSION" != "$DEVELOP_VERSION" ]; then
-              PACKAGES_INFO="$PACKAGES_INFO\n- \`$PKG_NAME@$RELEASE_VERSION\` ✅ will publish (from $DEVELOP_VERSION)"
-              TO_PUBLISH="$TO_PUBLISH $PKG_NAME@$RELEASE_VERSION"
+              VERSION_CHANGED=true
+              CHANGE_REASON="from $DEVELOP_VERSION"
+            fi
+
+            if [ "$VERSION_CHANGED" = true ]; then
+              # Check if version already exists on npm
+              HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://registry.npmjs.org/$PKG_NAME/$RELEASE_VERSION")
+
+              if [ "$HTTP_STATUS" = "200" ]; then
+                PACKAGES_INFO="$PACKAGES_INFO\n- \`$PKG_NAME@$RELEASE_VERSION\` ⚠️ version exists on npm ($CHANGE_REASON)"
+              else
+                PACKAGES_INFO="$PACKAGES_INFO\n- \`$PKG_NAME@$RELEASE_VERSION\` ✅ will publish ($CHANGE_REASON)"
+                TO_PUBLISH="$TO_PUBLISH $PKG_NAME@$RELEASE_VERSION"
+                TO_BUILD="$TO_BUILD $PKG"
+              fi
             else
-              PACKAGES_INFO="$PACKAGES_INFO\n- \`$PKG_NAME@$RELEASE_VERSION\` ⏭️ unpublish"
+              PACKAGES_INFO="$PACKAGES_INFO\n- \`$PKG_NAME@$RELEASE_VERSION\` ⏭️ no version change"
             fi
           done
 
@@ -55,19 +70,26 @@ jobs:
           echo -e "$PACKAGES_INFO" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
           echo "to_publish=$(echo $TO_PUBLISH | xargs)" >> $GITHUB_OUTPUT
+          echo "to_build=$(echo $TO_BUILD | xargs)" >> $GITHUB_OUTPUT
 
       - name: Comment on PR
         uses: actions/github-script@v7
         env:
           PACKAGES_INFO: ${{ steps.detect.outputs.packages_info }}
           TO_PUBLISH: ${{ steps.detect.outputs.to_publish }}
+          TO_BUILD: ${{ steps.detect.outputs.to_build }}
         with:
           script: |
             const packagesInfo = process.env.PACKAGES_INFO;
             const toPublish = process.env.TO_PUBLISH;
-            const note = toPublish
-              ? '> ⚠️ Merging this PR will publish packages marked with ✅ to npm.'
-              : '> ℹ️ No packages will be published.';
+            const toBuild = process.env.TO_BUILD;
+
+            let note = '';
+            if (toPublish) {
+              note = '> ⚠️ Merging this PR will:\n> - 🔨 Build packages: `' + toBuild + '`\n> - 📤 Publish packages marked with ✅ to npm.';
+            } else {
+              note = '> ℹ️ No packages will be published (no version changes or versions already exist on npm).';
+            }
             const body = '## 🚀 Release Preview\n\n### Package Status\n' + packagesInfo + '\n\n' + note;
 
             const { data: comments } = await github.rest.issues.listComments({
@@ -135,13 +157,22 @@ jobs:
           node-version: 22
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Install & Build
+      - name: Install dependencies
+        if: steps.detect.outputs.to_publish != ''
+        run: pnpm install
+
+      - name: Build changed packages only
         if: steps.detect.outputs.to_publish != ''
         run: |
-          pnpm install
-          pnpm run build
+          TO_PUBLISH="${{ steps.detect.outputs.to_publish }}"
+          echo "📦 Building changed packages: $TO_PUBLISH"
 
-      - name: Publish to npm
+          for PKG in $TO_PUBLISH; do
+            echo "🔨 Building $PKG..."
+            pnpm run build:$PKG
+          done
+
+      - name: Check npm availability & Publish
         id: publish
         if: steps.detect.outputs.to_publish != ''
         env:
@@ -150,11 +181,23 @@ jobs:
           TO_PUBLISH="${{ steps.detect.outputs.to_publish }}"
           PUBLISHED=""
           FAILED=""
+          SKIPPED=""
 
           for PKG in $TO_PUBLISH; do
             PKG_PATH="packages/$PKG/package.json"
             DIST_PATH="dist/$PKG"
+            PKG_NAME="@mp-svg-icons/$PKG"
             VERSION=$(node -p "require('./$PKG_PATH').version")
+
+            # Check if version already exists on npm
+            echo "🔍 Checking npm for $PKG_NAME@$VERSION..."
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://registry.npmjs.org/$PKG_NAME/$VERSION")
+
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "⏭️ $PKG_NAME@$VERSION already exists on npm, skipping..."
+              SKIPPED="$SKIPPED $PKG_NAME@$VERSION"
+              continue
+            fi
 
             # Determine dist-tag
             case "$VERSION" in
@@ -167,21 +210,26 @@ jobs:
             esac
 
             if [ ! -d "$DIST_PATH" ]; then
-              FAILED="$FAILED @mp-svg-icons/$PKG"
+              echo "❌ Dist path not found for $PKG_NAME"
+              FAILED="$FAILED $PKG_NAME"
               continue
             fi
 
             cd "$DIST_PATH"
+            echo "📤 Publishing $PKG_NAME@$VERSION with tag '$DIST_TAG'..."
             if npm publish --tag "$DIST_TAG" --access public --provenance; then
-              PUBLISHED="$PUBLISHED @mp-svg-icons/$PKG@$VERSION"
+              echo "✅ Successfully published $PKG_NAME@$VERSION"
+              PUBLISHED="$PUBLISHED $PKG_NAME@$VERSION"
             else
-              FAILED="$FAILED @mp-svg-icons/$PKG"
+              echo "❌ Failed to publish $PKG_NAME@$VERSION"
+              FAILED="$FAILED $PKG_NAME"
             fi
             cd - > /dev/null
           done
 
           echo "published=$(echo $PUBLISHED | xargs)" >> $GITHUB_OUTPUT
           echo "failed=$(echo $FAILED | xargs)" >> $GITHUB_OUTPUT
+          echo "skipped=$(echo $SKIPPED | xargs)" >> $GITHUB_OUTPUT
           [ -n "$FAILED" ] && exit 1 || true
 
       - name: Create tags
@@ -199,11 +247,16 @@ jobs:
         run: |
           PUBLISHED="${{ steps.publish.outputs.published }}"
           FAILED="${{ steps.publish.outputs.failed }}"
+          SKIPPED="${{ steps.publish.outputs.skipped }}"
 
           if [ -z "${{ steps.detect.outputs.to_publish }}" ]; then
-            echo "## ℹ️ No Packages Published" >> $GITHUB_STEP_SUMMARY
+            echo "## ℹ️ No Packages to Publish" >> $GITHUB_STEP_SUMMARY
+            echo "No version changes detected." >> $GITHUB_STEP_SUMMARY
           elif [ -n "$FAILED" ]; then
             echo "## ⚠️ Release Partially Failed" >> $GITHUB_STEP_SUMMARY
+          elif [ -z "$PUBLISHED" ] && [ -n "$SKIPPED" ]; then
+            echo "## ℹ️ All Packages Skipped" >> $GITHUB_STEP_SUMMARY
+            echo "All versions already exist on npm." >> $GITHUB_STEP_SUMMARY
           else
             echo "## 🎉 Release Success" >> $GITHUB_STEP_SUMMARY
           fi
@@ -211,6 +264,11 @@ jobs:
           if [ -n "$PUBLISHED" ]; then
             echo "### ✅ Published" >> $GITHUB_STEP_SUMMARY
             for PKG in $PUBLISHED; do echo "- \`$PKG\`" >> $GITHUB_STEP_SUMMARY; done
+          fi
+
+          if [ -n "$SKIPPED" ]; then
+            echo "### ⏭️ Skipped (already on npm)" >> $GITHUB_STEP_SUMMARY
+            for PKG in $SKIPPED; do echo "- \`$PKG\`" >> $GITHUB_STEP_SUMMARY; done
           fi
 
           if [ -n "$FAILED" ]; then

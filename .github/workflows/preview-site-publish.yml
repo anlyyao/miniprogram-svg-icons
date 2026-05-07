@@ -39,10 +39,10 @@ jobs:
       - run: pnpm run generate
 
       - run: pnpm -C web run build
+        env:
+          DEPLOY_DOMAIN: ${{ needs.preview-context.outputs.svg_icons_domain }}
 
-      - run: |
-          export DEPLOY_DOMAIN=${{ needs.preview-context.outputs.svg_icons_domain }}
-          npx surge --project ./dist/web --domain $DEPLOY_DOMAIN --token ${{ secrets.SURGE_TOKEN }}
+      - run: npx surge --project ./dist/web --domain ${{ needs.preview-context.outputs.svg_icons_domain }} --token ${{ secrets.SURGE_TOKEN }}
 
   preview-comment:
     if: ${{ always() && !startsWith(github.head_ref, 'release/') }}

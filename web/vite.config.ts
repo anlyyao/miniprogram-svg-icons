@@ -25,7 +25,7 @@ export default defineConfig({
   build: {
     outDir: '../dist/web',
   },
-  base: '/miniprogram-svg-icons/',
+  base: process.env.DEPLOY_DOMAIN ? '/' : '/miniprogram-svg-icons/',
   server: {
     port: 3000,
     host: true,

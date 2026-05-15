@@ -24,18 +24,14 @@
   <a href="./README.md">简体中文</a> | <a href="./README_EN.md">English</a>
 </p>
 
----
-
 ## ✨ Features
 
 - 🎨 **Full Color Support** — Perfect rendering for single-color, dual-color, and multi-color icons
 - 🔄 **Runtime Color Control** — Dynamically modify `fill` / `stroke` colors via properties
 - 📦 **Zero Runtime Dependencies** — Data URI solution, no additional resource loading required
 - 🌐 **8 Platform Support** — WeChat / QQ / Alipay / Kuaishou / Douyin / Baidu / Xiaohongshu / JD
-- ✂️ **On-demand Tree Shaking** — Built-in CLI tool removes unused icons, reducing size by **99%+**
 - 🏷️ **Multi-brand Support** — Supports multiple icon brands (e.g., TDesign), easily extensible
-
----
+- ✂️ **On-demand Tree Shaking** — Built-in CLI tool removes unused icons, reducing size by **99%+**
 
 ## 📦 Supported Platforms
 
@@ -51,8 +47,6 @@
 | `@mp-svg-icons/utils`       | Utilities                | Icon tree-shaking CLI   |
 
 > 💡 QQ Mini Program can directly use the WeChat Mini Program version.
-
----
 
 ## 🚀 Quick Start
 
@@ -105,8 +99,6 @@ Register in page or component's `*.json` file:
 | `brand`       | `String`          | `tdesign` | Brand name                                  |
 
 > 💡 Color values are internally converted to `rgb()` format before injection into Data URI. No need to manually escape HEX `#`.
-
----
 
 ## ✂️ Icon Tree Shaking
 
@@ -166,8 +158,6 @@ npx mp-svg-icons-clear \
 | After (50 icons)  |   ~21.3 KB    |     50     | **97.9%** |
 | After (100 icons) |   ~42.6 KB    |    100     | **95.7%** |
 
----
-
 ## ⚙️ Technical Solution
 
 <p align="center">
@@ -175,40 +165,6 @@ npx mp-svg-icons-clear \
 </p>
 
 <p align="center"><em>Core Technical Pipeline — Complete chain from SVG source files to mini program image component rendering</em></p>
-
-### Background
-
-Major mini program platforms **do not support inline `<svg>` tags**. Here's a comparison of available solutions:
-
-| Solution                    | Dynamic Color | Multi-color | Performance |  Conclusion  |
-| --------------------------- | :-----------: | :---------: | :---------: | :----------: |
-| `image` referencing SVG     |      ❌       |     ❌      |    Good     | Insufficient |
-| SVG to Base64               |      ❌       |     ❌      |    Good     | Insufficient |
-| CSS filter coloring         |      ⚠️       |     ❌      |    Good     | Insufficient |
-| Canvas rendering            |      ✅       |     ✅      |    Poor     |  High cost   |
-| **Data URI (this project)** |      ✅       |     ✅      |    Good     |  ✅ Adopted  |
-
-### Core Technology: Minimal Encoding
-
-When embedding SVG in Data URI, the encoding method directly affects size:
-
-| Method                              | Size Change | Compatibility |
-| ----------------------------------- | ----------- | ------------- |
-| Base64                              | +35.6%      | Best          |
-| `encodeURIComponent`                | +35.9%      | Good          |
-| **Minimal Encoding (this project)** | **+4.7%**   | Good          |
-
-Minimal encoding only encodes 3 necessary characters:
-
-| Character | Encoding | Reason                     |
-| --------- | -------- | -------------------------- |
-| `#`       | `%23`    | Avoid URL fragment parsing |
-| `<`       | `%3C`    | Avoid HTML tag parsing     |
-| `>`       | `%3E`    | Avoid HTML tag parsing     |
-
-> ⚠️ Baidu and Douyin mini programs' `image` components have issues with double quotes in SVG when parsing Data URI. These platforms additionally perform `"` → `'` replacement.
-
----
 
 ## 📁 Project Structure
 
@@ -243,8 +199,6 @@ miniprogram-svg-icons/
 └── pnpm-workspace.yaml           # pnpm workspace configuration
 ```
 
----
-
 ## 🛠️ Local Development
 
 ### Requirements
@@ -275,19 +229,17 @@ pnpm run build:wechat
 pnpm run build
 ```
 
----
-
 ## 🔌 Extension Guide
 
 ### Add New Brand Icons
 
-1. Place SVG icon files in `resources/{brand}/` (filename is the icon name)
-2. Ensure SVG uses semantic `id` attributes to identify color regions (`fill1`, `fill2`, `stroke1`, `stroke2`)
-3. Run `pnpm run generate` to automatically identify and generate
+- Place SVG icon files in `resources/{brand}/` (filename is the icon name)
+- Ensure SVG uses semantic `id` attributes to identify color regions (`fill1`, `fill2`, `stroke1`, `stroke2`)
+- Run `pnpm run generate` to automatically identify and generate
 
 ### Add New Mini Program Platform
 
-**Step 1** — Add configuration in `scripts/shared.ts` `PLATFORMS`:
+- **Step 1** — Add configuration in `scripts/shared.ts` `PLATFORMS`:
 
 ```typescript
 newplatform: {
@@ -300,7 +252,7 @@ newplatform: {
 },
 ```
 
-**Step 2** — Add build commands in root `package.json`:
+- **Step 2** — Add build commands in root `package.json`:
 
 ```json
 {
@@ -309,9 +261,7 @@ newplatform: {
 }
 ```
 
-**Step 3** — Create package directory `packages/newplatform/`, add `package.json` and register in `pnpm-workspace.yaml`.
-
----
+- **Step 3** — Create package directory `packages/newplatform/`, add `package.json` and register in `pnpm-workspace.yaml`.
 
 ## 🤝 Contributing
 
@@ -321,22 +271,15 @@ Contributions are welcome! Please read the [Contributing Guide](./CONTRIBUTING.m
 - 💡 [Submit Suggestion](https://github.com/anlyyao/miniprogram-svg-icons/issues)
 - 🔀 [Submit PR](https://github.com/anlyyao/miniprogram-svg-icons/pulls)
 
----
-
 ## 🔗 Related Links
 
-- [TDesign Official Icon Library](https://github.com/Tencent/tdesign-icons)
-- [TDesign Mini Program Component Library](https://tdesign.tencent.com/miniprogram/overview)
+- [TDesign Official Icon Library](https://tdesign.tencent.com/icons)
 - [Demo Project Source](https://github.com/anlyyao/miniprogram-svg-icon-demo)
-- [Technical Sharing Document](./docs/TECH_SHARING.md)
-
----
+- [Technical Sharing](./docs/TECH_SHARING.md)
 
 ## 📄 License
 
 [MIT](./LICENSE) © [anlyyao](https://github.com/anlyyao)
-
----
 
 <p align="center">
   If this project helps you, please give it a ⭐️!

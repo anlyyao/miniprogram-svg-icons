@@ -30,8 +30,8 @@
 - 🔄 **运行时颜色控制** — 通过属性动态修改 `fill` / `stroke` 颜色
 - 📦 **零依赖运行** — Data URI 方案，无需额外资源加载
 - 🌐 **8 大平台适配** — 微信 / QQ / 支付宝 / 快手 / 抖音 / 百度 / 小红书 / 京东
-- ✂️ **按需裁剪** — 内置 CLI 工具，移除未使用图标，体积减少 **99%+**
 - 🏷️ **多品牌支持** — 支持多品牌图标源（如 TDesign），易扩展
+- ✂️ **按需裁剪** — 内置 CLI 工具，移除未使用图标，体积减少 **99%+**
 
 ## 📦 支持的平台
 
@@ -166,38 +166,6 @@ npx mp-svg-icons-clear \
 
 <p align="center"><em>核心技术路线 — 从 SVG 源文件到小程序 image 组件渲染的完整链路</em></p>
 
-### 背景问题
-
-各大平台小程序**不支持直接内联 `<svg>` 标签**，可选方案对比如下：
-
-| 方案                   | 动态改色 | 多色支持 | 性能 |  结论   |
-| ---------------------- | :------: | :------: | :--: | :-----: |
-| `image` 引用 SVG       |    ❌    |    ❌    |  好  | 不满足  |
-| SVG 转 Base64          |    ❌    |    ❌    |  好  | 不满足  |
-| CSS filter 改色        |    ⚠️    |    ❌    |  好  | 不满足  |
-| Canvas 绘制            |    ✅    |    ✅    |  差  | 成本高  |
-| **Data URI（本项目）** |    ✅    |    ✅    |  好  | ✅ 采用 |
-
-### 核心技术：最小化编码
-
-将 SVG 嵌入 Data URI 时，编码方式直接影响体积：
-
-| 方案                     | 体积变化  | 兼容性 |
-| ------------------------ | --------- | ------ |
-| Base64                   | +35.6%    | 最好   |
-| `encodeURIComponent`     | +35.9%    | 好     |
-| **最小化编码（本项目）** | **+4.7%** | 好     |
-
-最小化编码仅编码 3 个必要字符：
-
-| 字符 | 编码  | 说明               |
-| ---- | ----- | ------------------ |
-| `#`  | `%23` | 避免 URL 片段解析  |
-| `<`  | `%3C` | 避免 HTML 标签解析 |
-| `>`  | `%3E` | 避免 HTML 标签解析 |
-
-> ⚠️ 百度、抖音小程序的 `image` 组件在解析 Data URI 时，SVG 中的双引号会导致错误。因此这两个平台额外进行 `"` → `'` 替换处理。
-
 ## 📁 项目结构
 
 ```
@@ -265,13 +233,13 @@ pnpm run build
 
 ### 新增品牌图标
 
-1. 在 `resources/{brand}/` 下放置 SVG 图标文件（文件名为图标名）
-2. 确保 SVG 中使用语义化 `id` 标识颜色区域（`fill1`、`fill2`、`stroke1`、`stroke2`）
-3. 运行 `pnpm run generate` 即可自动识别并生成
+- 在 `resources/{brand}/` 下放置 SVG 图标文件（文件名为图标名）
+- 确保 SVG 中使用语义化 `id` 标识颜色区域（`fill1`、`fill2`、`stroke1`、`stroke2`）
+- 运行 `pnpm run generate` 即可自动识别并生成
 
 ### 新增小程序平台
 
-**步骤 1** — 在 `scripts/shared.ts` 的 `PLATFORMS` 中添加配置：
+- **步骤 1** — 在 `scripts/shared.ts` 的 `PLATFORMS` 中添加配置：
 
 ```typescript
 newplatform: {
@@ -284,7 +252,7 @@ newplatform: {
 },
 ```
 
-**步骤 2** — 在根 `package.json` 添加构建命令：
+- **步骤 2** — 在根 `package.json` 添加构建命令：
 
 ```json
 {
@@ -293,7 +261,7 @@ newplatform: {
 }
 ```
 
-**步骤 3** — 创建包目录 `packages/newplatform/`，添加 `package.json` 并在 `pnpm-workspace.yaml` 中注册。
+- **步骤 3** — 创建包目录 `packages/newplatform/`，添加 `package.json` 并在 `pnpm-workspace.yaml` 中注册。
 
 ## 🤝 贡献
 
@@ -305,10 +273,9 @@ newplatform: {
 
 ## 🔗 相关链接
 
-- [TDesign 官方图标库](https://github.com/Tencent/tdesign-icons)
-- [TDesign 小程序组件库](https://tdesign.tencent.com/miniprogram/overview)
+- [TDesign 官方图标库](https://tdesign.tencent.com/icons)
 - [演示项目源码](https://github.com/anlyyao/miniprogram-svg-icon-demo)
-- [技术分享文档](./docs/TECH_SHARING.md)
+- [技术分享](./docs/TECH_SHARING.md)
 
 ## 📄 License
 

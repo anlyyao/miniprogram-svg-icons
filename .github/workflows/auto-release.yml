@@ -147,27 +147,18 @@ jobs:
           echo "to_publish=$(echo $TO_PUBLISH | xargs)" >> $GITHUB_OUTPUT
 
       - name: Setup pnpm
-        if: steps.detect.outputs.to_publish != ''
         uses: pnpm/action-setup@v4
 
       - name: Setup Node.js
-        if: steps.detect.outputs.to_publish != ''
         uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 24
           registry-url: 'https://registry.npmjs.org'
 
-      # npm Trusted Publishing requires npm >= 11.5.1
-      - name: Upgrade npm for Trusted Publishing
-        if: steps.detect.outputs.to_publish != ''
-        run: npm install -g npm@latest
-
       - name: Install dependencies
-        if: steps.detect.outputs.to_publish != ''
         run: pnpm install
 
       - name: Build changed packages only
-        if: steps.detect.outputs.to_publish != ''
         run: |
           TO_PUBLISH="${{ steps.detect.outputs.to_publish }}"
           echo "📦 Building changed packages: $TO_PUBLISH"
@@ -179,7 +170,6 @@ jobs:
 
       - name: Check npm availability & Publish
         id: publish
-        if: steps.detect.outputs.to_publish != ''
         run: |
           TO_PUBLISH="${{ steps.detect.outputs.to_publish }}"
           PUBLISHED=""

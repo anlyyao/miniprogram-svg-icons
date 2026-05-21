@@ -77,26 +77,23 @@ Register in page or component's `*.json` file:
 ### Use Icons
 
 ```xml
-<!-- Basic usage -->
 <t-icon name="add" size="{{48}}" />
 
-<!-- Custom colors -->
-<t-icon name="close" size="{{32}}" stroke-color="#0052D9" fill-color="#E7EFFF" />
+<t-icon name="send" size="{{32}}" stroke-color="#0766ff" fill-color="#e70d0d" />
 
-<!-- Specify brand -->
-<t-icon name="logo" size="{{64}}" brand="tdesign" />
+<t-icon name="robot-2" size="{{32}}" stroke-color="{{['#0052D9', '#e40a23']}}" fill-color="{{['#e1e50f', '#632bc9']}}" />
 ```
 
 ### Component Properties
 
-| Property      | Type              | Default   | Description                                 |
-| ------------- | ----------------- | --------- | ------------------------------------------- |
-| `name`        | `String`          | —         | Icon name (required)                        |
-| `size`        | `Number / String` | `24`      | Icon size (px)                              |
-| `strokeColor` | `String`          | -         | Stroke color, supports HEX / rgb() / rgba() |
-| `fillColor`   | `String`          | -         | Fill color, supports HEX / rgb() / rgba()   |
-| `strokeWidth` | `String`          | `2`       | Stroke width                                |
-| `brand`       | `String`          | `tdesign` | Brand name                                  |
+| Property    | Type              | Default | Description                                 |
+| ----------- | ----------------- | ------- | ------------------------------------------- |
+| name        | String            | —       | Icon name (required)                        |
+| size        | Number / String   | 24      | Icon size (px)                              |
+| strokeColor | String / String[] | -       | Stroke color, supports HEX / rgb() / rgba() |
+| fillColor   | String / String[] | -       | Fill color, supports HEX / rgb() / rgba()   |
+| strokeWidth | Number            | 2       | Stroke width                                |
+| brand       | String            | tdesign | Brand name                                  |
 
 > 💡 Color values are internally converted to `rgb()` format before injection into Data URI. No need to manually escape HEX `#`.
 

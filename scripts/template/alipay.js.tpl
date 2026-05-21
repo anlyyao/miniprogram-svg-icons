@@ -5,7 +5,7 @@ Component({
     name: '',
     brand: 'tdesign',
     size: 24,
-    strokeWidth: '2',
+    strokeWidth: 2,
     strokeColor: null,
     fillColor: null,
   },

@@ -51,20 +51,21 @@ jobs:
       - miniprogram-svg-icons
     runs-on: ubuntu-latest
     steps:
-      - name: jobs report
-        id: report
+      - name: maintain preview comment
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const pr_id = ${{ needs.preview-context.outputs.pr_id }};
             const svg_icons_domain = "${{ needs.preview-context.outputs.svg_icons_domain }}";
+            const bodyInclude = '<!-- AUTO_PREVIEW_HOOK -->';
 
             const { data: { jobs } } = await github.rest.actions.listJobsForWorkflowRun({
               owner: context.repo.owner,
               repo: context.repo.repo,
               run_id: context.runId,
-              per_page: 100
-            })
+              per_page: 100,
+            });
 
             const preview = {
               "miniprogram-svg-icons": { status: "", report_url: "" },
@@ -73,7 +74,7 @@ jobs:
             const preview_failure = `<img width="300" alt="失败" src="https://user-images.githubusercontent.com/5378891/75333447-1e63a280-58c1-11ea-975d-235367fd1522.png" />`;
             jobs
               .filter((job) => job.name === "miniprogram-svg-icons")
-              .map((job) => {
+              .forEach((job) => {
                 preview["miniprogram-svg-icons"].status = preview_failure;
                 preview["miniprogram-svg-icons"].report_url = job.html_url;
 
@@ -85,21 +86,37 @@ jobs:
 
             const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
 
-            const comment = `
-              # Miniprogram SVG Icons Preview [Open](${runUrl})
-              | Site | Preview |
-              | --------- | :--: |
-              | miniprogram-svg-icons | [${preview["miniprogram-svg-icons"].status}](${preview["miniprogram-svg-icons"].report_url}) |
+            const body = [
+              `# Miniprogram SVG Icons Preview [Open](${runUrl})`,
+              `| Site | Preview |`,
+              `| --------- | :--: |`,
+              `| miniprogram-svg-icons | [${preview["miniprogram-svg-icons"].status}](${preview["miniprogram-svg-icons"].report_url}) |`,
+              ``,
+              bodyInclude,
+            ].join('\n');
 
-              <!-- AUTO_PREVIEW_HOOK -->
-              `;
+            // 查找已有的预览评论（按 body-include 匹配），有则更新，无则新建
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr_id,
+              per_page: 100,
+            });
 
-            core.setOutput('comment', comment);
+            const existing = comments.find((c) => c.body && c.body.includes(bodyInclude));
 
-      - name: comment
-        uses: actions-cool/maintain-one-comment@v3.2.1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          number: ${{ needs.preview-context.outputs.pr_id }}
-          body: ${{ steps.report.outputs.comment }}
-          body-include: '<!-- AUTO_PREVIEW_HOOK -->'
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr_id,
+                body,
+              });
+            }

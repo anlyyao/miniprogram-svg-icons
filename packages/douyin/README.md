@@ -52,21 +52,24 @@ pnpm add @mp-svg-icons/douyin
 
 ```xml
 <t-icon name="add" size="{{48}}" />
-<t-icon name="close" size="{{32}}" stroke-color="#0052D9" fill-color="#E7EFFF" />
+
+<t-icon name="send" size="{{32}}" stroke-color="#0766ff" fill-color="#e70d0d" />
+
+<t-icon name="robot-2" size="{{32}}" stroke-color="{{['#0052D9', '#e40a23']}}" fill-color="{{['#e1e50f', '#632bc9']}}" />
 ```
 
 > **提示**：图标组件（Icon）包含全量图标映射（~1MB），建议配合 `@mp-svg-icons/utils` 裁剪工具使用。
 
 ## ⚙️ 组件属性
 
-| 属性          | 类型              | 默认值    | 说明                                         |
-| ------------- | ----------------- | --------- | -------------------------------------------- |
-| `size`        | `Number / String` | `24`      | 图标尺寸（px）                               |
-| `strokeColor` | `String`          | —         | 描边颜色，支持 `rgb()` / `rgba()` / HEX 格式 |
-| `fillColor`   | `String`          | —         | 填充颜色，支持 `rgb()` / `rgba()` / HEX 格式 |
-| `strokeWidth` | `String`          | `2`       | 描边宽度                                     |
-| `name`        | `String`          | —         | 图标名称                                     |
-| `brand`       | `String`          | `tdesign` | 品牌名称                                     |
+| 属性        | 类型              | 默认值  | 说明                                         |
+| ----------- | ----------------- | ------- | -------------------------------------------- |
+| size        | Number / String   | 24      | 图标尺寸（px）                               |
+| strokeColor | String / String[] | —       | 描边颜色，支持 `rgb()` / `rgba()` / HEX 格式 |
+| fillColor   | String / String[] | —       | 填充颜色，支持 `rgb()` / `rgba()` / HEX 格式 |
+| strokeWidth | Number            | 2       | 描边宽度                                     |
+| name        | String            | —       | 图标名称                                     |
+| brand       | String            | tdesign | 品牌名称                                     |
 
 > **注意**：颜色值内部统一转为 `rgb()` 格式后注入 Data URI，因此 HEX 的 `#` 无需手动转义。
 

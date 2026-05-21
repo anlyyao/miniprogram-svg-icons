@@ -5,7 +5,7 @@ Component({
     name: { type: String, value: '' },
     brand: { type: String, value: 'tdesign' },
     size: { type: null, value: 24 },
-    strokeWidth: { type: String, value: 2 },
+    strokeWidth: { type: Number, value: 2 },
     strokeColor: { type: null },
     fillColor: { type: null },
   },

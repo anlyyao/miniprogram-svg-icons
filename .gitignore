@@ -35,3 +35,5 @@ packages/xiaohongshu/*
 # auto-generated files
 web/auto-imports.d.ts
 web/components.d.ts
+
+example/miniprogram_npm

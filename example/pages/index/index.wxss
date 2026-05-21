@@ -1,0 +1,217 @@
+/**index.wxss**/
+
+/* 页面布局 */
+page {
+  height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.page {
+  height: 100vh;
+  position: relative;
+}
+
+/* ====== 图标展示区域 ====== */
+.icon-area {
+  height: 100vh;
+  padding: 24rpx 24rpx 120rpx;
+  box-sizing: border-box;
+}
+
+/* 分类区块 */
+.category-section {
+  margin-bottom: 32rpx;
+}
+
+.category-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16rpx;
+  padding: 12rpx 16rpx;
+  background-color: #fff;
+  border-radius: 12rpx;
+  border-left: 6rpx solid #0052d9;
+}
+
+/* 图标网格 */
+.icon-grid {
+  display: flex;
+  flex-wrap: wrap;
+  background-color: #fff;
+  border-radius: 12rpx;
+  padding: 12rpx 8rpx;
+}
+
+.icon-item {
+  width: 25%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16rpx 8rpx;
+  box-sizing: border-box;
+}
+
+.icon-name {
+  font-size: 18rpx;
+  color: #999;
+  margin-top: 8rpx;
+  text-align: center;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 加载更多提示 */
+.load-more-tip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16rpx;
+  padding: 32rpx 0 48rpx;
+  color: #999;
+  font-size: 24rpx;
+}
+
+/* ====== 右侧浮动配置按钮 ====== */
+.fab-btn {
+  position: fixed;
+  right: 32rpx;
+  bottom: 200rpx;
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  background-color: #0052d9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 16rpx rgba(0, 82, 217, 0.4);
+  z-index: 100;
+}
+
+.fab-btn:active {
+  transform: scale(0.92);
+  opacity: 0.9;
+}
+
+/* ====== 右侧操作面板 ====== */
+.operations-panel {
+  width: 620rpx;
+  height: 100vh;
+  padding: 40rpx 32rpx;
+  box-sizing: border-box;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.operations-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #181818;
+  margin-bottom: 40rpx;
+  padding-bottom: 20rpx;
+  border-bottom: 1rpx solid #e7e7e7;
+}
+
+/* 操作区块 */
+.op-section {
+  margin-bottom: 40rpx;
+}
+
+.op-label {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #181818;
+  margin-bottom: 16rpx;
+}
+
+/* slider 当前值提示 */
+.slider-value {
+  font-size: 22rpx;
+  color: #999;
+  margin-top: 8rpx;
+}
+
+/* ====== 颜色触发容器 ====== */
+.color-trigger-row {
+  display: flex;
+  gap: 24rpx;
+}
+
+/* 颜色选择器项容器 - 固定宽度 */
+.color-trigger-item {
+  width: 260rpx;
+}
+
+/* 颜色标签（颜色1、颜色2）*/
+.color-trigger-label {
+  display: block;
+  font-size: 24rpx;
+  color: #666;
+  margin-bottom: 12rpx;
+}
+
+.color-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 16rpx 20rpx;
+  background-color: #f5f5f5;
+  border-radius: 12rpx;
+  border: 2rpx solid #e7e7e7;
+  box-sizing: border-box;
+}
+
+.color-trigger:active {
+  background-color: #ebebeb;
+}
+
+.color-trigger-swatch {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 8rpx;
+  border: 2rpx solid #dcdcdc;
+  flex-shrink: 0;
+  /* 棋盘格背景（用于展示透明色）*/
+  background-image:
+    linear-gradient(45deg, #ccc 25%, transparent 25%),
+    linear-gradient(-45deg, #ccc 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #ccc 75%),
+    linear-gradient(-45deg, transparent 75%, #ccc 75%);
+  background-size: 12rpx 12rpx;
+  background-position: 0 0, 0 6rpx, 6rpx -6rpx, -6rpx 0;
+}
+
+.color-trigger-text {
+  font-size: 24rpx;
+  color: #666;
+  margin-left: 16rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 重置按钮区域 - 撑满剩余空间 */
+.op-reset {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  margin-top: 48rpx;
+  padding-top: 24rpx;
+  border-top: 1rpx solid #e7e7e7;
+}
+
+/* slider 包裹容器 - 阻止滚动冲突 */
+.slider-wrapper {
+  padding: 16rpx 0;
+}
+
+.op-slider {
+  margin: 0 16rpx;
+}

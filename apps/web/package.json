@@ -3,6 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "homepage": "https://github.com/anlyyao/miniprogram-svg-icons#readme",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",

@@ -24,6 +24,12 @@
   <a href="./README.md">简体中文</a> | <a href="./README_EN.md">English</a>
 </p>
 
+## 👀 预览
+
+多色图标示例小程序，请使用微信扫码预览 ↓
+
+<img width="260" src="./example/qrcode.jpg" />
+
 ## ✨ 特性
 
 - 🎨 **完整色彩支持** — 单色、双色、多色图标完美渲染
@@ -35,16 +41,16 @@
 
 ## 📦 支持的平台
 
-| 包名                        | 平台         | 备注             |
-| --------------------------- | ------------ | ---------------- |
-| `@mp-svg-icons/wechat`      | 微信小程序   | 基准平台         |
-| `@mp-svg-icons/alipay`      | 支付宝小程序 | 独立 API 风格    |
-| `@mp-svg-icons/kuaishou`    | 快手小程序   |                  |
-| `@mp-svg-icons/douyin`      | 抖音小程序   | 需额外处理双引号 |
-| `@mp-svg-icons/baidu`       | 百度小程序   | 需额外处理双引号 |
-| `@mp-svg-icons/xiaohongshu` | 小红书小程序 |                  |
-| `@mp-svg-icons/jd`          | 京东小程序   |                  |
-| `@mp-svg-icons/utils`       | 工具集       | 图标裁剪 CLI     |
+| 包名                                                                                 | 平台         | 备注             |
+| ------------------------------------------------------------------------------------ | ------------ | ---------------- |
+| [@mp-svg-icons/wechat](https://www.npmjs.com/package/@mp-svg-icons/wechat)           | 微信小程序   | 基准平台         |
+| [@mp-svg-icons/alipay](https://www.npmjs.com/package/@mp-svg-icons/alipay)           | 支付宝小程序 | 独立 API 风格    |
+| [@mp-svg-icons/kuaishou](https://www.npmjs.com/package/@mp-svg-icons/kuaishou)       | 快手小程序   |                  |
+| [@mp-svg-icons/douyin](https://www.npmjs.com/package/@mp-svg-icons/douyin)           | 抖音小程序   | 需额外处理双引号 |
+| [@mp-svg-icons/baidu](https://www.npmjs.com/package/@mp-svg-icons/baidu)             | 百度小程序   | 需额外处理双引号 |
+| [@mp-svg-icons/xiaohongshu](https://www.npmjs.com/package/@mp-svg-icons/xiaohongshu) | 小红书小程序 |                  |
+| [@mp-svg-icons/jd](https://www.npmjs.com/package/@mp-svg-icons/jd)                   | 京东小程序   |                  |
+| [@mp-svg-icons/utils](https://www.npmjs.com/package/@mp-svg-icons/utils)             | 工具集       | 图标裁剪 CLI     |
 
 > 💡 QQ 小程序可直接使用微信小程序版本。
 
@@ -213,18 +219,17 @@ cd miniprogram-svg-icons
 # 安装依赖
 pnpm install
 
-# 生成单个平台
-pnpm run generate:wechat
-
-# 生成所有平台
-pnpm run generate
-
-# 构建发布产物（单个平台）
-pnpm run build:wechat
-
-# 构建所有平台
-pnpm run build
 ```
+
+### 在开发者工具中预览
+
+#### 导入项目
+
+打开[微信开发者工具](https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html)，导入 example 文件夹
+
+#### 构建 npm
+
+在微信开发者工具中，点击菜单栏：**工具 → 构建 npm**，即可预览效果。
 
 ## 🔌 扩展指南
 
@@ -271,8 +276,6 @@ newplatform: {
 ## 🔗 相关链接
 
 - [TDesign 官方图标库](https://tdesign.tencent.com/icons)
-- [演示项目源码](https://github.com/anlyyao/miniprogram-svg-icon-demo)
-- [技术分享](./docs/TECH_SHARING.md)
 
 ## 📄 License
 

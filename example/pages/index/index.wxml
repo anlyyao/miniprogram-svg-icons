@@ -1,0 +1,196 @@
+<!--index.wxml-->
+<view class="page">
+  <!-- 右侧浮动配置按钮 -->
+  <t-fab icon="setting" bind:click="onShowPopup" style="z-index: 2;"></t-fab>
+
+  <!-- 图标展示区域 -->
+  <scroll-view
+    class="icon-area"
+    scroll-y
+    enhanced
+    enable-flex
+    show-scrollbar="{{false}}"
+    lower-threshold="{{200}}"
+    bindscrolltolower="onScrollToLower"
+  >
+    <block wx:for="{{iconCategories}}" wx:key="key">
+      <view class="category-section">
+        <view class="category-title">{{item.labelCN}}（{{item.key}}）</view>
+        <view class="icon-grid">
+          <view class="icon-item" wx:for="{{item.icons}}" wx:for-item="iconName" wx:key="*this">
+            <t-icon
+              name="{{iconName}}"
+              size="{{iconSize}}"
+              stroke-width="{{strokeWidth}}"
+              stroke-color="{{iconStrokeColor}}"
+              fill-color="{{iconFillColor}}"
+            />
+            <text class="icon-name">{{iconName}}</text>
+          </view>
+        </view>
+      </view>
+    </block>
+    <!-- 加载提示 -->
+    <view class="load-more-tip" wx:if="{{isLoadingMore}}">
+      <t-loading theme="circular" size="40rpx" />
+      <text>加载中...</text>
+    </view>
+    <view class="load-more-tip" wx:elif="{{!hasMoreCategories && iconCategories.length > 0}}">
+      <text>已加载全部分类</text>
+    </view>
+  </scroll-view>
+
+
+  <!-- 右侧操作面板 -->
+  <t-popup
+    visible="{{popupVisible}}"
+    placement="right"
+    bind:visible-change="onPopupVisibleChange"
+    show-overlay="{{true}}"
+    close-on-overlay-click="{{true}}"
+  >
+    <scroll-view
+      wx:if="{{popupVisible}}"
+      class="operations-panel"
+      scroll-y
+      enhanced
+      show-scrollbar="{{false}}"
+    >
+      <view class="operations-title">图标配置</view>
+
+      <!-- 图标分类（描边 / 填充）- 影响页面图标展示 -->
+      <view class="op-section">
+        <view class="op-label">图标分类</view>
+        <t-radio-group value="{{iconCategory}}" bind:change="onIconCategoryChange">
+          <t-radio value="outline" label="描边（outline）" />
+          <t-radio value="filled" label="填充（filled）" />
+        </t-radio-group>
+      </view>
+
+      <!-- ========== 描边图标(outline)的配置选项 ========== -->
+      <block wx:if="{{iconCategory === 'outline'}}">
+        <!-- 线条粗细 -->
+        <view class="op-section">
+          <view class="op-label">线条粗细</view>
+          <view class="slider-wrapper" catch:touchmove="catchTouchMove">
+            <slider
+              class="op-slider"
+              value="{{strokeWidth}}"
+              bindchange="onStrokeWidthChange"
+              min="0.5"
+              max="2.5"
+              step="0.5"
+              show-value
+              block-size="16"
+              activeColor="#0052D9"
+              block-color="#0052D9"
+            />
+          </view>
+        </view>
+
+        <!-- 图标填充类型（描边 / 描边+填充）- 仅影响操作面板中颜色选项显示 -->
+        <view class="op-section">
+          <view class="op-label">图标填充类型</view>
+          <t-radio-group value="{{panelIconType}}" bind:change="onPanelIconTypeChange">
+            <t-radio value="outline" label="描边图标" />
+            <t-radio value="outlineFilled" label="描边+填充图标" />
+          </t-radio-group>
+        </view>
+
+        <!-- 图标颜色：描边图标显示单色/双色，描边+填充图标显示双色/多色 -->
+        <view class="op-section">
+          <view class="op-label">图标颜色</view>
+          <t-radio-group value="{{colorType}}" bind:change="onColorTypeChange">
+            <block wx:if="{{panelIconType === 'outline'}}">
+              <t-radio value="single" label="单色" />
+              <t-radio value="double" label="双色" />
+            </block>
+            <block wx:else>
+              <t-radio value="double" label="双色" />
+              <t-radio value="multiple" label="多色" />
+            </block>
+          </t-radio-group>
+        </view>
+
+        <!-- 填充颜色（仅面板图标类型为 描边+填充 时显示）-->
+        <view class="op-section" wx:if="{{panelIconType === 'outlineFilled'}}">
+          <view class="op-label">填充颜色</view>
+          <view class="color-trigger-row">
+            <!-- 填充颜色1 -->
+            <view class="color-trigger-item">
+              <text class="color-trigger-label" wx:if="{{colorType === 'multiple'}}">填充颜色1</text>
+              <view class="color-trigger" bind:tap="onShowFillColor1Picker">
+                <view class="color-trigger-swatch" style="background-color: {{fillColor1}}" />
+                <text class="color-trigger-text">{{fillColor1}}</text>
+              </view>
+            </view>
+            <!-- 填充颜色2（多色时显示）-->
+            <view class="color-trigger-item" wx:if="{{colorType === 'multiple'}}">
+              <text class="color-trigger-label">填充颜色2</text>
+              <view class="color-trigger" bind:tap="onShowFillColor2Picker">
+                <view class="color-trigger-swatch" style="background-color: {{fillColor2}}" />
+                <text class="color-trigger-text">{{fillColor2}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 线条颜色 -->
+        <view class="op-section">
+          <view class="op-label">线条颜色</view>
+          <view class="color-trigger-row">
+            <!-- 线条颜色1 -->
+            <view class="color-trigger-item">
+              <text class="color-trigger-label" wx:if="{{(panelIconType === 'outline' && colorType === 'double') || (panelIconType === 'outlineFilled' && colorType === 'multiple')}}">线条颜色1</text>
+              <view class="color-trigger" bind:tap="onShowStrokeColor1Picker">
+                <view class="color-trigger-swatch" style="background-color: {{strokeColor1}}" />
+                <text class="color-trigger-text">{{strokeColor1}}</text>
+              </view>
+            </view>
+            <!-- 线条颜色2（描边图标双色、描边+填充图标多色时显示）-->
+            <view class="color-trigger-item" wx:if="{{(panelIconType === 'outline' && colorType === 'double') || (panelIconType === 'outlineFilled' && colorType === 'multiple')}}">
+              <text class="color-trigger-label">线条颜色2</text>
+              <view class="color-trigger" bind:tap="onShowStrokeColor2Picker">
+                <view class="color-trigger-swatch" style="background-color: {{strokeColor2}}" />
+                <text class="color-trigger-text">{{strokeColor2}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </block>
+
+      <!-- ========== 填充图标(filled)的配置选项 ========== -->
+      <block wx:else>
+        <!-- 填充颜色（填充图标只有1种填充颜色）-->
+        <view class="op-section">
+          <view class="op-label">填充颜色</view>
+          <view class="color-trigger-row">
+            <view class="color-trigger-item">
+              <view class="color-trigger" bind:tap="onShowFillColor1Picker">
+                <view class="color-trigger-swatch" style="background-color: {{fillColor1}}" />
+                <text class="color-trigger-text">{{fillColor1}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </block>
+
+      <!-- 重置按钮 -->
+      <view class="op-section op-reset">
+        <t-button theme="light" block bind:tap="onResetConfig">重置</t-button>
+      </view>
+    </scroll-view>
+  </t-popup>
+
+  <!-- ColorPicker 弹窗（usePopup 模式，从底部弹出）-->
+  <t-color-picker
+    use-popup="{{true}}"
+    popup-props="{{colorPickerPopupProps}}"
+    visible="{{colorPickerVisible}}"
+    value="{{activeColorValue}}"
+    format="HEX"
+    type="multiple"
+    bind:change="onColorPickerChange"
+    bind:close="onColorPickerClose"
+  />
+</view>

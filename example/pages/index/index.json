@@ -1,0 +1,11 @@
+{
+  "usingComponents": {
+    "t-icon": "@mp-svg-icons/wechat/icon",
+    "t-popup": "tdesign-miniprogram/popup/popup",
+    "t-fab": "tdesign-miniprogram/fab/fab",
+    "t-radio-group": "tdesign-miniprogram/radio-group/radio-group",
+    "t-radio": "tdesign-miniprogram/radio/radio",
+    "t-button": "tdesign-miniprogram/button/button",
+    "t-color-picker": "tdesign-miniprogram/color-picker/color-picker"
+  }
+}

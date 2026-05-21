@@ -24,6 +24,12 @@
   <a href="./README.md">简体中文</a> | <a href="./README_EN.md">English</a>
 </p>
 
+## 👀 Preview
+
+Multi-color icon example mini program, please scan with WeChat to preview ↓
+
+<img width="260" src="./example/qrcode.jpg" />
+
 ## ✨ Features
 
 - 🎨 **Full Color Support** — Perfect rendering for single-color, dual-color, and multi-color icons
@@ -35,16 +41,16 @@
 
 ## 📦 Supported Platforms
 
-| Package                     | Platform                 | Notes                   |
-| --------------------------- | ------------------------ | ----------------------- |
-| `@mp-svg-icons/wechat`      | WeChat Mini Program      | Reference platform      |
-| `@mp-svg-icons/alipay`      | Alipay Mini Program      | Independent API style   |
-| `@mp-svg-icons/kuaishou`    | Kuaishou Mini Program    |                         |
-| `@mp-svg-icons/douyin`      | Douyin Mini Program      | Requires quote escaping |
-| `@mp-svg-icons/baidu`       | Baidu Mini Program       | Requires quote escaping |
-| `@mp-svg-icons/xiaohongshu` | Xiaohongshu Mini Program |                         |
-| `@mp-svg-icons/jd`          | JD Mini Program          |                         |
-| `@mp-svg-icons/utils`       | Utilities                | Icon tree-shaking CLI   |
+| Package                                                                              | Platform                 | Notes                   |
+| ------------------------------------------------------------------------------------ | ------------------------ | ----------------------- |
+| [@mp-svg-icons/wechat](https://www.npmjs.com/package/@mp-svg-icons/wechat)           | WeChat Mini Program      | Reference platform      |
+| [@mp-svg-icons/alipay](https://www.npmjs.com/package/@mp-svg-icons/alipay)           | Alipay Mini Program      | Independent API style   |
+| [@mp-svg-icons/kuaishou](https://www.npmjs.com/package/@mp-svg-icons/kuaishou)       | Kuaishou Mini Program    |                         |
+| [@mp-svg-icons/douyin](https://www.npmjs.com/package/@mp-svg-icons/douyin)           | Douyin Mini Program      | Requires quote escaping |
+| [@mp-svg-icons/baidu](https://www.npmjs.com/package/@mp-svg-icons/baidu)             | Baidu Mini Program       | Requires quote escaping |
+| [@mp-svg-icons/xiaohongshu](https://www.npmjs.com/package/@mp-svg-icons/xiaohongshu) | Xiaohongshu Mini Program |                         |
+| [@mp-svg-icons/jd](https://www.npmjs.com/package/@mp-svg-icons/jd)                   | JD Mini Program          |                         |
+| [@mp-svg-icons/utils](https://www.npmjs.com/package/@mp-svg-icons/utils)             | Utilities                | Icon tree-shaking CLI   |
 
 > 💡 QQ Mini Program can directly use the WeChat Mini Program version.
 
@@ -213,18 +219,17 @@ cd miniprogram-svg-icons
 # Install dependencies
 pnpm install
 
-# Generate single platform
-pnpm run generate:wechat
-
-# Generate all platforms
-pnpm run generate
-
-# Build release output (single platform)
-pnpm run build:wechat
-
-# Build all platforms
-pnpm run build
 ```
+
+### Preview in Developer Tools
+
+#### Import Project
+
+Open [WeChat DevTools](https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html), and import the `example` folder.
+
+#### Build npm
+
+In WeChat DevTools, click the menu: **Tools → Build npm**, then you can preview the effect.
 
 ## 🔌 Extension Guide
 
@@ -271,8 +276,6 @@ Contributions are welcome! Please read the [Contributing Guide](./CONTRIBUTING.m
 ## 🔗 Related Links
 
 - [TDesign Official Icon Library](https://tdesign.tencent.com/icons)
-- [Demo Project Source](https://github.com/anlyyao/miniprogram-svg-icon-demo)
-- [Technical Sharing](./docs/TECH_SHARING.md)
 
 ## 📄 License
 

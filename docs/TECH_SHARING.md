@@ -6,8 +6,6 @@
 
 ---
 
-![demo](./images/demo.gif)
-
 ## 1. 项目概述
 
 ### 1.1 项目特性
@@ -19,28 +17,28 @@
 - ✅ **多品牌支持** — 支持多品牌图标源（如 TDesign），易扩展
 - ✅ **按需裁剪** — 内置 CLI 工具，移除未使用图标减小包体积
 
-### 1.2 支持平台
+### 1.2 支持的平台
 
-| 包名                        | 平台         | 备注             |
-| :-------------------------- | :----------- | :--------------- |
-| `@mp-svg-icons/wechat`      | 微信小程序   | 基准平台         |
-| `@mp-svg-icons/alipay`      | 支付宝小程序 | 独立 API 风格    |
-| `@mp-svg-icons/kuaishou`    | 快手小程序   | —                |
-| `@mp-svg-icons/douyin`      | 抖音小程序   | 需额外处理双引号 |
-| `@mp-svg-icons/baidu`       | 百度小程序   | 需额外处理双引号 |
-| `@mp-svg-icons/xiaohongshu` | 小红书小程序 | —                |
-| `@mp-svg-icons/jd`          | 京东小程序   | —                |
-| `@mp-svg-icons/utils`       | 工具集       | 图标裁剪 CLI     |
+| 包名                                                                                 | 平台         | 备注             |
+| ------------------------------------------------------------------------------------ | ------------ | ---------------- |
+| [@mp-svg-icons/wechat](https://www.npmjs.com/package/@mp-svg-icons/wechat)           | 微信小程序   | 基准平台         |
+| [@mp-svg-icons/alipay](https://www.npmjs.com/package/@mp-svg-icons/alipay)           | 支付宝小程序 | 独立 API 风格    |
+| [@mp-svg-icons/kuaishou](https://www.npmjs.com/package/@mp-svg-icons/kuaishou)       | 快手小程序   |                  |
+| [@mp-svg-icons/douyin](https://www.npmjs.com/package/@mp-svg-icons/douyin)           | 抖音小程序   | 需额外处理双引号 |
+| [@mp-svg-icons/baidu](https://www.npmjs.com/package/@mp-svg-icons/baidu)             | 百度小程序   | 需额外处理双引号 |
+| [@mp-svg-icons/xiaohongshu](https://www.npmjs.com/package/@mp-svg-icons/xiaohongshu) | 小红书小程序 |                  |
+| [@mp-svg-icons/jd](https://www.npmjs.com/package/@mp-svg-icons/jd)                   | 京东小程序   |                  |
+| [@mp-svg-icons/utils](https://www.npmjs.com/package/@mp-svg-icons/utils)             | 工具集       | 图标裁剪 CLI     |
 
 > QQ 小程序可直接使用微信小程序版本。
 
 ### 1.3 核心价值
 
-🎯 **解决真实痛点** — 几乎所有使用设计系统（TDesign、Ant Design、Vant 等）的小程序项目，都面临"如何在小程序中使用 SVG 图标"的问题。这个项目提供了一套**自动化、工程化、可维护**的完整方案。
+🎯 **解决真实痛点** — 几乎所有使用设计系统（TDesign、Ant Design、Vant 等）的小程序项目，都面临「如何在小程序中使用 SVG 图标」的问题。这个项目提供了一套**自动化、工程化、可维护**的完整方案。
 
-🧩 **可复制的构建范式** — 模板分层 + 平台配置的方式，实现了"一套源码，多端输出"。
+🧩 **可复制的构建范式** — 模板分层 + 平台配置的方式，实现了「一套源码，多端输出」。
 
-📦 **体积治理思路** — "全量构建 + 后置裁剪"的模式，平衡了**开发便利性**和**产物体积**两个相互矛盾的需求。
+📦 **体积治理思路** — 「全量构建 + 后置裁剪」的模式，平衡了**开发便利性**和**产物体积**两个相互矛盾的需求。
 
 ## 2. 背景：小程序不支持内联 `<svg>` 标签
 
@@ -61,17 +59,17 @@
 
 **面对这一限制，我们有两种应对思路**：
 
-- **硬碰硬** — 试图绕过或突破平台限制，例如通过 Canvas 重绘等"曲线救国"的方式；
-- **以退为进** — 承认限制的存在，退一步选择小程序原生支持的渲染方式，再在此基础上"进阶"找回 SVG 的动态改色、多色支持等核心能力。
+- **硬碰硬** — 试图绕过或突破平台限制，例如通过 Canvas 重绘等「曲线救国」的方式；
+- **以退为进** — 承认限制的存在，退一步选择小程序原生支持的渲染方式，再在此基础上「进阶」找回 SVG 的动态改色、多色支持等核心能力。
   后者正是本文所采用的技术策略。
 
 ## 3. 技术方案选型：以退为进
 
 > 既然无法直接使用 `<svg>` 标签，那就换个思路——**用小程序原生支持的渲染方式，间接实现 SVG 图标能力**。
 
-### 3.1 为什么不以"硬碰硬"的方式突破限制？
+### 3.1 为什么不以「硬碰硬」的方式突破限制？
 
-在面对平台限制时，一个直觉反应是试图绕过或突破它。但在小程序中使用 SVG 这个场景下，"硬碰硬"的代价过高：
+在面对平台限制时，一个直觉反应是试图绕过或突破它。但在小程序中使用 SVG 这个场景下，「硬碰硬」的代价过高：
 
 - Canvas 绘制：需要解析 SVG 路径、处理视图缩放、逐帧绘制，性能开销大，实现复杂
 
@@ -86,7 +84,7 @@
 
 ### 3.3 渲染方式选型：<image /> vs background-image
 
-在"以退为进"的思路下，有两种可行的渲染方式：
+在「以退为进」的思路下，有两种可行的渲染方式：
 
 | 对比维度   | `<image />` 标签                                             | `background-image`                                            |
 | :--------- | :----------------------------------------------------------- | :------------------------------------------------------------ |
@@ -432,29 +430,7 @@ newplatform: {
 - [Node.js](https://nodejs.org/) >= 20
 - [pnpm](https://pnpm.io/)
 
-### 6.2 开发构建
-
-```bash
-# 克隆项目
-git clone https://github.com/anlyyao/miniprogram-svg-icons.git
-
-# 安装依赖
-pnpm install
-
-# 生成单个平台
-pnpm run generate:wechat
-
-# 生成所有平台
-pnpm run generate
-
-# 构建发布产物（单个平台）
-pnpm run build:wechat
-
-# 构建所有平台
-pnpm run build
-```
-
-### 6.3 业务接入
+### 6.2 业务接入
 
 以微信小程序为例，其他平台用法相同：
 
@@ -484,7 +460,7 @@ npm install @mp-svg-icons/wechat
 <t-icon name="robot-2" size="{{32}}" stroke-color="{{['#0052D9', '#e40a23']}}" fill-color="{{['#e1e50f', '#632bc9']}}" />
 ```
 
-### 6.4 组件属性
+### 6.3 组件属性
 
 | 属性        | 类型              | 默认值  | 说明                                |
 | :---------- | :---------------- | :------ | :---------------------------------- |
@@ -497,11 +473,11 @@ npm install @mp-svg-icons/wechat
 
 > 💡 颜色值内部统一转为 `rgb()` 格式后注入 Data URI，HEX 的 `#` 无需手动转义。
 
-### 6.5 CLI 工具使用
+### 6.4 CLI 工具使用
 
 ```bash
 - **安装 cli 工具**
-npm install @mp-svg-icons/utile
+npm install @mp-svg-icons/utils
 ```
 
 ```bash
@@ -554,11 +530,6 @@ npx mp-svg-icons-clear \
 | 运行时颜色注入       | `fill` / `stroke` 动态替换 | 支持多色图标、主题换肤、动态配色      |
 | 按需裁剪             | CLI 自动扫描 + 交集校验    | 1MB → 4KB，体积降低 99%+              |
 
-从"小程序不支持直接内联 `<svg>` 标签"的平台限制，到一个支持 **8 大小程序平台、2300+ 图标、可按需裁剪**的完整工程方案——这背后是**对问题的准确抽象**（SVG → Data URI）、**对差异的合理隔离**（平台模板分层）和**对体积的主动治理**（构建后裁剪）。
+从「小程序不支持直接内联 `<svg>` 标签」的平台限制，到一个支持 **8 大小程序平台、2300+ 图标、可按需裁剪**的完整工程方案——这背后是**对问题的准确抽象**（SVG → Data URI）、**对差异的合理隔离**（平台模板分层）和**对体积的主动治理**（构建后裁剪）。
 
 它不只是一个图标组件库，更是小程序组件工程化的一次有价值的实践。
-
-## 相关链接
-
-- [TDesign 官方图标资源](https://tdesign.tencent.com/icons)
-- [演示项目](https://github.com/anlyyao/miniprogram-svg-icon-demo)

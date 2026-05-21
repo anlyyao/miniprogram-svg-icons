@@ -77,26 +77,23 @@ npm install @mp-svg-icons/alipay
 ### 使用图标
 
 ```xml
-<!-- 基础用法 -->
 <t-icon name="add" size="{{48}}" />
 
-<!-- 自定义颜色 -->
-<t-icon name="close" size="{{32}}" stroke-color="#0052D9" fill-color="#E7EFFF" />
+<t-icon name="send" size="{{32}}" stroke-color="#0766ff" fill-color="#e70d0d" />
 
-<!-- 指定品牌 -->
-<t-icon name="logo" size="{{64}}" brand="tdesign" />
+<t-icon name="robot-2" size="{{32}}" stroke-color="{{['#0052D9', '#e40a23']}}" fill-color="{{['#e1e50f', '#632bc9']}}" />
 ```
 
 ### 组件属性
 
-| 属性          | 类型              | 默认值    | 说明                                |
-| ------------- | ----------------- | --------- | ----------------------------------- |
-| `name`        | `String`          | —         | 图标名称（必填）                    |
-| `size`        | `Number / String` | `24`      | 图标尺寸（px）                      |
-| `strokeColor` | `String`          | -         | 描边颜色，支持 HEX / rgb() / rgba() |
-| `fillColor`   | `String`          | -         | 填充颜色，支持 HEX / rgb() / rgba() |
-| `strokeWidth` | `String`          | `2`       | 描边宽度                            |
-| `brand`       | `String`          | `tdesign` | 品牌名称                            |
+| 属性        | 类型              | 默认值  | 说明                                |
+| ----------- | ----------------- | ------- | ----------------------------------- |
+| name        | String            | —       | 图标名称（必填）                    |
+| size        | Number / String   | 24      | 图标尺寸（px）                      |
+| strokeColor | String / String[] | -       | 描边颜色，支持 HEX / rgb() / rgba() |
+| fillColor   | String / String[] | -       | 填充颜色，支持 HEX / rgb() / rgba() |
+| strokeWidth | Number            | 2       | 描边宽度                            |
+| brand       | String            | tdesign | 品牌名称                            |
 
 > 💡 颜色值内部统一转为 `rgb()` 格式后注入 Data URI，HEX 的 `#` 无需手动转义。
 

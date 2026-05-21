@@ -157,6 +157,11 @@ jobs:
           node-version: 22
           registry-url: 'https://registry.npmjs.org'
 
+      # npm Trusted Publishing requires npm >= 11.5.1
+      - name: Upgrade npm for Trusted Publishing
+        if: steps.detect.outputs.to_publish != ''
+        run: npm install -g npm@latest
+
       - name: Install dependencies
         if: steps.detect.outputs.to_publish != ''
         run: pnpm install
@@ -175,8 +180,6 @@ jobs:
       - name: Check npm availability & Publish
         id: publish
         if: steps.detect.outputs.to_publish != ''
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           TO_PUBLISH="${{ steps.detect.outputs.to_publish }}"
           PUBLISHED=""

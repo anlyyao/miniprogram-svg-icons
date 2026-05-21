@@ -123,7 +123,6 @@ jobs:
         with:
           ref: develop
           fetch-depth: 0
-          token: ${{ secrets.ACCESS_TOKEN }}
 
       - name: Detect packages
         id: detect

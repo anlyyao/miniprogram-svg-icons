@@ -1,6 +1,6 @@
 {
   "name": "@mp-svg-icons/jd",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "SVG 多色图标 - 京东小程序组件库",
   "miniprogram": "./",
   "keywords": [

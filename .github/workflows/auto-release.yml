@@ -158,9 +158,12 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       # npm Trusted Publishing requires npm >= 11.5.1
+      # Use corepack-free approach to avoid MODULE_NOT_FOUND errors on Node 22.x
       - name: Upgrade npm for Trusted Publishing
         if: steps.detect.outputs.to_publish != ''
-        run: npm install -g npm@latest
+        run: |
+          npm cache clean --force || true
+          npm install -g npm@11 --force
 
       - name: Install dependencies
         if: steps.detect.outputs.to_publish != ''

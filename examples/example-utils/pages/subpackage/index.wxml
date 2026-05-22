@@ -1,0 +1,15 @@
+<!--subpackage/index.wxml - 模拟分包页面中的图标引用-->
+<scroll-view class="scrollarea" scroll-y type="list">
+  <view class="section">
+    <text class="title">分包页面中的 SVG 图标</text>
+    <svg-icon name="check-circle" />
+    <svg-icon name="home" />
+  </view>
+
+  <view class="section">
+    <text class="title">分包页面中的 Vant 图标</text>
+    <vant-icon name="star-o" />
+    <vant-icon name="like" />
+    <vant-icon name="cart-o" />
+  </view>
+</scroll-view>

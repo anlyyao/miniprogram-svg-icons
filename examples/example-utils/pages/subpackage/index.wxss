@@ -1,0 +1,20 @@
+/**subpackage/index.wxss**/
+page {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.scrollarea {
+  flex: 1;
+  overflow-y: hidden;
+}
+.section {
+  padding: 20rpx;
+  margin-bottom: 20rpx;
+}
+.title {
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 16rpx;
+  display: block;
+}

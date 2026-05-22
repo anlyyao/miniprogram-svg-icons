@@ -1,0 +1,16 @@
+{
+  "name": "example-utils",
+  "private": true,
+  "description": "测试 @mp-svg-icons/utils 图标裁剪工具的完整性示例",
+  "scripts": {
+    "test": "npm run test:node && npm run test:cli",
+    "test:node": "node scripts/test-node-api.js",
+    "test:cli": "bash scripts/test-cli.sh"
+  },
+  "dependencies": {
+    "@mp-svg-icons/wechat": "workspace:*",
+    "@mp-svg-icons/utils": "workspace:*",
+    "@vant/weapp": "latest",
+    "tdesign-miniprogram": "latest"
+  }
+}

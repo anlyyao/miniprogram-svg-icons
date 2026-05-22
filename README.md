@@ -28,7 +28,7 @@
 
 多色图标示例小程序，请使用微信扫码预览 ↓
 
-<img width="260" src="./example/qrcode.jpg" />
+<img width="260" src="./examples/example-svg-icon/qrcode.jpg" />
 
 ## ✨ 特性
 
@@ -225,7 +225,7 @@ pnpm install
 
 #### 导入项目
 
-打开[微信开发者工具](https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html)，导入 example 文件夹
+打开[微信开发者工具](https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html)，导入 examples/example-svg-icon 文件夹
 
 #### 构建 npm
 

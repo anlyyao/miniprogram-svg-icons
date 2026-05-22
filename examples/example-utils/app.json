@@ -1,0 +1,12 @@
+{
+  "pages": ["pages/index/index", "pages/multi-brand/index", "pages/dynamic-icons/index", "pages/subpackage/index"],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "Utils 功能测试",
+    "navigationBarBackgroundColor": "#ffffff"
+  },
+  "style": "v2",
+  "componentFramework": "glass-easel",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

@@ -1,0 +1,5 @@
+{
+  "usingComponents": {
+    "my-icon": "@mp-svg-icons/wechat/icon"
+  }
+}

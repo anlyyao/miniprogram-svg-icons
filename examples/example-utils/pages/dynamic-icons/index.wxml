@@ -1,0 +1,15 @@
+<!--dynamic-icons/index.wxml - 动态图标名测试（需要 --icons 手动指定）-->
+<scroll-view class="scrollarea" scroll-y type="list">
+  <view class="section">
+    <text class="title">动态图标名（由 JS 赋值，静态扫描无法识别）</text>
+    <!-- name 绑定变量，静态分析无法解析 -->
+    <svg-icon name="{{dynamicIcon}}" />
+    <t-icon name="{{tIconName}}" />
+  </view>
+
+  <view class="section">
+    <text class="title">静态图标（可被正常扫描到）</text>
+    <svg-icon name="delete" />
+    <t-icon name="close" />
+  </view>
+</scroll-view>

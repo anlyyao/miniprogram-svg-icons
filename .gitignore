@@ -1,7 +1,11 @@
 node_modules
+
 package-lock.json
 pnpm-lock.yaml
+
 dist
+
+miniprogram_npm
 
 # 忽略 packages 下各小程序包中生成的文件（保留 package.json 和 README.md）
 packages/wechat/*
@@ -35,5 +39,3 @@ packages/xiaohongshu/*
 # auto-generated files
 web/auto-imports.d.ts
 web/components.d.ts
-
-example/miniprogram_npm

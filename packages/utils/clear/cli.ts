@@ -19,6 +19,7 @@
 import type { ClearOptions } from './types';
 import { CLI_BIN_NAME } from './constants';
 import { clear } from './index';
+import { parseBaseArgs, validateIconSource } from '../shared/cli';
 
 // ======================== CLI 帮助信息 ========================
 
@@ -64,66 +65,16 @@ mp-svg-icons-clear — 小程序图标组件裁剪 CLI 工具
 // ======================== CLI 参数解析 ========================
 
 function parseCLIArgs(): ClearOptions {
-  const args = process.argv.slice(2);
-
-  if (args.includes('-h') || args.includes('--help')) {
-    printHelp();
-    process.exit(0);
-  }
-
-  const scanDirs: string[] = [];
-  let icons: string[] = [];
   let pkgDir: string | undefined;
-  let dryRun = false;
 
-  let i = 0;
-  while (i < args.length) {
-    const arg = args[i];
-
-    switch (arg) {
-      case '--scan': {
-        i++;
-        while (i < args.length && !args[i].startsWith('--') && args[i] !== '-h') {
-          scanDirs.push(args[i]);
-          i++;
-        }
-        break;
-      }
-
-      case '--icons': {
-        i++;
-        if (i < args.length) {
-          icons = args[i]
-            .split(',')
-            .map((s) => s.trim())
-            .filter(Boolean);
-          i++;
-        }
-        break;
-      }
-
-      case '--pkg-dir': {
-        i++;
-        if (i < args.length) {
-          pkgDir = args[i];
-          i++;
-        }
-        break;
-      }
-
-      case '--dry-run': {
-        dryRun = true;
-        i++;
-        break;
-      }
-
-      default: {
-        console.warn(`⚠️ 未知参数: ${arg}`);
-        i++;
-        break;
-      }
-    }
-  }
+  const baseOptions = parseBaseArgs(printHelp, [
+    {
+      argName: '--pkg-dir',
+      setValue: (value: string) => {
+        pkgDir = value;
+      },
+    },
+  ]);
 
   // 校验 --pkg-dir 必填
   if (!pkgDir) {
@@ -133,13 +84,14 @@ function parseCLIArgs(): ClearOptions {
   }
 
   // 校验至少有一种图标来源
-  if (scanDirs.length === 0 && icons.length === 0) {
-    console.error('❌ --scan 和 --icons 至少需要指定一个\n');
-    printHelp();
-    process.exit(1);
-  }
+  validateIconSource(baseOptions.scanDirs, baseOptions.icons, printHelp);
 
-  return { scanDirs, icons, pkgDir, dryRun };
+  return {
+    scanDirs: baseOptions.scanDirs,
+    icons: baseOptions.icons,
+    pkgDir,
+    dryRun: baseOptions.dryRun,
+  };
 }
 
 // ======================== CLI 入口 ========================

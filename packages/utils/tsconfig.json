@@ -21,6 +21,6 @@
     "esModuleInterop": true,
     "resolveJsonModule": true
   },
-  "include": ["clear/**/*.ts"],
+  "include": ["index.ts", "shared/**/*.ts", "clear/**/*.ts", "iconfont-clear/**/*.ts"],
   "exclude": ["node_modules"]
 }

@@ -28,7 +28,7 @@ import type {
   BrandClearResult,
   IconsData,
 } from './types';
-import { escapeRegExp, formatBytes } from './utils';
+import { escapeRegExp, formatBytes } from '../shared/utils';
 import { resolvePkgDir } from './path-utils';
 import { scanAllFiles } from './scanner';
 import { loadIconsData, clearIconsJs } from './icon';

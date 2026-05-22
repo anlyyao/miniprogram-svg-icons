@@ -29,6 +29,7 @@ import type {
   IconsData,
 } from './types';
 import { escapeRegExp, formatBytes } from '../shared/utils';
+import { mergeManualIcons } from '../shared/pipeline';
 import { resolvePkgDir } from './path-utils';
 import { scanAllFiles } from './scanner';
 import { loadIconsData, clearIconsJs } from './icon';
@@ -130,9 +131,9 @@ function collectUsedIcons(
     }
 
     // 收集通用组件图标（按品牌分组）
-    for (const [brandName, icons] of scanResult.iconsByBrand) {
-      if (icons.size > 0) {
-        for (const icon of icons) {
+    for (const [brandName, brandIcons] of scanResult.iconsByBrand) {
+      if (brandIcons.size > 0) {
+        for (const icon of brandIcons) {
           iconUsedByBrand.get(brandName)!.add(icon);
         }
       }
@@ -151,18 +152,26 @@ function collectUsedIcons(
 
   // 手动指定(根据图标包中实际存在的组件类型分别归入)
   if (icons.length > 0) {
-    const validCount = icons.reduce((count, icon) => {
+    // 对多品牌场景，手动指定的图标添加到所有品牌
+    const allBrandUsedIcons = new Set<string>();
+    for (const usedSet of iconUsedByBrand.values()) {
+      for (const icon of usedSet) {
+        allBrandUsedIcons.add(icon);
+      }
+    }
+
+    // 复用共享的手动图标合并逻辑进行校验和日志
+    const tempUsedIcons = new Set<string>(allBrandUsedIcons);
+    mergeManualIcons(icons, allIconNameSet, tempUsedIcons);
+
+    // 将有效的手动指定图标添加到所有品牌
+    for (const icon of icons) {
       if (allIconNameSet.has(icon)) {
-        // 添加到所有品牌的 icon 使用集合（因为是手动指定，不区分品牌）
         for (const brandResult of loadResult.brandResults) {
           iconUsedByBrand.get(brandResult.brand.name)!.add(icon);
         }
-        return count + 1;
       }
-      console.warn(`⚠️ 手动指定的图标未找到: ${icon}`);
-      return count;
-    }, 0);
-    console.log(`📌 手动指定 ${icons.length} 个图标(有效 ${validCount} 个)`);
+    }
   }
 
   return iconUsedByBrand;
@@ -338,8 +347,8 @@ export function clear(options: ClearOptions): ClearResult {
 
   // 提前检查:如果扫描目录下没有找到任何使用中的图标,给出警告但继续执行裁剪
   let hasUsedIcons = false;
-  for (const icons of iconUsedByBrand.values()) {
-    if (icons.size > 0) {
+  for (const brandIcons of iconUsedByBrand.values()) {
+    if (brandIcons.size > 0) {
       hasUsedIcons = true;
       break;
     }

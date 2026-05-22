@@ -33,6 +33,33 @@ pnpm build
 
 ## 运行测试
 
+> 测试示例中使用到了多品牌图标，而安装的 `@mp-svg-icons/wechat` 目前只有 tdesign 品牌，所以需要手动构建符合预期的 icons.js，否则 npm run test 会出现失败用例
+
+```js
+// examples/example-utils/miniprogram_npm/@mp-svg-icons/wechat/icon/icons.js 测试数据
+module.exports = {
+  tdesign: {
+    add: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><g><path stroke="{s1 || 'currentColor'}" stroke-linecap="square" stroke-width="{sw}" d="M12 5v14m7-7H5" /></g></svg>`,
+    'arrow-left': `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><g><path stroke="{s1 || 'currentColor'}" stroke-linecap="square" stroke-width="{sw}" d="M11 6.5 5.5 12l5.5 5.5M6.75 12h13" /></g></svg>`,
+    'arrow-right': `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><g><path stroke="{s1 || 'currentColor'}" stroke-linecap="square" stroke-width="{sw}" d="m13 17.5 5.5-5.5L13 6.5m4.25 5.5h-13" /></g></svg>`,
+    'check-circle': `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><g><path fill="{f1 || 'transparent'}" d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12" /><path stroke="{s1 || 'currentColor'}" stroke-linecap="square" stroke-width="{sw}" d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Z" /><path stroke="{s2 || 'currentColor'}" stroke-linecap="square" stroke-width="{sw}" d="m16.5 9-6 6-3-3" /></g></svg>`,
+    close: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><g><path stroke="{s1 || 'currentColor'}" stroke-linecap="square" stroke-width="{sw}" d="M16.95 7.05 12 12m0 0-4.95 4.95M12 12l4.95 4.95M12 12 7.05 7.05" /></g></svg>`,
+    delete: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><g><path fill="{f1 || 'transparent'}" d="M5 5h14l-.5 17h-13z" /><path stroke="{s1 || 'currentColor'}" stroke-linecap="square" stroke-width="{sw}" d="M21 5H3m2 0h14l-.5 17h-13zm3.5-3h7v3h-7z" /><path stroke="{s2 || 'currentColor'}" stroke-linecap="square" stroke-width="{sw}" d="M12 9v9" /></g></svg>`,
+    home: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><g><path fill="{f1 || 'transparent'}" d="m3 10 9-7.5 9 7.5v11H3z" /><path fill="{f2 || 'transparent'}" d="M9 14h6v7H9z" /><path stroke="{s2 || 'currentColor'}" stroke-linecap="square" stroke-width="{sw}" d="M9 14h6v7H9z" /><path stroke="{s1 || 'currentColor'}" stroke-linecap="square" stroke-width="{sw}" d="m3 10 9-7.5 9 7.5v11H3z" /></g></svg>`,
+    loading: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path fill="{s1 || 'currentColor'}" d="M12 2.25c-5.384 0-9.75 4.366-9.75 9.75s4.366 9.75 9.75 9.75v-2.437A7.312 7.312 0 1 1 19.313 12h2.437c0-5.384-4.366-9.75-9.75-9.75" /></svg>`,
+    search: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><g><path fill="{f1 || 'transparent'}" d="M15.803 15.803A7.5 7.5 0 1 1 5.197 5.197a7.5 7.5 0 0 1 10.606 10.606" /><path stroke="{s2 || 'currentColor'}" stroke-linecap="square" stroke-width="{sw}" d="m15.803 15.804 5.303 5.303" /><path stroke="{s1 || 'currentColor'}" stroke-linecap="square" stroke-width="{sw}" d="M15.803 15.803A7.5 7.5 0 1 1 5.197 5.197a7.5 7.5 0 0 1 10.606 10.606Z" /></g></svg>`,
+    setting: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><g><path fill="{f1 || 'transparent'}" fill-rule="evenodd" d="M20.66 7 12 2 3.34 7v10L12 22l8.66-5zM12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8" clip-rule="evenodd" /><path fill="{f2 || 'transparent'}" d="M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0" /><path stroke="{s1 || 'currentColor'}" stroke-linecap="square" stroke-width="{sw}" d="m12 2 8.66 5v10L12 22l-8.66-5V7z" /><path stroke="{s2 || 'currentColor'}" stroke-linecap="square" stroke-width="{sw}" d="M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" /></g></svg>`,
+  },
+  material: {
+    add: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><g><path stroke="{s1 || 'currentColor'}" stroke-linecap="square" stroke-width="{sw}" d="M12 5v14m7-7H5" /></g></svg>`,
+    close: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><g><path stroke="{s1 || 'currentColor'}" stroke-linecap="square" stroke-width="{sw}" d="M16.95 7.05 12 12m0 0-4.95 4.95M12 12l4.95 4.95M12 12 7.05 7.05" /></g></svg>`,
+    home: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><g><path fill="{f1 || 'transparent'}" d="m3 10 9-7.5 9 7.5v11H3z" /><path fill="{f2 || 'transparent'}" d="M9 14h6v7H9z" /><path stroke="{s2 || 'currentColor'}" stroke-linecap="square" stroke-width="{sw}" d="M9 14h6v7H9z" /><path stroke="{s1 || 'currentColor'}" stroke-linecap="square" stroke-width="{sw}" d="m3 10 9-7.5 9 7.5v11H3z" /></g></svg>`,
+    star: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><g><path fill="{f1 || 'transparent'}" d="m12 3.676 2.187 6.29 6.658.136-5.307 4.024 1.928 6.374L12 16.696 6.534 20.5l1.928-6.374-5.307-4.024 6.659-.136z" /><path stroke="{s1 || 'currentColor'}" stroke-linecap="square" stroke-width="{sw}" d="m12 3.676 2.187 6.29 6.658.136-5.307 4.024 1.928 6.374L12 16.696 6.534 20.5l1.928-6.374-5.307-4.024 6.659-.136z" /></g></svg>`,
+    search: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><g><path fill="{f1 || 'transparent'}" d="M15.803 15.803A7.5 7.5 0 1 1 5.197 5.197a7.5 7.5 0 0 1 10.606 10.606" /><path stroke="{s2 || 'currentColor'}" stroke-linecap="square" stroke-width="{sw}" d="m15.803 15.804 5.303 5.303" /><path stroke="{s1 || 'currentColor'}" stroke-linecap="square" stroke-width="{sw}" d="M15.803 15.803A7.5 7.5 0 1 1 5.197 5.197a7.5 7.5 0 0 1 10.606 10.606Z" /></g></svg>`,
+  },
+};
+```
+
 ### 一键运行所有测试
 
 ```bash

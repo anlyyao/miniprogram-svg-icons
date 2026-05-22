@@ -23,7 +23,8 @@
 import path from 'path';
 
 import type { IconfontClearOptions, IconfontClearResult, IconfontScanContext, IconfontCssData } from './types';
-import { formatBytes, escapeRegExp } from '../shared/utils';
+import { escapeRegExp } from '../shared/utils';
+import { mergeManualIcons, warnIfNoUsedIcons, computeClearLists, printClearSummary } from '../shared/pipeline';
 import { resolvePkgDir, detectIconDir } from './path-utils';
 import { scanAllFiles } from './scanner';
 import { loadIconfontCss, clearIconfontCss } from './css';
@@ -84,6 +85,7 @@ export function iconfontClear(options: IconfontClearOptions): IconfontClearResul
     iconPathRegex,
   };
 
+  // 1. 扫描源码收集使用中的图标
   const usedIcons = new Set<string>();
 
   if (scanDirs.length > 0) {
@@ -102,29 +104,15 @@ export function iconfontClear(options: IconfontClearOptions): IconfontClearResul
     console.log(`🔍 扫描到 ${usedIcons.size} 个图标被引用: ${[...usedIcons].sort().join(', ')}`);
   }
 
-  if (icons.length > 0) {
-    let validCount = 0;
-    for (const icon of icons) {
-      if (allIconNameSet.has(icon)) {
-        usedIcons.add(icon);
-        validCount++;
-      } else {
-        console.warn(`⚠️ 手动指定的图标未找到: ${icon}`);
-      }
-    }
-    console.log(`📌 手动指定 ${icons.length} 个图标（有效 ${validCount} 个）`);
-  }
+  // 2. 合并手动指定的图标（复用共享逻辑）
+  mergeManualIcons(icons, allIconNameSet, usedIcons);
 
-  if (usedIcons.size === 0) {
-    console.warn(
-      '⚠️ 扫描目录中未发现任何正在使用的图标，所有图标 CSS 规则将被移除。\n' +
-        '  如果这不符合预期，可通过 --icons 参数手动指定需要保留的图标名。',
-    );
-  }
+  // 3. 检查无图标使用警告（复用共享逻辑）
+  warnIfNoUsedIcons(usedIcons);
 
+  // 4. 计算保留/移除列表（复用共享逻辑）
   const allIconNames = [...iconRules.keys()];
-  const usedList = allIconNames.filter((name) => usedIcons.has(name));
-  const removedList = allIconNames.filter((name) => !usedIcons.has(name));
+  const { usedList, removedList } = computeClearLists(allIconNames, usedIcons);
 
   if (removedList.length === 0) {
     console.log(`\n✅ 所有图标均在使用中，无需裁剪`);
@@ -138,24 +126,19 @@ export function iconfontClear(options: IconfontClearOptions): IconfontClearResul
     };
   }
 
+  // 5. 执行裁剪
   const actionLabel = dryRun ? '将' : '正在';
   console.log(`\n🗑️ ${actionLabel}裁剪样式文件...`);
   const savedBytes = clearIconfontCss(cssData, usedIcons, dryRun);
 
-  console.log(`\n✅ ${dryRun ? '[预览模式] ' : ''}裁剪完成!`);
-  console.log(`   📊 保留 ${usedList.length} / ${iconRules.size} 个图标规则，移除 ${removedList.length} 个`);
-  if (savedBytes > 0) {
-    console.log(`   💾 节省: ${formatBytes(savedBytes)}`);
-  }
-
-  if (dryRun) {
-    console.log(`\n💡 移除 --dry-run 参数以执行实际裁剪`);
-  }
-
-  if (usedList.length > 0) {
-    console.log(`\n📋 保留的图标 (${usedList.length}):`);
-    console.log(`   ${usedList.sort().join(', ')}`);
-  }
+  // 6. 打印汇总（复用共享逻辑）
+  printClearSummary({
+    dryRun,
+    totalCount: iconRules.size,
+    usedList,
+    removedList,
+    savedBytes,
+  });
 
   return {
     pkgDir,

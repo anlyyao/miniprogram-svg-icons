@@ -5,33 +5,7 @@
  */
 
 import type { IconfontScanContext, IconfontScanResult } from './types';
-import { extractIconTagNames, collectFiles } from '../shared/scanner';
-
-/** 从模板内容中提取图标名称 */
-function extractIconNamesFromTemplate(content: string, allIconNames: Set<string>, tagNames: Set<string>): Set<string> {
-  const found = new Set<string>();
-  if (tagNames.size === 0) return found;
-
-  const tagPattern = [...tagNames].map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
-  const tagRegex = new RegExp(`<(?:${tagPattern})\\b([^<]*?)(?:/>|>)`, 'gi');
-  const nameAttrRegex = /\bname\s*=\s*["']([a-z][a-z0-9-]*)["']/gi;
-
-  let tagMatch: RegExpExecArray | null;
-  while ((tagMatch = tagRegex.exec(content)) !== null) {
-    const attrs = tagMatch[1];
-
-    let attrMatch: RegExpExecArray | null;
-    while ((attrMatch = nameAttrRegex.exec(attrs)) !== null) {
-      const iconName = attrMatch[1];
-      if (allIconNames.has(iconName)) {
-        found.add(iconName);
-      }
-    }
-    nameAttrRegex.lastIndex = 0;
-  }
-
-  return found;
-}
+import { collectFiles, collectIconTagNames, extractIconNamesSimple } from '../shared/scanner';
 
 /** 扫描所有源文件，提取 iconfont 图标使用信息 */
 export function scanAllFiles(scanDirs: readonly string[], ctx: IconfontScanContext): IconfontScanResult {
@@ -40,16 +14,12 @@ export function scanAllFiles(scanDirs: readonly string[], ctx: IconfontScanConte
   const usedIcons = new Set<string>();
   const { jsonFiles, templateFiles } = collectFiles(scanDirs, excludeDirs);
 
-  const iconTagNames = new Set<string>();
-  for (const { content } of jsonFiles) {
-    const tags = extractIconTagNames(content, iconPathRegex);
-    for (const tag of tags) {
-      iconTagNames.add(tag);
-    }
-  }
+  // 阶段一：从 JSON 文件提取 icon 组件标签名
+  const iconTagNames = collectIconTagNames(jsonFiles, iconPathRegex);
 
+  // 阶段二：从模板文件提取图标使用
   for (const { content } of templateFiles) {
-    const found = extractIconNamesFromTemplate(content, allIconNameSet, iconTagNames);
+    const found = extractIconNamesSimple(content, allIconNameSet, iconTagNames);
     for (const icon of found) {
       usedIcons.add(icon);
     }

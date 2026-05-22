@@ -6,11 +6,11 @@ import fs from 'fs';
 import path from 'path';
 
 export { isExcluded, walkDir } from '../shared/utils';
-import { resolveDir } from '../shared/utils';
+import { resolvePkgDir as sharedResolvePkgDir } from '../shared/utils';
 
 /** 解析并校验 --pkg-dir 路径 */
 export function resolvePkgDir(pkgDir: string): string {
-  return resolveDir(pkgDir, 'npm 包目录');
+  return sharedResolvePkgDir(pkgDir, 'npm 包目录');
 }
 
 /** icon 组件子目录候选名 */

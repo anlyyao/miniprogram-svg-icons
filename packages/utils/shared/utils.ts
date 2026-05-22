@@ -33,6 +33,16 @@ export function resolveDir(dir: string, label: string): string {
 }
 
 /**
+ * 解析并校验 --pkg-dir 指定的包路径
+ *
+ * @param pkgDir 包目录路径
+ * @param label 目录用途描述（用于错误信息），默认为 '包目录'
+ */
+export function resolvePkgDir(pkgDir: string, label = '包目录'): string {
+  return resolveDir(pkgDir, label);
+}
+
+/**
  * 判断 childPath 是否是 parentPath 的子路径（或相同路径）
  */
 function isSubPathOf(childPath: string, parentPath: string): boolean {

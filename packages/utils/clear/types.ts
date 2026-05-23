@@ -2,11 +2,22 @@
  * @mp-svg-icons/utils— 类型定义
  */
 
+/**
+ * 手动指定保留的图标，支持两种格式：
+ *
+ * 1. 数组格式：`['add', 'close', 'check-circle']`
+ *    图标会被保留在实际拥有该图标的品牌中。
+ *
+ * 2. 按品牌分组的对象格式：`{ tdesign: ['add', 'close'], material: ['home'] }`
+ *    精确指定每个品牌要保留的图标。
+ */
+export type IconsOption = readonly string[] | Readonly<Record<string, readonly string[]>>;
+
 export interface ClearOptions {
   /** 要扫描的源码目录（相对于 cwd） */
   readonly scanDirs: readonly string[];
-  /** 手动指定保留的图标名列表 */
-  readonly icons: readonly string[];
+  /** 手动指定保留的图标名列表（支持数组或按品牌分组的对象） */
+  readonly icons: IconsOption;
   /** 构建产物中图标包所在目录（必填） */
   readonly pkgDir: string;
   /** 仅预览，不实际修改 */

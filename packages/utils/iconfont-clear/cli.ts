@@ -85,9 +85,17 @@ function parseCLIArgs(): IconfontClearOptions {
 
   validateIconSource(baseOptions.scanDirs, baseOptions.icons, printHelp);
 
+  // iconfont-clear 没有品牌概念，不支持对象格式
+  if (!Array.isArray(baseOptions.icons)) {
+    console.error('❌ --icons 参数错误：mp-iconfont-clear 不支持按品牌分组的对象格式，请使用逗号分隔的图标名列表\n');
+    printHelp();
+    process.exit(1);
+  }
+  const icons: string[] = baseOptions.icons;
+
   return {
     scanDirs: baseOptions.scanDirs,
-    icons: baseOptions.icons,
+    icons,
     pkgDir,
     dryRun: baseOptions.dryRun,
   };

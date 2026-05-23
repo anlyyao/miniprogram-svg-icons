@@ -27,6 +27,7 @@ import type {
   BrandIconDataLoadResult,
   BrandClearResult,
   IconsData,
+  IconsOption,
 } from './types';
 import { escapeRegExp, formatBytes } from '../shared/utils';
 import { mergeManualIcons } from '../shared/pipeline';
@@ -102,7 +103,7 @@ function loadAllIconData(brands: readonly BrandInfo[], iconsData: IconsData | nu
  */
 function collectUsedIcons(
   scanDirs: readonly string[],
-  icons: readonly string[],
+  icons: IconsOption,
   ctx: ScanContext,
   loadResult: IconDataLoadResult,
 ): Map<string, Set<string>> {
@@ -133,8 +134,10 @@ function collectUsedIcons(
     // 收集通用组件图标（按品牌分组）
     for (const [brandName, brandIcons] of scanResult.iconsByBrand) {
       if (brandIcons.size > 0) {
+        const brandSet = iconUsedByBrand.get(brandName);
+        if (!brandSet) continue; // 跳过图标库中不存在的品牌
         for (const icon of brandIcons) {
-          iconUsedByBrand.get(brandName)!.add(icon);
+          brandSet.add(icon);
         }
       }
     }
@@ -150,27 +153,65 @@ function collectUsedIcons(
     }
   }
 
-  // 手动指定(根据图标包中实际存在的组件类型分别归入)
-  if (icons.length > 0) {
-    // 对多品牌场景，手动指定的图标添加到所有品牌
-    const allBrandUsedIcons = new Set<string>();
-    for (const usedSet of iconUsedByBrand.values()) {
-      for (const icon of usedSet) {
-        allBrandUsedIcons.add(icon);
-      }
-    }
+  // 手动指定图标
+  const isArrayFormat = Array.isArray(icons);
+  const hasManualIcons = isArrayFormat ? icons.length > 0 : Object.keys(icons).length > 0;
 
-    // 复用共享的手动图标合并逻辑进行校验和日志
-    const tempUsedIcons = new Set<string>(allBrandUsedIcons);
-    mergeManualIcons(icons, allIconNameSet, tempUsedIcons);
-
-    // 将有效的手动指定图标添加到所有品牌
-    for (const icon of icons) {
-      if (allIconNameSet.has(icon)) {
-        for (const brandResult of loadResult.brandResults) {
-          iconUsedByBrand.get(brandResult.brand.name)!.add(icon);
+  if (hasManualIcons) {
+    if (isArrayFormat) {
+      // 数组格式：--icons add,close,check-circle
+      // 图标只添加到实际拥有该图标的品牌中
+      const allBrandUsedIcons = new Set<string>();
+      for (const usedSet of iconUsedByBrand.values()) {
+        for (const icon of usedSet) {
+          allBrandUsedIcons.add(icon);
         }
       }
+
+      // 复用共享的手动图标合并逻辑进行校验和日志
+      const tempUsedIcons = new Set<string>(allBrandUsedIcons);
+      mergeManualIcons(icons, allIconNameSet, tempUsedIcons);
+
+      // 将有效的手动指定图标只添加到实际拥有该图标的品牌
+      for (const icon of icons) {
+        if (allIconNameSet.has(icon)) {
+          for (const brandResult of loadResult.brandResults) {
+            if (!brandResult.iconNameSet.has(icon)) continue; // 该品牌不包含此图标，跳过
+            const brandSet = iconUsedByBrand.get(brandResult.brand.name);
+            if (brandSet) brandSet.add(icon);
+          }
+        }
+      }
+    } else {
+      // 对象格式：--icons { tdesign: [add], material: [home] }
+      // 按品牌精确指定要保留的图标
+      let totalSpecified = 0;
+      let totalValid = 0;
+
+      for (const [brandName, brandIcons] of Object.entries(icons)) {
+        if (!brandIcons || brandIcons.length === 0) continue;
+
+        const brandResult = loadResult.brandResults.find((b) => b.brand.name === brandName);
+        if (!brandResult) {
+          console.warn(`⚠️ 手动指定的品牌不存在: ${brandName}`);
+          continue;
+        }
+
+        const brandSet = iconUsedByBrand.get(brandName);
+        if (!brandSet) continue;
+
+        for (const icon of brandIcons) {
+          totalSpecified++;
+          if (brandResult.iconNameSet.has(icon)) {
+            brandSet.add(icon);
+            totalValid++;
+          } else {
+            console.warn(`⚠️ 手动指定的图标未找到: ${icon} (品牌: ${brandName})`);
+          }
+        }
+      }
+
+      console.log(`📌 手动指定 ${totalSpecified} 个图标（有效 ${totalValid} 个）`);
     }
   }
 
@@ -385,4 +426,4 @@ export function clear(options: ClearOptions): ClearResult {
 }
 
 // 导出类型
-export type { ClearOptions, ClearResult, BrandClearResult } from './types';
+export type { ClearOptions, ClearResult, BrandClearResult, IconsOption } from './types';

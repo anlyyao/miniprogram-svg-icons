@@ -33,7 +33,9 @@ mp-svg-icons-clear — 小程序图标组件裁剪 CLI 工具
 参数:
   --pkg-dir <path>     （必填）构建产物中图标包所在目录
   --scan <dirs...>     扫描指定目录中的源文件（支持多个目录，空格分隔）
-  --icons <names>      手动指定要保留的图标名（逗号分隔）
+  --icons <names>      手动指定要保留的图标名，支持两种格式：
+                         列表格式: add,close,check-circle
+                         品牌格式: { tdesign: ['add','close'], material: ['home'] }
   --dry-run            仅预览，不实际修改文件
   -h, --help           显示帮助信息
 

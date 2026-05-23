@@ -325,6 +325,58 @@ divider "测试 12: 多目录扫描"
 sub_divider "12.1 同时扫描多个目录"
 assert_output_contains "多目录扫描工作正常" "保留" node "$CLEAR_CLI" --pkg-dir "$SVG_PKG_DIR" --scan ./pages/index ./pages/multi-brand ./pages/subpackage --dry-run
 
+# ================================================================
+# 测试 13: mp-svg-icons-clear — --icons 对象格式（按品牌精确指定）
+# ================================================================
+divider "测试 13: mp-svg-icons-clear — --icons 对象格式"
+
+sub_divider "13.1 JSON 对象格式 (dry-run)"
+assert_output_contains "JSON 对象格式能正常解析" "tdesign" node "$CLEAR_CLI" --pkg-dir "$SVG_PKG_DIR" --icons '{"tdesign":["add","close"],"material":["home"]}' --dry-run
+assert_output_contains "JSON 对象格式保留 add" "add" node "$CLEAR_CLI" --pkg-dir "$SVG_PKG_DIR" --icons '{"tdesign":["add","close"],"material":["home"]}' --dry-run
+
+sub_divider "13.2 简化对象格式 (dry-run)"
+assert_output_contains "简化对象格式能正常解析" "tdesign" node "$CLEAR_CLI" --pkg-dir "$SVG_PKG_DIR" --icons "{ tdesign: ['add','close'], material: ['home'] }" --dry-run
+
+sub_divider "13.3 对象格式实际裁剪后验证并恢复"
+backup_file "$ICONS_JS"
+
+node "$CLEAR_CLI" --pkg-dir "$SVG_PKG_DIR" --icons '{"tdesign":["add"],"material":["home"]}'
+
+assert_file_contains "裁剪后 tdesign add 仍存在" "$ICONS_JS" '"add"'
+assert_file_contains "裁剪后 material home 仍存在" "$ICONS_JS" '"home"'
+assert_file_not_contains "裁剪后 search 已移除" "$ICONS_JS" '"search"'
+assert_file_not_contains "裁剪后 setting 已移除" "$ICONS_JS" '"setting"'
+assert_file_not_contains "裁剪后 star 已移除" "$ICONS_JS" '"star"'
+
+restore_file "$ICONS_JS"
+assert_file_contains "文件已恢复 (setting 存在)" "$ICONS_JS" '"setting"'
+
+sub_divider "13.4 仅指定一个品牌（另一品牌全部裁剪）"
+backup_file "$ICONS_JS"
+
+node "$CLEAR_CLI" --pkg-dir "$SVG_PKG_DIR" --icons '{"tdesign":["add","close"]}'
+
+assert_file_contains "裁剪后 tdesign add 仍存在" "$ICONS_JS" '"add"'
+assert_file_contains "裁剪后 tdesign close 仍存在" "$ICONS_JS" '"close"'
+# material 品牌未在对象中指定，其图标应全部被裁剪
+assert_file_not_contains "裁剪后 material star 已移除" "$ICONS_JS" '"star"'
+
+restore_file "$ICONS_JS"
+assert_file_contains "文件已恢复 (star 存在)" "$ICONS_JS" '"star"'
+
+# ================================================================
+# 测试 14: mp-iconfont-clear — --icons 对象格式报错
+# ================================================================
+divider "测试 14: mp-iconfont-clear — --icons 对象格式报错"
+
+sub_divider "14.1 传入对象格式应报错退出"
+assert_fail "对象格式应报错退出" node "$ICONFONT_CLI" --pkg-dir "$TDESIGN_PKG_DIR" --icons '{"tdesign":["add","close"]}'
+assert_output_contains "报错信息提示不支持对象格式" "不支持按品牌分组的对象格式" node "$ICONFONT_CLI" --pkg-dir "$TDESIGN_PKG_DIR" --icons '{"tdesign":["add","close"]}'
+
+sub_divider "14.2 传入简化对象格式也应报错"
+assert_fail "简化对象格式也应报错退出" node "$ICONFONT_CLI" --pkg-dir "$TDESIGN_PKG_DIR" --icons "{ tdesign: ['add','close'] }"
+assert_output_contains "简化格式报错信息正确" "不支持按品牌分组的对象格式" node "$ICONFONT_CLI" --pkg-dir "$TDESIGN_PKG_DIR" --icons "{ tdesign: ['add','close'] }"
+
 # ======================== 结果汇总 ========================
 
 echo ""

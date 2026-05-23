@@ -64,7 +64,7 @@ module.exports = {
 
 ```bash
 cd examples/example-utils
-npm test
+npm run test
 ```
 
 ### 分别运行

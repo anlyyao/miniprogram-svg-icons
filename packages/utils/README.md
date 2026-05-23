@@ -67,6 +67,14 @@ npx mp-svg-icons-clear \
   --icons add,close,check-circle,delete
 ```
 
+**按品牌精确指定要保留的图标**（仅保留 tdesign 品牌的 add，material 品牌的 home）：
+
+```bash
+npx mp-svg-icons-clear \
+  --pkg-dir ./miniprogram_npm/@mp-svg-icons/wechat \
+  --icons '{ tdesign: ['add'], material: ['home'] }'
+```
+
 **先预览裁剪结果，确认无误后再执行**：
 
 ```bash
@@ -119,9 +127,18 @@ import { clear } from '@mp-svg-icons/utils';
 // 或者
 import { clear } from '@mp-svg-icons/utils/clear';
 
+// 方式一：icons 为数组。图标会被保留在**实际拥有该图标的品牌**中（如果多个品牌都有同名图标，则都保留）。
 const result = clear({
   scanDirs: ['./pages', './components'],
   icons: ['loading'],
+  pkgDir: './miniprogram_npm/@mp-svg-icons/wechat',
+  dryRun: false,
+});
+
+// 方式二：icons 为对象（按品牌精确指定保留的图标）
+const result2 = clear({
+  scanDirs: ['./pages', './components'],
+  icons: { tdesign: ['add', 'close'], material: ['home'] },
   pkgDir: './miniprogram_npm/@mp-svg-icons/wechat',
   dryRun: false,
 });

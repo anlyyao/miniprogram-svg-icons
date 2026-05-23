@@ -1,8 +1,7 @@
 /**
- * @mp-svg-icons/utils — 通用裁剪流程
+ * 通用裁剪流程
  *
- * 抽取 clear 和 iconfont-clear 两个工具共有的执行步骤，
- * 避免相同逻辑重复实现。
+ * 抽取 clear 和 iconfont-clear 两个工具共有的执行步骤。
  */
 
 import { formatBytes } from './utils';
@@ -33,13 +32,12 @@ export interface ClearPipelineResult {
 
 /**
  * 合并手动指定的图标到已使用集合
- *
  * @param icons 手动指定的图标名列表
  * @param allIconNameSet 全量图标名集合
  * @param usedIcons 将被修改的使用中图标集合
  */
 export function mergeManualIcons(icons: readonly string[], allIconNameSet: Set<string>, usedIcons: Set<string>): void {
-  if (icons.length === 0) return;
+  if (!icons.length) return;
 
   let validCount = 0;
   for (const icon of icons) {
@@ -53,9 +51,7 @@ export function mergeManualIcons(icons: readonly string[], allIconNameSet: Set<s
   console.log(`📌 手动指定 ${icons.length} 个图标（有效 ${validCount} 个）`);
 }
 
-/**
- * 检查并输出"无使用图标"警告
- */
+/** 检查并输出"无使用图标"警告 */
 export function warnIfNoUsedIcons(usedIcons: Set<string>): void {
   if (usedIcons.size === 0) {
     console.warn(
@@ -65,27 +61,22 @@ export function warnIfNoUsedIcons(usedIcons: Set<string>): void {
   }
 }
 
-/**
- * 计算裁剪列表（保留/移除）
- */
+/** 计算裁剪列表（保留/移除），单次遍历分组 */
 export function computeClearLists(
   allIconNames: readonly string[],
   usedIcons: Set<string>,
 ): { usedList: string[]; removedList: string[] } {
-  const usedList = allIconNames.filter((name) => usedIcons.has(name));
-  const removedList = allIconNames.filter((name) => !usedIcons.has(name));
+  const usedList: string[] = [];
+  const removedList: string[] = [];
+  for (const name of allIconNames) {
+    (usedIcons.has(name) ? usedList : removedList).push(name);
+  }
   return { usedList, removedList };
 }
 
 /**
  * 打印通用裁剪汇总信息
- *
- * @param dryRun 是否为预览模式
- * @param totalCount 图标总数
- * @param usedList 保留的图标列表
- * @param removedList 移除的图标列表
- * @param savedBytes 节省的字节数
- * @param labelPrefix 标签前缀（用于区分品牌等场景）
+ * @param options.labelPrefix 标签前缀（用于区分品牌等场景）
  */
 export function printClearSummary(options: {
   dryRun: boolean;
@@ -97,7 +88,7 @@ export function printClearSummary(options: {
 }): void {
   const { dryRun, totalCount, usedList, removedList, savedBytes, labelPrefix = '' } = options;
 
-  if (removedList.length === 0) {
+  if (!removedList.length) {
     console.log(`\n✅ 所有图标均在使用中，无需裁剪`);
     return;
   }
@@ -113,7 +104,7 @@ export function printClearSummary(options: {
     console.log(`\n💡 移除 --dry-run 参数以执行实际裁剪`);
   }
 
-  if (usedList.length > 0) {
+  if (usedList.length) {
     console.log(`\n📋 ${labelPrefix}保留的图标 (${usedList.length}):`);
     console.log(`   ${[...usedList].sort().join(', ')}`);
   }

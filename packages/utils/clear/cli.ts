@@ -21,8 +21,6 @@ import { CLI_BIN_NAME } from './constants';
 import { clear } from './index';
 import { parseBaseArgs, validateIconSource } from '../shared/cli';
 
-// ======================== CLI 帮助信息 ========================
-
 function printHelp(): void {
   console.log(`
 mp-svg-icons-clear — 小程序图标组件裁剪 CLI 工具
@@ -64,8 +62,6 @@ mp-svg-icons-clear — 小程序图标组件裁剪 CLI 工具
 `);
 }
 
-// ======================== CLI 参数解析 ========================
-
 function parseCLIArgs(): ClearOptions {
   let pkgDir: string | undefined;
 
@@ -78,14 +74,12 @@ function parseCLIArgs(): ClearOptions {
     },
   ]);
 
-  // 校验 --pkg-dir 必填
   if (!pkgDir) {
     console.error('❌ --pkg-dir 为必填参数\n');
     printHelp();
     process.exit(1);
   }
 
-  // 校验至少有一种图标来源
   validateIconSource(baseOptions.scanDirs, baseOptions.icons, printHelp);
 
   return {
@@ -96,12 +90,6 @@ function parseCLIArgs(): ClearOptions {
   };
 }
 
-// ======================== CLI 入口 ========================
-
-/**
- * 本文件为 CLI 独立入口，应通过 package.json bin 字段直接指向此文件。
- * 作为纯入口文件，无条件执行 CLI 逻辑，不再依赖 require.main === module 等判断。
- */
 const options = parseCLIArgs();
 try {
   clear(options);

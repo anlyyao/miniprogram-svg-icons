@@ -1,8 +1,8 @@
 /**
- * @mp-svg-icons/utils — iconfont 裁剪类型定义
+ * iconfont-clear — 类型定义
  */
 
-/** iconfont 裁剪选项 */
+/** 裁剪选项 */
 export interface IconfontClearOptions {
   /** 要扫描的源码目录（相对于 cwd） */
   readonly scanDirs: readonly string[];
@@ -14,7 +14,7 @@ export interface IconfontClearOptions {
   readonly dryRun: boolean;
 }
 
-/** 单个 iconfont 组件库的裁剪结果 */
+/** 裁剪结果 */
 export interface IconfontClearResult {
   /** npm 包目录路径 */
   readonly pkgDir: string;
@@ -30,7 +30,7 @@ export interface IconfontClearResult {
   readonly savedBytes: number;
 }
 
-/** iconfont CSS 解析结果 */
+/** iconfont CSS 数据 */
 export interface IconfontCssData {
   readonly filePath: string;
   readonly prefix: string;
@@ -41,7 +41,7 @@ export interface IconfontCssData {
   readonly originalSize: number;
 }
 
-/** iconfont 图标组件信息 */
+/** iconfont 组件信息 */
 export interface IconfontComponentInfo {
   readonly dir: string;
   readonly cssFilePath: string;
@@ -49,6 +49,7 @@ export interface IconfontComponentInfo {
   readonly pathRegex: RegExp;
 }
 
+/** 扫描上下文 */
 export interface IconfontScanContext {
   readonly pkgDir: string;
   readonly excludeDirs: Set<string>;
@@ -58,6 +59,7 @@ export interface IconfontScanContext {
   readonly iconPathRegex: RegExp;
 }
 
+/** 扫描结果 */
 export interface IconfontScanResult {
   readonly iconTagNames: Set<string>;
   readonly usedIcons: Set<string>;

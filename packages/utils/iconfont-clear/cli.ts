@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * @mp-svg-icons/utils — iconfont 裁剪 CLI 入口
+ * iconfont-clear — CLI 入口
  *
  * 用法:
  *   npx mp-iconfont-clear --pkg-dir ./miniprogram_npm/tdesign-miniprogram --scan ./pages ./components
@@ -11,7 +11,7 @@
  *   --pkg-dir <path>     (必填) iconfont 组件库的 npm 包目录路径
  *   --scan <dirs...>     扫描指定目录中的源文件（支持多个目录，空格分隔）
  *   --icons <names>      手动指定要保留的图标名（逗号分隔）
- *   --dry-run            仅打印将被移除的图标，不实际执行
+ *   --dry-run            仅预览，不实际修改文件
  *   -h, --help           显示帮助信息
  */
 
@@ -91,11 +91,10 @@ function parseCLIArgs(): IconfontClearOptions {
     printHelp();
     process.exit(1);
   }
-  const icons: string[] = baseOptions.icons;
 
   return {
     scanDirs: baseOptions.scanDirs,
-    icons,
+    icons: baseOptions.icons,
     pkgDir,
     dryRun: baseOptions.dryRun,
   };

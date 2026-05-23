@@ -7,9 +7,9 @@ export {
   collectIconTagNames,
   collectFiles,
 } from './scanner';
-export { parseBaseArgs, validateIconSource } from './cli';
+export { parseBaseArgs, validateIconSource, isIconsEmpty } from './cli';
 export { mergeManualIcons, warnIfNoUsedIcons, computeClearLists, printClearSummary } from './pipeline';
 
 export type { CollectedFiles } from './scanner';
-export type { BaseCLIOptions, CustomArgHandler } from './cli';
+export type { BaseCLIOptions, CustomArgHandler, IconsCLIOption } from './cli';
 export type { ClearPipelineOptions, ClearPipelineResult } from './pipeline';

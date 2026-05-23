@@ -1,7 +1,7 @@
 /**
- * @mp-svg-icons/utils — 文件扫描与图标识别
+ * clear — 源码扫描器
  *
- * 扫描项目源码中的 JSON 配置和模板文件，识别图标组件引用和使用情况。
+ * 扫描源码中图标组件的使用情况，按品牌分组收集使用中的图标名。
  */
 
 import type { ScanContext, ScanResult } from './types';
@@ -23,7 +23,7 @@ export function scanAllFiles(scanDirs: readonly string[], ctx: ScanContext): Sca
 
   // 将标签名分配给所有已知品牌（品牌由模板中的 brand 属性决定）
   const iconTagNamesByBrand = new Map<string, Set<string>>();
-  if (allIconTagNames.size > 0) {
+  if (allIconTagNames.size) {
     for (const brand of brandNameSet) {
       iconTagNamesByBrand.set(brand, new Set(allIconTagNames));
     }
@@ -39,12 +39,8 @@ export function scanAllFiles(scanDirs: readonly string[], ctx: ScanContext): Sca
       defaultBrand,
     );
     for (const [brand, icons] of foundByBrand) {
-      if (!iconsByBrand.has(brand)) {
-        iconsByBrand.set(brand, new Set());
-      }
-      for (const icon of icons) {
-        iconsByBrand.get(brand)!.add(icon);
-      }
+      if (!iconsByBrand.has(brand)) iconsByBrand.set(brand, new Set());
+      for (const icon of icons) iconsByBrand.get(brand)!.add(icon);
     }
   }
 

@@ -1,7 +1,7 @@
 /**
- * @mp-svg-icons/utils — iconfont 文件扫描与图标识别
+ * iconfont-clear — 源码扫描器
  *
- * 扫描项目源码中的 JSON 配置和模板文件，识别 iconfont 图标组件引用和使用情况。
+ * 扫描源码中 iconfont 图标组件的使用情况。
  */
 
 import type { IconfontScanContext, IconfontScanResult } from './types';
@@ -19,8 +19,7 @@ export function scanAllFiles(scanDirs: readonly string[], ctx: IconfontScanConte
 
   // 阶段二：从模板文件提取图标使用
   for (const { content } of templateFiles) {
-    const found = extractIconNamesSimple(content, allIconNameSet, iconTagNames);
-    for (const icon of found) {
+    for (const icon of extractIconNamesSimple(content, allIconNameSet, iconTagNames)) {
       usedIcons.add(icon);
     }
   }

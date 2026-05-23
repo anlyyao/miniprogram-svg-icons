@@ -1,0 +1,7 @@
+{
+  "usingComponents": {
+    "svg-icon": "@mp-svg-icons/wechat/icon",
+    "t-icon": "/miniprogram_npm/tdesign-miniprogram/icon/icon",
+    "vant-icon": "/miniprogram_npm/@vant/weapp/icon/index"
+  }
+}

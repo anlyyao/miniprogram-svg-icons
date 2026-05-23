@@ -1,0 +1,29 @@
+<!--index.wxml - 基础裁剪测试页面-->
+<scroll-view class="scrollarea" scroll-y type="list">
+  <view class="section">
+    <text class="title">SVG 图标（默认 tdesign 品牌）</text>
+    <svg-icon name="add" />
+    <svg-icon name="close" />
+    <svg-icon name="search" />
+  </view>
+
+  <view class="section">
+    <text class="title">SVG 图标（指定 material 品牌）</text>
+    <svg-icon name="home" brand="material" />
+    <svg-icon name="star" brand="material" />
+  </view>
+
+  <view class="section">
+    <text class="title">TDesign iconfont 图标</text>
+    <t-icon name="home" />
+    <t-icon name="search" />
+    <t-icon name="add" />
+  </view>
+
+  <view class="section">
+    <text class="title">Vant iconfont 图标</text>
+    <vant-icon name="close" />
+    <vant-icon name="search" />
+    <vant-icon name="home-o" />
+  </view>
+</scroll-view>

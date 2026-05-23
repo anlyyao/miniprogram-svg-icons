@@ -1,0 +1,15 @@
+<!--multi-brand/index.wxml - 多品牌 & 自定义标签名测试-->
+<scroll-view class="scrollarea" scroll-y type="list">
+  <view class="section">
+    <text class="title">自定义标签名 my-icon（默认 tdesign 品牌）</text>
+    <my-icon name="arrow-left" />
+    <my-icon name="arrow-right" />
+    <my-icon name="loading" />
+  </view>
+
+  <view class="section">
+    <text class="title">自定义标签名 my-icon（指定 material 品牌）</text>
+    <my-icon name="add" brand="material" />
+    <my-icon name="close" brand="material" />
+  </view>
+</scroll-view>

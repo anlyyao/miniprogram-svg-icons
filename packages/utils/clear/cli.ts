@@ -19,8 +19,7 @@
 import type { ClearOptions } from './types';
 import { CLI_BIN_NAME } from './constants';
 import { clear } from './index';
-
-// ======================== CLI 帮助信息 ========================
+import { parseBaseArgs, validateIconSource } from '../shared/cli';
 
 function printHelp(): void {
   console.log(`
@@ -32,7 +31,9 @@ mp-svg-icons-clear — 小程序图标组件裁剪 CLI 工具
 参数:
   --pkg-dir <path>     （必填）构建产物中图标包所在目录
   --scan <dirs...>     扫描指定目录中的源文件（支持多个目录，空格分隔）
-  --icons <names>      手动指定要保留的图标名（逗号分隔）
+  --icons <names>      手动指定要保留的图标名，支持两种格式：
+                         列表格式: add,close,check-circle
+                         品牌格式: { tdesign: ['add','close'], material: ['home'] }
   --dry-run            仅预览，不实际修改文件
   -h, --help           显示帮助信息
 
@@ -61,93 +62,34 @@ mp-svg-icons-clear — 小程序图标组件裁剪 CLI 工具
 `);
 }
 
-// ======================== CLI 参数解析 ========================
-
 function parseCLIArgs(): ClearOptions {
-  const args = process.argv.slice(2);
-
-  if (args.includes('-h') || args.includes('--help')) {
-    printHelp();
-    process.exit(0);
-  }
-
-  const scanDirs: string[] = [];
-  let icons: string[] = [];
   let pkgDir: string | undefined;
-  let dryRun = false;
 
-  let i = 0;
-  while (i < args.length) {
-    const arg = args[i];
+  const baseOptions = parseBaseArgs(printHelp, [
+    {
+      argName: '--pkg-dir',
+      setValue: (value: string) => {
+        pkgDir = value;
+      },
+    },
+  ]);
 
-    switch (arg) {
-      case '--scan': {
-        i++;
-        while (i < args.length && !args[i].startsWith('--') && args[i] !== '-h') {
-          scanDirs.push(args[i]);
-          i++;
-        }
-        break;
-      }
-
-      case '--icons': {
-        i++;
-        if (i < args.length) {
-          icons = args[i]
-            .split(',')
-            .map((s) => s.trim())
-            .filter(Boolean);
-          i++;
-        }
-        break;
-      }
-
-      case '--pkg-dir': {
-        i++;
-        if (i < args.length) {
-          pkgDir = args[i];
-          i++;
-        }
-        break;
-      }
-
-      case '--dry-run': {
-        dryRun = true;
-        i++;
-        break;
-      }
-
-      default: {
-        console.warn(`⚠️ 未知参数: ${arg}`);
-        i++;
-        break;
-      }
-    }
-  }
-
-  // 校验 --pkg-dir 必填
   if (!pkgDir) {
     console.error('❌ --pkg-dir 为必填参数\n');
     printHelp();
     process.exit(1);
   }
 
-  // 校验至少有一种图标来源
-  if (scanDirs.length === 0 && icons.length === 0) {
-    console.error('❌ --scan 和 --icons 至少需要指定一个\n');
-    printHelp();
-    process.exit(1);
-  }
+  validateIconSource(baseOptions.scanDirs, baseOptions.icons, printHelp);
 
-  return { scanDirs, icons, pkgDir, dryRun };
+  return {
+    scanDirs: baseOptions.scanDirs,
+    icons: baseOptions.icons,
+    pkgDir,
+    dryRun: baseOptions.dryRun,
+  };
 }
 
-// ======================== CLI 入口 ========================
-
-/**
- * 本文件为 CLI 独立入口，应通过 package.json bin 字段直接指向此文件。
- * 作为纯入口文件，无条件执行 CLI 逻辑，不再依赖 require.main === module 等判断。
- */
 const options = parseCLIArgs();
 try {
   clear(options);

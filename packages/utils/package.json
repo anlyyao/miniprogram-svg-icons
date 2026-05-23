@@ -2,26 +2,33 @@
   "name": "@mp-svg-icons/utils",
   "version": "0.0.1",
   "description": "小程序 SVG 图标工具集 - 支持微信、支付宝、快手等多平台小程序",
-  "main": "clear/index.js",
-  "types": "clear/index.d.ts",
+  "main": "index.js",
+  "types": "index.d.ts",
   "bin": {
-    "mp-svg-icons-clear": "./clear/cli.js"
+    "mp-svg-icons-clear": "./clear/cli.js",
+    "mp-iconfont-clear": "./iconfont-clear/cli.js"
   },
   "exports": {
     ".": {
-      "types": "./clear/index.d.ts",
-      "default": "./clear/index.js"
+      "types": "./index.d.ts",
+      "default": "./index.js"
     },
     "./clear": {
       "types": "./clear/index.d.ts",
       "default": "./clear/index.js"
+    },
+    "./iconfont-clear": {
+      "types": "./iconfont-clear/index.d.ts",
+      "default": "./iconfont-clear/index.js"
     }
   },
   "scripts": {
     "build": "tsc && cp package.json README.md ../../dist/utils/"
   },
   "files": [
-    "clear"
+    "shared",
+    "clear",
+    "iconfont-clear"
   ],
   "keywords": [
     "miniprogram",

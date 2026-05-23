@@ -1,19 +1,23 @@
 /**
- * @mp-svg-icons/utils— 类型定义
+ * clear — 类型定义
  */
 
+/** 手动指定保留的图标，支持数组或按品牌分组的对象 */
+export type IconsOption = readonly string[] | Readonly<Record<string, readonly string[]>>;
+
+/** 裁剪选项 */
 export interface ClearOptions {
   /** 要扫描的源码目录（相对于 cwd） */
   readonly scanDirs: readonly string[];
-  /** 手动指定保留的图标名列表 */
-  readonly icons: readonly string[];
+  /** 手动指定保留的图标名列表（支持数组或按品牌分组的对象） */
+  readonly icons: IconsOption;
   /** 构建产物中图标包所在目录（必填） */
   readonly pkgDir: string;
   /** 仅预览，不实际修改 */
   readonly dryRun: boolean;
 }
 
-/** 单个品牌的裁剪结果 */
+/** 单品牌裁剪结果 */
 export interface BrandClearResult {
   /** 品牌名称 */
   readonly brand: string;
@@ -25,6 +29,7 @@ export interface BrandClearResult {
   readonly removedIcons: readonly string[];
 }
 
+/** 裁剪总结果 */
 export interface ClearResult {
   /** 各品牌的裁剪结果 */
   readonly brands: readonly BrandClearResult[];
@@ -32,15 +37,13 @@ export interface ClearResult {
   readonly totalSavedBytes: number;
 }
 
-/**
- * 品牌信息（来源于 icons.js 的顶层 key）
- */
+/** 品牌信息 */
 export interface BrandInfo {
   /** 品牌名称 */
   readonly name: string;
 }
 
-/** 扫描上下文：在各阶段间共享的运行时数据 */
+/** 扫描上下文 */
 export interface ScanContext {
   /** 解析后的图标包绝对路径 */
   readonly pkgDir: string;
@@ -62,14 +65,14 @@ export interface ScanContext {
   readonly iconPathRegex: RegExp;
 }
 
-/** 单个品牌的图标数据加载结果 */
+/** 单品牌图标数据加载结果 */
 export interface BrandIconDataLoadResult {
   readonly brand: BrandInfo;
   /** 该品牌的图标名集合 */
   readonly iconNameSet: Set<string>;
 }
 
-/** 图标数据加载结果（多品牌） */
+/** 图标数据加载总结果 */
 export interface IconDataLoadResult {
   /** 各品牌的图标数据 */
   readonly brandResults: readonly BrandIconDataLoadResult[];
@@ -79,7 +82,7 @@ export interface IconDataLoadResult {
   readonly iconsData: IconsData | null;
 }
 
-/** icons.js 数据结构 */
+/** icons.js 解析后的数据结构 */
 export interface IconsData {
   /** 所有品牌的图标数据 { "brand1": { "icon1": "svg1", ... }, ... } */
   readonly data: Record<string, Record<string, string>>;
@@ -89,7 +92,7 @@ export interface IconsData {
   readonly originalSize: number;
 }
 
-/** 文件扫描结果（合并 usingComponents 和模板图标名提取） */
+/** 扫描结果 */
 export interface ScanResult {
   /** icon 通用组件的自定义标签名集合（按品牌分组，key 为品牌名） */
   readonly iconTagNamesByBrand: Map<string, Set<string>>;
@@ -97,7 +100,7 @@ export interface ScanResult {
   readonly iconsByBrand: Map<string, Set<string>>;
 }
 
-/** performClear 执行裁剪后的完整返回结果 */
+/** 裁剪执行结果 */
 export interface PerformClearResult {
   /** 各品牌的使用/移除图标 */
   readonly brandResults: ReadonlyMap<string, { used: readonly string[]; removed: readonly string[]; total: number }>;

@@ -1,6 +1,6 @@
 {
   "name": "@mp-svg-icons/utils",
-  "version": "0.0.2-beta",
+  "version": "0.0.2",
   "description": "小程序 SVG 图标工具集 - 支持微信、支付宝、快手等多平台小程序",
   "main": "index.js",
   "types": "index.d.ts",

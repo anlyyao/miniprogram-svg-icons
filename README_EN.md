@@ -28,7 +28,7 @@
 
 Multi-color icon example mini program, please scan with WeChat to preview ↓
 
-<img width="260" src="./example/qrcode.jpg" />
+<img width="260" src="./examples/example-svg-icon/qrcode.jpg" />
 
 ## ✨ Features
 
@@ -225,7 +225,7 @@ pnpm install
 
 #### Import Project
 
-Open [WeChat DevTools](https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html), and import the `example` folder.
+Open [WeChat DevTools](https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html), and import the `examples/example-svg-icon` folder.
 
 #### Build npm
 

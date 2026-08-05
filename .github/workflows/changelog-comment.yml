@@ -50,7 +50,7 @@ jobs:
         with:
           ref: ${{ steps.pr.outputs.head_ref }}
           fetch-depth: 0
-          token: ${{ secrets.ACCESS_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate changelog for PR
         id: gen

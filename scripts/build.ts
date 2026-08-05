@@ -166,15 +166,16 @@ export async function build(platformId: string = 'wechat'): Promise<BuildResult>
   // -------- 4. 生成并压缩图标组件（Icon）（包含 icons.js） --------
   await buildIconComponent(platformDistDir, platform, brandsIcons, templates);
 
-  // -------- 5. 复制 package.json 和 README.md 到产物目录 --------
+  // -------- 5. 复制 package.json、README.md、CHANGELOG.md 到产物目录 --------
   const sourcePkgDir = path.resolve(ROOT_DIR, 'packages', platformId);
-  for (const file of ['package.json', 'README.md']) {
+  const OPTIONAL_FILES = ['CHANGELOG.md'];
+  for (const file of ['package.json', 'README.md', ...OPTIONAL_FILES]) {
     const src = path.resolve(sourcePkgDir, file);
     const dest = path.resolve(platformDistDir, file);
     if (fs.existsSync(src)) {
       fs.copyFileSync(src, dest);
       console.log(`📄 已复制 ${file} 到产物目录`);
-    } else {
+    } else if (!OPTIONAL_FILES.includes(file)) {
       console.log(`⚠️  未找到 ${src}，跳过 ${file} 复制`);
     }
   }

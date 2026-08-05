@@ -22,6 +22,8 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
+          fetch-tags: true
+          token: ${{ secrets.ACCESS_TOKEN }}
 
       - name: Detect packages
         id: detect
@@ -72,25 +74,41 @@ jobs:
           echo "to_publish=$(echo $TO_PUBLISH | xargs)" >> $GITHUB_OUTPUT
           echo "to_build=$(echo $TO_BUILD | xargs)" >> $GITHUB_OUTPUT
 
+      - name: Collect changelog
+        id: changelog
+        uses: actions/github-script@v7
+        env:
+          TO_BUILD: ${{ steps.detect.outputs.to_build }}
+        with:
+          script: |
+            const { renderPreview } = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/release-changelog.cjs`);
+            const dirs = (process.env.TO_BUILD || '').split(' ').filter(Boolean);
+            // 直接读取各子包 .changelog/pr-*.md 暂存文件聚合预览
+            core.setOutput('body', renderPreview({ dirs }));
+
       - name: Comment on PR
         uses: actions/github-script@v7
         env:
           PACKAGES_INFO: ${{ steps.detect.outputs.packages_info }}
           TO_PUBLISH: ${{ steps.detect.outputs.to_publish }}
           TO_BUILD: ${{ steps.detect.outputs.to_build }}
+          CHANGELOG_BODY: ${{ steps.changelog.outputs.body }}
         with:
           script: |
             const packagesInfo = process.env.PACKAGES_INFO;
             const toPublish = process.env.TO_PUBLISH;
             const toBuild = process.env.TO_BUILD;
+            const changelog = process.env.CHANGELOG_BODY;
 
             let note = '';
             if (toPublish) {
-              note = '> ⚠️ Merging this PR will:\n> - 🔨 Build packages: `' + toBuild + '`\n> - 📤 Publish packages marked with ✅ to npm.';
+              note = '> ⚠️ Merging this PR will:\n> - 🔨 Build packages: `' + toBuild + '`\n> - 📤 Publish packages marked with ✅ to npm.\n> - 📝 Write `CHANGELOG.md` and create GitHub Releases.';
             } else {
               note = '> ℹ️ No packages will be published (no version changes or versions already exist on npm).';
             }
-            const body = '## 🚀 Release Preview\n\n### Package Status\n' + packagesInfo + '\n\n' + note;
+            const body = '## 🚀 Release Preview\n\n### Package Status\n' + packagesInfo + '\n\n'
+              + (changelog ? changelog + '\n\n' : '')
+              + note;
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
@@ -115,6 +133,43 @@ jobs:
               });
             }
 
+      - name: Compose changelog into branch
+        id: compose
+        uses: actions/github-script@v7
+        env:
+          TO_BUILD: ${{ steps.detect.outputs.to_build }}
+        with:
+          script: |
+            const { composeReleaseChangelog } = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/release-changelog.cjs`);
+            const dirs = (process.env.TO_BUILD || '').split(' ').filter(Boolean);
+            // 读取各子包 .changelog/pr-*.md 暂存 → 合成 CHANGELOG.md → 清理暂存
+            const { affected, removed } = composeReleaseChangelog({ dirs });
+            core.setOutput('affected', affected.join(' '));
+            core.setOutput('removed', removed.join(' '));
+
+      - name: Commit changelog to release PR
+        if: steps.compose.outputs.affected != ''
+        env:
+          AFFECTED: ${{ steps.compose.outputs.affected }}
+          REMOVED: ${{ steps.compose.outputs.removed }}
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          # 合成后的 CHANGELOG.md（新增/修改）
+          for PKG in $AFFECTED; do
+            git add "packages/$PKG/CHANGELOG.md"
+          done
+          # 已被清理的 .changelog/pr-*.md 暂存文件（删除）
+          for FILE in $REMOVED; do
+            git add -A "$FILE"
+          done
+          if git diff --cached --quiet; then
+            echo "ℹ️ 无变化，跳过提交"
+          else
+            git commit -m "docs(changelog): compose changelog & clear stash for release [skip ci]"
+            git push origin HEAD:${{ github.head_ref }}
+          fi
+
   release:
     runs-on: ubuntu-latest
     if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/')
@@ -124,6 +179,7 @@ jobs:
           ref: develop
           fetch-depth: 0
           token: ${{ secrets.ACCESS_TOKEN }}
+          fetch-tags: true
 
       - name: Detect packages
         id: detect
@@ -225,6 +281,33 @@ jobs:
           echo "skipped=$(echo $SKIPPED | xargs)" >> $GITHUB_OUTPUT
           [ -n "$FAILED" ] && exit 1 || true
 
+      - name: Update changelog
+        id: changelog
+        if: steps.publish.outputs.published != ''
+        uses: actions/github-script@v7
+        env:
+          PUBLISHED: ${{ steps.publish.outputs.published }}
+        with:
+          script: |
+            const { applyRelease } = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/release-changelog.cjs`);
+            const published = (process.env.PUBLISHED || '').split(' ').filter(Boolean);
+            // CHANGELOG.md 已在 release PR 合成阶段写入，这里直接回读版本区块作为 Release 正文（兜底才会写文件）
+            const releases = applyRelease({ published });
+            core.setOutput('releases', JSON.stringify(releases));
+
+      - name: Commit changelog
+        if: steps.publish.outputs.published != ''
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "ℹ️ CHANGELOG 已在 release PR 合成，无新增变化，跳过提交"
+          else
+            git commit -m "chore(changelog): update changelog [skip ci]"
+            git push origin HEAD:develop
+          fi
+
       - name: Create tags
         if: steps.publish.outputs.published != ''
         run: |
@@ -234,6 +317,25 @@ jobs:
             git tag "$TAG"
           done
           git push origin --tags
+
+      - name: Create GitHub releases
+        id: releases
+        if: steps.publish.outputs.published != ''
+        uses: actions/github-script@v7
+        env:
+          RELEASES: ${{ steps.changelog.outputs.releases }}
+        with:
+          script: |
+            const { createReleases } = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/release-changelog.cjs`);
+            const releases = JSON.parse(process.env.RELEASES || '[]');
+            const urls = await createReleases({
+              github,
+              context,
+              core,
+              releases,
+              prNumber: context.payload.pull_request.number,
+            });
+            core.setOutput('urls', urls.join(' '));
 
       - name: Summary
         if: always()
@@ -257,6 +359,12 @@ jobs:
           if [ -n "$PUBLISHED" ]; then
             echo "### ✅ Published" >> $GITHUB_STEP_SUMMARY
             for PKG in $PUBLISHED; do echo "- \`$PKG\`" >> $GITHUB_STEP_SUMMARY; done
+          fi
+
+          RELEASE_URLS="${{ steps.releases.outputs.urls }}"
+          if [ -n "$RELEASE_URLS" ]; then
+            echo "### 🏷️ GitHub Releases" >> $GITHUB_STEP_SUMMARY
+            for URL in $RELEASE_URLS; do echo "- $URL" >> $GITHUB_STEP_SUMMARY; done
           fi
 
           if [ -n "$SKIPPED" ]; then

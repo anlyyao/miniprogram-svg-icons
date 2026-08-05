@@ -1,0 +1,136 @@
+name: Changelog Comment
+
+# PR 评论 `/changelog` 时，为当前 PR 生成 changelog 并写入各子包 .changelog/pr-<number>.md 暂存文件，再推回 PR 分支
+on:
+  issue_comment:
+    types: [created, edited]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  changelog:
+    # 仅处理 PR 上的 `/changelog` 评论，且非机器人触发
+    if: |
+      github.event.issue.pull_request &&
+      github.event.comment.user.type != 'Bot' &&
+      startsWith(github.event.comment.body, '/changelog')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get PR info
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+            core.setOutput('head_ref', pr.head.ref);
+            core.setOutput('number', pr.number);
+            core.setOutput('is_release', String(pr.head.ref.startsWith('release/')));
+
+      - name: Skip release PR
+        if: steps.pr.outputs.is_release == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: 'ℹ️ 该 PR 为发版分支，changelog 会在 release 预览阶段自动合成并写入，无需手动执行 `/changelog`。',
+            });
+
+      - uses: actions/checkout@v6
+        if: steps.pr.outputs.is_release != 'true'
+        with:
+          ref: ${{ steps.pr.outputs.head_ref }}
+          fetch-depth: 0
+          token: ${{ secrets.ACCESS_TOKEN }}
+
+      - name: Generate changelog for PR
+        id: gen
+        if: steps.pr.outputs.is_release != 'true'
+        uses: actions/github-script@v7
+        env:
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+        with:
+          script: |
+            const core0 = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/changelog-core.cjs`);
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+
+            const packages = core0.listPackages(process.env.GITHUB_WORKSPACE);
+            const parsed = core0.parsePullRequestBody(pr.body, packages);
+
+            if (parsed.skipped) {
+              core.info('PR 标记无需 changelog，跳过');
+              core.setOutput('changed', 'false');
+              core.setOutput('affected', '');
+              return;
+            }
+
+            const meta = { author: pr.user?.login, number: pr.number, url: pr.html_url };
+            const affected = [];
+            const files = [];
+            for (const pkg of packages) {
+              const entries = (parsed.entries[pkg.name] || []).map((entry) => core0.decorateEntry(entry, meta));
+              // 写入（或在无条目时清理）该包的 PR 暂存文件 packages/<pkg>/.changelog/pr-<number>.md
+              const res = core0.writeStash(process.env.GITHUB_WORKSPACE, pkg.dir, pr.number, entries);
+              if (!res) continue;
+              files.push(res.file);
+              if (!res.removed) affected.push(pkg.dir);
+            }
+
+            core.setOutput('changed', files.length ? 'true' : 'false');
+            core.setOutput('affected', affected.join(' '));
+            core.setOutput('files', files.join(' '));
+
+      - name: Commit and push to PR branch
+        if: steps.gen.outputs.changed == 'true'
+        env:
+          FILES: ${{ steps.gen.outputs.files }}
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          for FILE in $FILES; do
+            git add -A "$FILE"
+          done
+          if git diff --cached --quiet; then
+            echo "ℹ️ changelog 暂存文件无变化，跳过提交"
+          else
+            git commit -m "docs(changelog): update changelog for #${{ steps.pr.outputs.number }} [skip ci]"
+            git push origin HEAD:${{ steps.pr.outputs.head_ref }}
+          fi
+
+      - name: Comment result
+        if: always() && steps.pr.outputs.is_release != 'true'
+        uses: actions/github-script@v7
+        env:
+          CHANGED: ${{ steps.gen.outputs.changed }}
+          AFFECTED: ${{ steps.gen.outputs.affected }}
+        with:
+          script: |
+            const changed = process.env.CHANGED;
+            const affected = process.env.AFFECTED || '';
+            const dirs = affected.split(' ').filter(Boolean).map((d) => `\`packages/${d}/.changelog/pr-${{ steps.pr.outputs.number }}.md\``);
+            let body;
+            if (changed === 'true' && dirs.length) {
+              body = `✅ 已为 #${{ steps.pr.outputs.number }} 生成 changelog暂存文件并推送到分支：\n\n- ${dirs.join('\n- ')}`;
+            } else if (changed === 'true') {
+              body = `✅ 已更新 #${{ steps.pr.outputs.number }} 的 changelog 暂存文件（本次无新增条目，已清理过期暂存）。`;
+            } else {
+              body = `ℹ️ #${{ steps.pr.outputs.number }} 没有需要纳入 changelog 的条目（或已标记跳过）。`;
+            }
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });

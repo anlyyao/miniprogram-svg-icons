@@ -332,6 +332,28 @@ Before submitting a PR, please ensure:
 关联的 Issue 编号（如：Closes #123）
 ```
 
+### Changelog 生成 | Changelog
+
+本仓库通过 GitHub Actions 自动收集 changelog，条目来源于 PR 描述中的「📝 更新日志」，按分包标题归类：
+
+```markdown
+#### @mp-svg-icons/wechat
+
+- feat(icon): 新增 xxx 图标
+- fix: 修复 xxx 问题
+```
+
+- 无需手动评论 `/changelog`：发版时 CI 会自动收集「上一个 tag 到当前 release 分支」区间内所有已合并 PR 的描述，按包聚合为 changelog（勾选了「本条 PR 不需要纳入 Changelog」的 PR 会被跳过）；
+- Changelog 预览仅由 **release PR** 主动触发：向 `develop` 提 `release/*` 分支的 PR 时，CI 会在评论中给出 Release Preview（待发布包 + 累计的 changelog 预览）；
+- Release PR 合并后，CI 自动把各子包累积的条目合入 `packages/<平台>/CHANGELOG.md`（同名版本去重并按版本号置顶）；
+- 若本次改动无需记录，请勾选「本条 PR 不需要纳入 Changelog」。
+
+### 发布流程 | Release Process
+
+1. 本地执行 `pnpm run release` 更新版本号，并推送 `release/*` 分支；
+2. 向 `develop` 提 PR，CI 会评论 Release Preview（待发布包 + changelog 预览）；
+3. PR 合并后自动完成：构建 → 发布 npm → 写入 `packages/<平台>/CHANGELOG.md` → 打 tag → 创建 GitHub Release。
+
 ### 审核流程 | Review Process
 
 1. 提交 PR 后，维护者会尽快审核

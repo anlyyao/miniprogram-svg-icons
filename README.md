@@ -225,7 +225,7 @@ pnpm install
 
 #### 导入项目
 
-打开[微信开发者工具](https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html)，导入 examples/example-svg-icon 文件夹
+打开[微信开发者工具](https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html)，导入 `examples/example-svg-icon` 文件夹
 
 #### 构建 npm
 

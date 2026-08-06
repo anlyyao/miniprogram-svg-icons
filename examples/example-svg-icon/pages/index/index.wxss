@@ -14,8 +14,54 @@ page {
 /* ====== 图标展示区域 ====== */
 .icon-area {
   height: 100vh;
-  padding: 24rpx 24rpx 120rpx;
   box-sizing: border-box;
+}
+
+/* ====== 方案一 <use> mask 透明度重叠验证区 ====== */
+
+.overlap-demo-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.overlap-demo-desc {
+  font-size: 20rpx;
+  color: #888;
+  line-height: 1.5;
+  margin-bottom: 16rpx;
+}
+
+.overlap-demo-grid {
+  /* display: flex; */
+  /* flex-wrap: wrap; */
+}
+
+.overlap-demo-item {
+  width: 25%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12rpx 8rpx;
+  box-sizing: border-box;
+}
+
+/*棋盘格背景，便于观察半透明叠加处是否变深 */
+.overlap-demo-swatch {
+  width: 148px;
+  height: 148px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8rpx;
+  background-image:
+    linear-gradient(45deg, #ccc 25%, transparent 25%),
+    linear-gradient(-45deg, #ccc 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #ccc 75%),
+    linear-gradient(-45deg, transparent 75%, #ccc 75%);
+  background-size: 16rpx 16rpx;
+  background-position: 0 0, 0 8rpx, 8rpx -8rpx, -8rpx 0;
 }
 
 /* 分类区块 */

@@ -2,6 +2,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import { parseSvg, generateSvg } from './utils/svgTotemplate';
 import { optimizeSvg } from './utils/svgOptimizer';
+import { processOpacityOverlap } from './utils/opacityOverlap';
 
 // ======================== 路径常量 ========================
 
@@ -185,6 +186,9 @@ export function loadSvgs(svgDir: string): SvgEntry[] {
 
   const svgFiles = fs.readdirSync(svgDir).filter((f) => f.endsWith('.svg'));
 
+  // 用目录名作为 brand 前缀，保证跨品牌同名图标的检测缓存 key 唯一
+  const brandKey = path.basename(svgDir);
+
   const rawEntries: { name: string; content: string; file: string }[] = [];
   for (const file of svgFiles) {
     try {
@@ -194,9 +198,14 @@ export function loadSvgs(svgDir: string): SvgEntry[] {
       // 使用 SVGO 进行预压缩
       const optimizedContent = optimizeSvg(originalContent, file);
 
+      // 处理透明度重叠：检测到几何重叠时注入 luminance mask 挖除上层覆盖区域，
+      // 避免运行时传入半透明色时重叠区透明度叠加变深
+      const name = path.basename(file, '.svg');
+      const overlapProcessed = processOpacityOverlap(optimizedContent, `${brandKey}/${name}`);
+
       rawEntries.push({
-        name: path.basename(file, '.svg'),
-        content: optimizedContent,
+        name,
+        content: overlapProcessed,
         file,
       });
     } catch (err) {
@@ -288,10 +297,10 @@ export function generateIconsJS(brandsIcons: BrandIconsMap): string {
 // ======================== 目录清理 ========================
 
 /** 清理时需要保留的文件 */
-const PRESERVE_FILES = new Set(['package.json', 'README.md']);
+const PRESERVE_FILES = new Set(['package.json', 'README.md', '.changelog', 'CHANGELOG.md']);
 
 /**
- * 清理输出目录（保留 package.json、README.md）
+ * 清理输出目录（保留 package.json、README.md、.changelog）
  */
 export async function cleanOutputDir(outputDir: string): Promise<void> {
   if (!fs.existsSync(outputDir)) {

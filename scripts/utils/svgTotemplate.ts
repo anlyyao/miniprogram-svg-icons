@@ -13,6 +13,10 @@ export interface SvgNode {
 const CONTEXT_IDS = ['fill1', 'fill2', 'stroke1', 'stroke2'] as const;
 const CONTEXT_ID_SET = new Set<string>(CONTEXT_IDS);
 
+// 这些子树仅作定义/挖除用途（如透明度重叠 mask），其颜色是固定的 #000/#fff，
+// 不能被 normalizeColor 替换成 {f1}/{s1} 等动态变量，需原样输出。
+const RAW_OUTPUT_TAGS = new Set(['defs', 'mask', 'clippath', 'symbol']);
+
 const SPECIFIED_ICONS_SET = new Set(specifiedIcons);
 
 const domParser = new DOMParser();
@@ -104,6 +108,30 @@ function buildAttrString(node: SvgNode, isSpecified: boolean, parentId?: string)
     .join('');
 }
 
+/**
+ * 原样序列化子树（保留 id、不做颜色归一化），用于 defs/mask 等定义类节点：
+ * 其颜色固定为 #000/#fff，若被 normalizeColor 替换成动态变量会破坏 mask 挖除。
+ */
+function serializeRaw(node: SvgNode, tag: string): string {
+  const attrs = Object.entries(node.$)
+    .map(([k, v]) => ` ${k}="${v}"`)
+    .join('');
+
+  const hasChildren = Object.keys(node.children).length > 0;
+  if (!hasChildren) {
+    return `<${tag}${attrs} />`;
+  }
+
+  let inner = '';
+  for (const [childTag, children] of Object.entries(node.children)) {
+    if (!children) continue;
+    for (const child of children) {
+      inner += serializeRaw(child, childTag);
+    }
+  }
+  return `<${tag}${attrs}>${inner}</${tag}>`;
+}
+
 export function parseSvg(svgContent: string): SvgNode {
   const xmlDoc = domParser.parseFromString(svgContent, 'image/svg+xml');
 
@@ -131,6 +159,12 @@ function generateChildrenTemplate(
     if (!children) continue;
 
     for (const node of children) {
+      // defs/mask 等定义类子树原样输出，不做颜色归一化
+      if (RAW_OUTPUT_TAGS.has(tag)) {
+        tpl += serializeRaw(node, tag);
+        continue;
+      }
+
       const currentId = node.$.id;
       const contextId = CONTEXT_ID_SET.has(currentId) ? currentId : parentId;
 

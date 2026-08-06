@@ -44,11 +44,25 @@ Component({
       return color.map((c) => this.hex2rgb(c));
     },
 
+    // 归一化颜色为 SVG 可识别的形式，并保留透明度（alpha）。
+    // 支持 #rgb / #rgba / #rrggbb / #rrggbbaa / rgb() / rgba() 及颜色关键字。
+    // 编译期已对重叠图层注入 mask，使各层互不叠加，因此这里直接把 alpha 保留在
+    // 各自颜色里即可正确渲染，重叠区不会出现透明度累加变深。
     hex2rgb(hex) {
+      if (typeof hex !== 'string') return hex;
       if (hex[0] !== '#') return hex;
-      hex = hex.slice(1);
-      if (hex.length === 3) hex = hex.replace(/(.)/g, '$1$1');
-      const [r, g, b] = hex.match(/../g).map((c) => parseInt(c, 16));
+
+      let h = hex.slice(1);
+      // 3/4 位简写补全为6/8 位
+      if (h.length === 3 || h.length === 4) h = h.replace(/(.)/g, '$1$1');
+
+      if (h.length !== 6 && h.length !== 8) return hex;
+
+      const [r, g, b] = h.match(/../g).map((c) => parseInt(c, 16));
+      if (h.length === 8) {
+        const a = parseInt(h.slice(6, 8), 16) / 255;
+        return `rgba(${r},${g},${b},${Math.round(a * 1000) / 1000})`;
+      }
       return `rgb(${r},${g},${b})`;
     },
 

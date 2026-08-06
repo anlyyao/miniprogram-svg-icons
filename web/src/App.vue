@@ -45,8 +45,8 @@
               >
                 <svg
                   class="icon-svg"
-                  :style="{ 
-                    width: `${configuration.iconSize}px`, 
+                  :style="{
+                    width: `${configuration.iconSize}px`,
                     height: `${configuration.iconSize}px`,
                     color: 'var(--td-text-color-primary)'
                   }"
@@ -127,12 +127,12 @@
                 variant="default-filled"
                 :key="configuration.strokeTypes"
               >
-                <t-radio-button 
+                <t-radio-button
                   value="single"
                   v-if="configuration.strokeTypes === 'outline'"
                 >单色</t-radio-button>
                 <t-radio-button value="double">双色</t-radio-button>
-                <t-radio-button 
+                <t-radio-button
                   value="multiple"
                   v-if="configuration.strokeTypes === 'outlineFilled'"
                 >多色</t-radio-button>
@@ -140,7 +140,7 @@
             </div>
 
             <!-- 填充颜色（仅描边-填充模式显示） -->
-            <div 
+            <div
               class="operation-section color-pickers"
               v-if="configuration.strokeTypes === 'outlineFilled'"
             >
@@ -149,10 +149,11 @@
                 <t-color-picker
                   v-model="configuration.fillColor1"
                   :color-modes="['monochrome']"
-                  format="HEX"
+                  :enable-alpha="true"
+                  format="RGBA"
                 />
               </div>
-              <div 
+              <div
                 class="color-picker-item"
                 v-if="configuration.colorType === 'multiple'"
               >
@@ -160,7 +161,8 @@
                 <t-color-picker
                   v-model="configuration.fillColor2"
                   :color-modes="['monochrome']"
-                  format="HEX"
+                  :enable-alpha="true"
+                  format="RGBA"
                 />
               </div>
             </div>
@@ -172,10 +174,11 @@
                 <t-color-picker
                   v-model="configuration.strokeColor1"
                   :color-modes="['monochrome']"
-                  format="HEX"
+                  :enable-alpha="true"
+                  format="RGBA"
                 />
               </div>
-              <div 
+              <div
                 class="color-picker-item"
                 v-if="(configuration.colorType === 'double' && configuration.strokeTypes === 'outline') || configuration.colorType === 'multiple'"
               >
@@ -183,7 +186,8 @@
                 <t-color-picker
                   v-model="configuration.strokeColor2"
                   :color-modes="['monochrome']"
-                  format="HEX"
+                  :enable-alpha="true"
+                  format="RGBA"
                 />
               </div>
             </div>
@@ -198,16 +202,17 @@
                 <t-color-picker
                   v-model="configuration.fillColor1"
                   :color-modes="['monochrome']"
-                  format="HEX"
+                  :enable-alpha="true"
+                  format="RGBA"
                 />
               </div>
             </div>
           </template>
 
           <!-- 重置按钮 -->
-          <t-button 
-            theme="default" 
-            block 
+          <t-button
+            theme="default"
+            block
             @click="handleReset"
             style="border-color: var(--td-border-level-2-color)"
           >
@@ -383,17 +388,17 @@ const currentManifest = computed(() => {
 // 过滤后的品牌和图标
 const filteredBrands = computed(() => {
   const search = searchStr.value.toLowerCase().trim();
-  
+
   if (!search) {
     return currentManifest.value;
   }
-  
+
   return currentManifest.value.map(brandData => ({
     brand: brandData.brand,
-    count: brandData.icons.filter(name => 
+    count: brandData.icons.filter(name =>
       name.toLowerCase().includes(search)
     ).length,
-    icons: brandData.icons.filter(name => 
+    icons: brandData.icons.filter(name =>
       name.toLowerCase().includes(search)
     ),
   })).filter(brandData => brandData.icons.length > 0);
@@ -427,27 +432,27 @@ const hidePopover = () => {
 // 处理图标悬浮
 const handleHoverIcon = (e: MouseEvent) => {
   let target = e.target as HTMLElement;
-  
+
   // 向上查找 icon-wrapper 元素
   while (target && !target.classList.contains('icon-wrapper')) {
     target = target.parentNode as HTMLElement;
     if (!target || target === document.body) return;
   }
-  
+
   if (!target || !target.classList.contains('icon-wrapper')) return;
-  
+
   const brand = target.dataset.brand;
   const name = target.dataset.name;
-  
+
   if (!brand || !name) return;
-  
+
   currentIcon.value = { brand, name };
-  
+
   const popover = document.getElementById('icon-popover');
   if (!popover) return;
-  
+
   popover.style.display = 'block';
-  
+
   popperInstance = createPopper(target, popover, {
     placement: 'right-start',
     modifiers: [
@@ -470,23 +475,23 @@ const handleHoverIcon = (e: MouseEvent) => {
 // 获取当前图标的 SVG 字符串
 const getCurrentSvg = (): string => {
   if (!currentIcon.value) return '';
-  
+
   const { brand, name } = currentIcon.value;
   const symbolId = `icon-${brand}-${name}`;
   const symbol = document.getElementById(symbolId);
-  
+
   if (!symbol) return '';
-  
+
   const viewBox = symbol.getAttribute('viewBox') || '0 0 24 24';
   const content = symbol.innerHTML;
-  
+
   return `<svg width="24" height="24" viewBox="${viewBox}" fill="none" xmlns="http://www.w3.org/2000/svg">${content}</svg>`;
 };
 
 // 复制图标
 const handleCopyIcon = async (type: 'name' | 'svg') => {
   if (!currentIcon.value) return;
-  
+
   try {
     if (type === 'name') {
       await navigator.clipboard.writeText(currentIcon.value.name);
@@ -498,17 +503,17 @@ const handleCopyIcon = async (type: 'name' | 'svg') => {
   } catch {
     MessagePlugin.error('复制失败');
   }
-  
+
   hidePopover();
 };
 
 // 下载图标
 const handleDownloadIcon = (type: 'svg' | 'png') => {
   if (!currentIcon.value) return;
-  
+
   const svgString = getCurrentSvg();
   const { name } = currentIcon.value;
-  
+
   try {
     if (type === 'svg') {
       const blob = new Blob([svgString], { type: 'image/svg+xml' });
@@ -527,7 +532,7 @@ const handleDownloadIcon = (type: 'svg' | 'png') => {
       const ctx = canvas.getContext('2d');
       const url = URL.createObjectURL(svgBlob);
       const img = new Image();
-      
+
       img.onload = () => {
         ctx?.drawImage(img, 0, 0, 48, 48);
         const pngUrl = canvas.toDataURL('image/png');
@@ -543,7 +548,7 @@ const handleDownloadIcon = (type: 'svg' | 'png') => {
   } catch {
     MessagePlugin.error('下载失败');
   }
-  
+
   hidePopover();
 };
 
@@ -560,7 +565,7 @@ onMounted(() => {
   document.addEventListener('click', (e) => {
     const content = document.querySelector('.icons-view__content');
     const popover = document.getElementById('icon-popover');
-    
+
     if (
       content &&
       !content.contains(e.target as Node) &&
@@ -570,7 +575,7 @@ onMounted(() => {
       hidePopover();
     }
   });
-  
+
   // 从 localStorage 恢复配置（对齐 tdesign-icons：不恢复 currentType）
   const savedConfig = localStorage.getItem('mp-svg-icons-config');
   if (savedConfig) {
@@ -587,13 +592,13 @@ onMounted(() => {
       configuration.fillColor2 = config.fillColor2 || initConfiguration.fillColor2;
     } catch {}
   }
-  
+
   // 验证配置一致性：确保描边模式下的 fillColor 为 transparent
   if (configuration.currentType === 'outline' && configuration.strokeTypes === 'outline') {
     configuration.fillColor1 = 'transparent';
     configuration.fillColor2 = 'transparent';
   }
-  
+
   // 标记为已初始化
   nextTick(() => {
     initialized.value = true;
@@ -822,7 +827,7 @@ onMounted(() => {
   .icons-view__content {
     padding-right: 24px;
   }
-  
+
   .icons-view__operations {
     display: none;
   }

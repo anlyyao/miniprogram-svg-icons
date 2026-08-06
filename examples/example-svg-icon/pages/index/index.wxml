@@ -13,7 +13,31 @@
     lower-threshold="{{200}}"
     bindscrolltolower="onScrollToLower"
   >
-    <block wx:for="{{iconCategories}}" wx:key="key">
+    <!-- ========== 方案一（<use> 引用 mask）透明度重叠验证区 ========== -->
+    <view class="overlap-demo">
+      <view class="overlap-demo-title">透明度重叠验证（方案一 &lt;use&gt; 引用 mask）</view>
+      <view class="overlap-demo-desc">
+        填充=半透明红 rgba(255,0,0,0.5)，描边=半透明蓝 rgba(0,0,255,0.5)。
+        mask 生效时描边与填充的重叠区不叠加变深；失效时重叠区会明显加深/发暗。
+      </view>
+      <view class="overlap-demo-grid">
+        <view class="overlap-demo-item" wx:for="{{overlapDemoIcons}}" wx:for-item="demoName" wx:key="*this">
+          <view class="overlap-demo-swatch">
+            <t-icon
+              class="overlap-demo-icon"
+              name="{{demoName}}"
+              size="{{148}}"
+              stroke-width="{{2}}"
+              stroke-color="{{demoStrokeColor}}"
+              fill-color="{{demoFillColor}}"
+            />
+          </view>
+          <text class="icon-name">{{demoName}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- <block wx:for="{{iconCategories}}" wx:key="key">
       <view class="category-section">
         <view class="category-title">{{item.labelCN}}（{{item.key}}）</view>
         <view class="icon-grid">
@@ -29,7 +53,7 @@
           </view>
         </view>
       </view>
-    </block>
+    </block> -->
     <!-- 加载提示 -->
     <view class="load-more-tip" wx:if="{{isLoadingMore}}">
       <t-loading theme="circular" size="40rpx" />
@@ -183,14 +207,22 @@
   </t-popup>
 
   <!-- ColorPicker 弹窗（usePopup 模式，从底部弹出）-->
+  <!--
+    使用受控 value 实时回传所选颜色；format 必须带 alpha（HEX8/RGBA 等），
+    否则 HEX 会丢弃透明度，导致拖动 alpha 滑轨时 value 不变、滑轨"滑不动"。
+    用 wx:if 让每次打开重建实例，确保受控 value 作为初始色正确生效。
+  -->
   <t-color-picker
+    wx:if="{{colorPickerVisible}}"
     use-popup="{{true}}"
+    enable-alpha="{{true}}"
     popup-props="{{colorPickerPopupProps}}"
-    visible="{{colorPickerVisible}}"
+    visible="{{true}}"
     value="{{activeColorValue}}"
-    format="HEX"
+    format="RGBA"
     type="multiple"
     bind:change="onColorPickerChange"
     bind:close="onColorPickerClose"
+    bind:palette-bar-change="onPaletteBarChange"
   />
 </view>

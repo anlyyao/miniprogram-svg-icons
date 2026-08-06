@@ -55,6 +55,7 @@
   "devDependencies": {
     "@commitlint/cli": "^19.0.0",
     "@commitlint/config-conventional": "^19.0.0",
+    "@resvg/resvg-js": "^2.6.2",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^20.11.0",
     "@types/xmldom": "^0.1.34",

@@ -45,6 +45,16 @@ Page({
     // 传递给 t-icon 的计算属性
     iconStrokeColor: '#000000',
     iconFillColor: 'transparent',
+
+    // ========== 方案一（<use> 引用 mask）验证专区 ==========
+    // 这些图标经检测存在几何重叠的多层 alpha 填充，编译期会注入 mask（方案一用
+    // <use> 引用可视层节点、而非克隆几何）。这里对它们同时赋予半透明的填充色与
+    // 描边色：若 mask 正确生效，描边与填充的重叠区域不会出现透明度叠加变深；
+    // 若 mask 失效（如<use>兼容性问题），重叠区会明显加深。
+    overlapDemoIcons: ['ability-open', 'abstract', 'accessibility', 'add-circle', 'browse-off', 'robot-2'],
+    // 半透明红色填充 + 半透明蓝色描边，重叠区最易观察是否叠加变深/变色
+    demoFillColor: ['rgba(255, 0, 0, 0.34)', 'rgba(237, 28, 230, 1)'],
+    demoStrokeColor: ['rgba(0, 0, 255, 0.5)', 'rgba(178, 224, 42, 0.44)'],
   },
 
   // 所有分类数据缓存
@@ -211,43 +221,52 @@ Page({
   },
 
   // ========== ColorPicker 弹窗控制 ==========
+  // 每次打开设置初始色并显示弹窗。wxml 中通过 wx:if 重建组件实例，
+  // 组件以非受控 default-value 回填 activeColorValue，避免受控 value
+  // 反复触发内部 init 导致 alpha(透明度) 滑轨无法拖动。
+  openColorPicker(activeColorKey, activeColorValue) {
+    this.setData({
+      activeColorKey,
+      activeColorValue,
+      colorPickerVisible: true,
+    });
+  },
+
   onShowFillColor1Picker() {
     const fillColor1 = this.data.fillColor1;
-    this.setData({
-      colorPickerVisible: true,
-      activeColorKey: 'fillColor1',
-      activeColorValue: fillColor1 === 'transparent' || fillColor1 === 'currentColor' ? '#000000' : fillColor1,
-    });
+    this.openColorPicker(
+      'fillColor1',
+      fillColor1 === 'transparent' || fillColor1 === 'currentColor' ? '#000000' : fillColor1,
+    );
   },
 
   onShowFillColor2Picker() {
-    this.setData({
-      colorPickerVisible: true,
-      activeColorKey: 'fillColor2',
-      activeColorValue: this.data.fillColor2 === 'transparent' ? '#000000' : this.data.fillColor2,
-    });
+    this.openColorPicker('fillColor2', this.data.fillColor2 === 'transparent' ? '#000000' : this.data.fillColor2);
   },
 
   onShowStrokeColor1Picker() {
-    this.setData({
-      colorPickerVisible: true,
-      activeColorKey: 'strokeColor1',
-      activeColorValue: this.data.strokeColor1,
-    });
+    this.openColorPicker('strokeColor1', this.data.strokeColor1);
   },
 
   onShowStrokeColor2Picker() {
-    this.setData({
-      colorPickerVisible: true,
-      activeColorKey: 'strokeColor2',
-      activeColorValue: this.data.strokeColor2,
-    });
+    this.openColorPicker('strokeColor2', this.data.strokeColor2);
   },
 
   onColorPickerChange(e) {
     const value = e.detail.value;
-    // 实时更新预览颜色值，但不更新实际配置
-    this.setData({ activeColorValue: value });
+    const { activeColorKey } = this.data;
+    // 实时回传颜色（受控 value + format=HEX8 包含透明度）。
+    // 同步更新对应颜色配置并刷新图标预览，拖动时即可看到实时效果。
+    const updates = { activeColorValue: value };
+    if (activeColorKey) {
+      updates[activeColorKey] = value;
+    }
+    this.setData(updates, () => this.updateIconColors());
+  },
+
+  onPaletteBarChange(e) {
+    const { color } = e.detail;
+    console.log('[onPaletteBarChange] color:', color);
   },
 
   onColorPickerClose() {

@@ -14,6 +14,12 @@ import { detectOpacityOverlapPaintTypes, PaintType } from './detectOpacityOverla
  *
  * 处理在「原始（优化后）SVG 字符串」阶段进行，早于模板变量替换（{f1}/{s1}），
  * 此时颜色为真实占位色、绘制顺序完整，处理结果不影响后续的动态填色。
+ *
+ * 体积优化：mask 里的挖除形状不再用 cloneNode 把上层路径几何（d）整段复制进去
+ * ——这会让同一条路径数据在多个下层的 mask 中被复制多份，导致产物体积暴涨。改为
+ * 把每个上层图层克隆为「纯黑挖除形状」在 <defs> 中只定义一份并赋 id，mask 内部
+ * 及共享白底 rect 均用 <use> 引用，使任意路径几何全图只存一份。产物是完整的独立
+ * SVG 文档，同文档内 <use> 引用 <defs> 中的 id 是标准 SVG 能力，渲染无需运行时配合。
  */
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
@@ -75,13 +81,14 @@ function getPaintTypes(node: SvgElement): PaintType[] {
 }
 
 /**
- * 把 upperNode 复制为 mask 形状：清除颜色/透明度等属性，几何形状按对应 paint
- * 类型填成纯黑（luminance mask 中黑色=挖除）。
+ * 把 upperNode 复制为「纯黑挖除形状」：清除颜色/透明度等属性，几何形状按对应
+ * paint 类型填成纯黑（luminance mask 中黑色=挖除）。生成的节点会被赋予 id 并只在
+ * <defs> 中定义一份，供各 mask 通过 <use> 复用，避免路径几何（d）被重复内联。
  */
-function makeMaskShape(doc: SvgElement, node: SvgElement, paintType: PaintType): SvgElement {
+function makeMaskShape(node: SvgElement, paintType: PaintType, id: string): SvgElement {
   const clone = node.cloneNode(true);
 
-  const strip = (element: SvgElement) => {
+  const strip = (element: SvgElement, isRoot: boolean) => {
     if (element.nodeType !== ELEMENT_NODE) return;
 
     const attrNames = Array.from(element.attributes || []).map((attr: any) => attr.name);
@@ -99,39 +106,154 @@ function makeMaskShape(doc: SvgElement, node: SvgElement, paintType: PaintType):
       );
     }
 
-    getElementChildren(element).forEach(strip);
+    // 仅在提供 id 时，为根节点写 id 供 <use> 引用；内联形状无需 id
+    if (isRoot && id) {
+      element.setAttribute('id', id);
+    }
+
+    getElementChildren(element).forEach((child: SvgElement) => strip(child, false));
   };
 
-  strip(clone);
+  strip(clone, true);
   return clone;
 }
 
-function createMask(doc: SvgElement, id: string, upperNodes: SvgElement[], viewBox: ViewBox): SvgElement {
-  const mask = doc.createElement('mask');
-  mask.setAttribute('id', id);
-  mask.setAttribute('maskUnits', 'userSpaceOnUse');
-  mask.setAttribute('maskContentUnits', 'userSpaceOnUse');
-  mask.setAttribute('mask-type', 'luminance');
-  mask.setAttribute('x', viewBox.x);
-  mask.setAttribute('y', viewBox.y);
-  mask.setAttribute('width', viewBox.width);
-  mask.setAttribute('height', viewBox.height);
+/**
+ * 共享定义池：把「白底 rect」与「被多个 mask 复用的挖除形状」在 <defs> 中只定义一份
+ * 并赋 id，供各 mask 通过 <use> 引用；只被单个 mask 使用的形状则直接内联，避免多余的
+ * <use> 间接层。使同一条路径几何最多只出现一次。
+ */
+class MaskShapeRegistry {
+  private readonly doc: SvgElement;
+  readonly viewBox: ViewBox;
+  private readonly definitions: SvgElement[] = [];
+  private readonly shapeIdByNode = new Map<SvgElement, string>();
+  private backgroundId = '';
+  private shapeIndex = 0;
 
-  // 白色背景矩形：默认全部保留
-  const rect = doc.createElement('rect');
-  rect.setAttribute('x', viewBox.x);
-  rect.setAttribute('y', viewBox.y);
-  rect.setAttribute('width', viewBox.width);
-  rect.setAttribute('height', viewBox.height);
-  rect.setAttribute('fill', '#fff');
-  mask.appendChild(rect);
+  constructor(doc: SvgElement, viewBox: ViewBox) {
+    this.doc = doc;
+    this.viewBox = viewBox;
+  }
 
-  // 上层图层填黑：这些区域从下层挖除
-  upperNodes.forEach((upperNode) => {
-    mask.appendChild(makeMaskShape(doc, upperNode, getPaintTypes(upperNode)[0]));
+  /** 共享白底矩形（默认全部保留），全图只定义一次，各 mask 用 <use> 引用 */
+  getBackgroundId(): string {
+    if (!this.backgroundId) {
+      this.backgroundId = 'overlap-bg';
+      const rect = this.doc.createElement('rect');
+      rect.setAttribute('id', this.backgroundId);
+      rect.setAttribute('x', this.viewBox.x);
+      rect.setAttribute('y', this.viewBox.y);
+      rect.setAttribute('width', this.viewBox.width);
+      rect.setAttribute('height', this.viewBox.height);
+      rect.setAttribute('fill', '#fff');
+      this.definitions.push(rect);
+    }
+    return this.backgroundId;
+  }
+
+  /** 把某上层图层的挖除形状注册进 <defs>（仅一次）并返回其 id，供多处 <use> 复用 */
+  getSharedShapeId(node: SvgElement): string {
+    const cached = this.shapeIdByNode.get(node);
+    if (cached) return cached;
+
+    const id = `overlap-shape-${this.shapeIndex}`;
+    this.shapeIndex += 1;
+    this.shapeIdByNode.set(node, id);
+    this.definitions.push(makeMaskShape(node, getPaintTypes(node)[0], id));
+    return id;
+  }
+
+  getDefinitions(): SvgElement[] {
+    return this.definitions;
+  }
+
+  /**
+   * 若全图最终只有 1 个 mask 引用共享白底（即整张图标只需 1 个 mask），则共享+`<use>`
+   * 反而比直接内联 rect 多一层间接开销。此时从共享定义池中移除白底定义，交由调用方
+   * 把对应 mask 内的 `<use>` 换成内联 rect。
+   */
+  hasSharedBackground(): boolean {
+    return Boolean(this.backgroundId);
+  }
+
+  removeBackgroundDefinition(): void {
+    const index = this.definitions.findIndex((def) => def.getAttribute?.('id') === this.backgroundId);
+    if (index !== -1) {
+      this.definitions.splice(index, 1);
+    }
+  }
+}
+
+function createUse(doc: SvgElement, refId: string): SvgElement {
+  const use = doc.createElement('use');
+  // 使用 xlink:href：小程序 <image> 内联 SVG data URI 时对 xlink 引用兼容性最稳。
+  use.setAttribute('xlink:href', `#${refId}`);
+  return use;
+}
+
+/**
+ * 为一组兄弟图层生成 mask。
+ *
+ * 体积优化的两条准则：
+ * 1. 白底矩形全图共享，各 mask 仅用 <use> 引用（省去每个 mask 内重复的 rect 及其坐标）。
+ * 2. 上层挖除形状按「被多少个下层 mask 使用」区分：
+ *    - 被 ≥2 个 mask 使用（3+ 层图标里靠上的图层）：注册到 <defs> 一次，各处 <use> 引用，
+ *      消除路径几何 d 的重复内联；
+ *    - 只被 1 个 mask 使用（如 2 层图标、或最底层下方唯一的上层）：直接内联进该 mask，
+ *      避免 <use> 间接层带来的额外字节。
+ * 3. mask 的 maskUnits 必须显式声明为 userSpaceOnUse（SVG 规范默认值是
+ *    objectBoundingBox，若省略会导致挖除区域被错误裁剪到目标元素自身包围盒，
+ *    在多层图标上出现挖除错位）；maskContentUnits 默认即为 userSpaceOnUse 可以省略，
+ *    x/y/width/height 省略后按 userSpaceOnUse 语境默认取视口的 -10%~120%，足以覆盖
+ *    图标可见区域，因此可以省略以压缩属性字节。
+ */
+function buildMasksForGroup(
+  doc: SvgElement,
+  siblings: SvgElement[],
+  maskTargetIndexes: number[],
+  registry: MaskShapeRegistry,
+  groupId: number,
+): { masks: SvgElement[]; maskIdByChildIndex: Map<number, string> } {
+  const masks: SvgElement[] = [];
+  const maskIdByChildIndex = new Map<number, string>();
+
+  // 每个下层需要挖除的上层集合（其后所有单一 paint 兄弟）
+  const upperByTarget = new Map<number, SvgElement[]>();
+  const usageCount = new Map<SvgElement, number>();
+
+  maskTargetIndexes.forEach((childIndex) => {
+    const uppers = siblings
+      .slice(childIndex + 1)
+      .filter((upperNode: SvgElement) => getPaintTypes(upperNode).length === 1);
+    upperByTarget.set(childIndex, uppers);
+    uppers.forEach((u) => usageCount.set(u, (usageCount.get(u) || 0) + 1));
   });
 
-  return mask;
+  maskTargetIndexes.forEach((childIndex, order) => {
+    const uppers = upperByTarget.get(childIndex) || [];
+    const maskId = `overlap-mask-${groupId}-${order}`;
+    const mask = doc.createElement('mask');
+    mask.setAttribute('id', maskId);
+    mask.setAttribute('maskUnits', 'userSpaceOnUse');
+    mask.setAttribute('mask-type', 'luminance');
+    mask.appendChild(createUse(doc, registry.getBackgroundId()));
+
+    uppers.forEach((upperNode) => {
+      if ((usageCount.get(upperNode) || 0) >= 2) {
+        // 被多个 mask 复用：注册共享形状并 <use> 引用，避免 d 重复
+        mask.appendChild(createUse(doc, registry.getSharedShapeId(upperNode)));
+      } else {
+        // 仅此 mask 使用：直接内联，省去 <use> 间接层
+        mask.appendChild(makeMaskShape(upperNode, getPaintTypes(upperNode)[0], ''));
+      }
+    });
+
+    masks.push(mask);
+    maskIdByChildIndex.set(childIndex, maskId);
+  });
+
+  return { masks, maskIdByChildIndex };
 }
 
 /**
@@ -139,9 +261,14 @@ function createMask(doc: SvgElement, id: string, upperNodes: SvgElement[], viewB
  * （含fill/stroke 跨类型重叠）覆盖的区域。maskPaintTypes 限定只处理检测出确实
  * 重叠的 paint 类型，避免给无需处理的图层注入多余 mask。
  */
-function applyMasks(doc: SvgElement, root: SvgElement, maskPaintTypes: PaintType[], viewBox: ViewBox): SvgElement[] {
-  const masks: SvgElement[] = [];
-  let maskIndex = 0;
+function applyMasks(
+  doc: SvgElement,
+  root: SvgElement,
+  maskPaintTypes: PaintType[],
+  registry: MaskShapeRegistry,
+): SvgElement[] {
+  const collected: SvgElement[] = [];
+  let groupId = 0;
 
   const visit = (node: SvgElement) => {
     if (CONTAINER_SKIP_TAGS.has(getTagName(node))) {
@@ -151,33 +278,37 @@ function applyMasks(doc: SvgElement, root: SvgElement, maskPaintTypes: PaintType
     const children = getElementChildren(node);
     children.forEach(visit);
 
+    const maskTargetIndexes: number[] = [];
     children.forEach((child, childIndex) => {
-      if (isVisiblePaint(child.getAttribute('mask'))) {
-        return;
-      }
+      if (isVisiblePaint(child.getAttribute('mask'))) return;
 
       const paintTypes = getPaintTypes(child);
-      if (paintTypes.length !== 1 || !maskPaintTypes.includes(paintTypes[0])) {
-        return;
-      }
+      if (paintTypes.length !== 1 || !maskPaintTypes.includes(paintTypes[0])) return;
 
-      const upperNodes = children
+      const hasUpper = children
         .slice(childIndex + 1)
-        .filter((upperNode: SvgElement) => getPaintTypes(upperNode).length === 1);
+        .some((upperNode: SvgElement) => getPaintTypes(upperNode).length === 1);
+      if (!hasUpper) return;
 
-      if (!upperNodes.length) {
-        return;
+      maskTargetIndexes.push(childIndex);
+    });
+
+    if (!maskTargetIndexes.length) return;
+
+    const { masks, maskIdByChildIndex } = buildMasksForGroup(doc, children, maskTargetIndexes, registry, groupId);
+    groupId += 1;
+
+    collected.push(...masks);
+    maskTargetIndexes.forEach((childIndex) => {
+      const maskId = maskIdByChildIndex.get(childIndex);
+      if (maskId) {
+        children[childIndex].setAttribute('mask', `url(#${maskId})`);
       }
-
-      const maskId = `overlap-mask-${maskIndex}`;
-      maskIndex += 1;
-      masks.push(createMask(doc, maskId, upperNodes, viewBox));
-      child.setAttribute('mask', `url(#${maskId})`);
     });
   };
 
   visit(root);
-  return masks;
+  return collected;
 }
 
 /**
@@ -200,17 +331,45 @@ export function processOpacityOverlap(svgString: string, cacheKey: string): stri
   }
 
   const viewBox = parseViewBox(root.getAttribute('viewBox'));
-  const masks = applyMasks(doc, root, paintTypes, viewBox);
+  const registry = new MaskShapeRegistry(doc, viewBox);
+  const masks = applyMasks(doc, root, paintTypes, registry);
   if (!masks.length) {
     return svgString;
   }
 
-  // 把 mask 定义放进<defs>（复用已有的或新建），置于最前
+  // 全图只有 1 个 mask 时，白底只被引用一次，且不可能存在被多处复用的共享形状
+  // （usageCount 至少 2 才会走共享），因此把背景 use 换成内联 rect 后该mask 内已
+  // 不含任何 <use>，无需再声明 xlink 命名空间，进一步省去每个 2层图标的固定字节。
+  let needsXlink = true;
+  if (masks.length === 1 && registry.hasSharedBackground()) {
+    const bgUse = getElementChildren(masks[0])[0];
+    if (bgUse && getTagName(bgUse) === 'use') {
+      const rect = doc.createElement('rect');
+      rect.setAttribute('x', viewBox.x);
+      rect.setAttribute('y', viewBox.y);
+      rect.setAttribute('width', viewBox.width);
+      rect.setAttribute('height', viewBox.height);
+      rect.setAttribute('fill', '#fff');
+      masks[0].insertBefore(rect, bgUse);
+      masks[0].removeChild(bgUse);
+      registry.removeBackgroundDefinition();
+      needsXlink = false;
+    }
+  }
+
+  // <use> 引用需要 xlink 命名空间声明，缺失则补上
+  if (needsXlink && !root.getAttribute('xmlns:xlink')) {
+    root.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+  }
+
+  // 把共享挖除形状与 mask 定义都放进 <defs>（复用已有的或新建），置于最前。
+  // 共享形状需先于 mask 定义，以便 mask 内的 <use> 能正确解析引用。
   let defs = getElementChildren(root).find((child: SvgElement) => getTagName(child) === 'defs');
   if (!defs) {
     defs = doc.createElement('defs');
     root.insertBefore(defs, root.firstChild);
   }
+  registry.getDefinitions().forEach((definition) => defs.appendChild(definition));
   masks.forEach((mask) => defs.appendChild(mask));
 
   return new XMLSerializer().serializeToString(doc);

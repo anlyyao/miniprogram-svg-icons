@@ -1,4 +1,5 @@
 import { DOMParser, XMLSerializer } from 'xmldom';
+import svgpath from 'svgpath';
 import { getElementChildren, getTagName, isVisiblePaint, SvgElement } from './svgDomHelpers';
 
 /**
@@ -39,28 +40,25 @@ function canMerge(previous: SvgElement, current: SvgElement): boolean {
   return JSON.stringify(getComparableAttrs(previous)) === JSON.stringify(getComparableAttrs(current));
 }
 
-const SVG_NUMBER = '[-+]?(?:\\d*\\.\\d+|\\d+\\.?\\d*)(?:[eE][-+]?\\d+)?';
-// 匹配路径开头的小写 `m`：命令字母 + 第一对坐标（moveto 目标点）
-const LEADING_LOWER_MOVETO_RE = new RegExp(`^m\\s*(${SVG_NUMBER})[\\s,]*(${SVG_NUMBER})`);
-// 紧跟在坐标对后面的裸数字（没有新的命令字母），即隐式重复的 moveto-as-lineto
-const BARE_NUMBER_RE = new RegExp(`^[\\s,]*${SVG_NUMBER}`);
-
 /**
- * 路径 `d` 的第一个 moveto 即使写成小写 `m` 也按绝对坐标处理；拼接到 previous 后面后
- * 它不再是首个命令，若不处理会被误解释为相对坐标，因此需换成 `M`。
+ * 把 current 的 `d` 拼到 previous 后面前，用 `svgpath` 把它整体转成绝对坐标
+ * （`.abs()`）。绝对坐标命令不依赖"当前点"，不管它被拼接到哪条 subpath 之后，
+ * 渲染结果都和它作为独立路径时完全一致——一次性规避了「首个 moveto 因为不再是
+ * 整条合成路径的第一个命令而被误判为相对坐标」以及「moveto 后紧跟的隐式重复坐标
+ * 对，其绝对/相对语义继承自moveto 大小写，直接改写命令字母会让它们被误读」这两类
+ * 问题，不需要自己用正则解析 SVG 路径语法。
  *
- * 若 moveto 后紧跟裸坐标对（隐式重复的 lineto，如 `m21 4.18-3-1.2v...` 里的
- * `-3-1.2`），其绝对/相对语义继承自 `m` 的大小写；直接换成 `M` 会让这些裸坐标被
- * 误当成绝对坐标，故需先插入 `l` 锁定相对语义，再替换 `m` 为 `M`。
+ * `svgpath` 是 fontello 出品的零依赖小工具库（专用于 SVG 路径坐标变换），比自研的
+ * 正则方案更不容易在路径语法的边界情况（科学计数法、无分隔负数、圆弧标志位不加
+ * 分隔符等）上出错，且只在构建脚本里用到，不会进入发布产物。
  */
-function normalizeLeadingMoveto(d: string): string {
-  const trimmed = d.trim();
-  const match = LEADING_LOWER_MOVETO_RE.exec(trimmed);
-  if (!match) return trimmed;
-
-  const rest = trimmed.slice(match[0].length);
-  const hasImplicitRepeat = BARE_NUMBER_RE.test(rest);
-  return `M${match[1]} ${match[2]}${hasImplicitRepeat ? 'l' : ''}${rest}`;
+function toAbsoluteD(d: string): string {
+  try {
+    return svgpath(d).abs().toString();
+  } catch {
+    // 极少数无法解析的畸形 d：保持原样，交由 canMerge 之外的路径正常渲染
+    return d;
+  }
 }
 
 /** 递归合并 node 子树内，每个容器下相邻的同款纯描边 path */
@@ -71,7 +69,7 @@ function mergeContainer(node: SvgElement): void {
 
   getElementChildren(node).reduce((previous: SvgElement | null, current: SvgElement) => {
     if (previous && canMerge(previous, current)) {
-      const mergedD = `${previous.getAttribute('d') || ''} ${normalizeLeadingMoveto(current.getAttribute('d') || '')}`;
+      const mergedD = `${previous.getAttribute('d') || ''} ${toAbsoluteD(current.getAttribute('d') || '')}`;
       previous.setAttribute('d', mergedD.trim());
       node.removeChild(current);
       return previous;

@@ -1,8 +1,6 @@
 const iconsMap = require("./icons");
 const { applyOverlapCutIfNeeded } = require("./utils");
 
-// ======================== 组件定义 ========================
-
 Component({
   properties: {
     name: { type: String, value: '' },
@@ -76,9 +74,7 @@ Component({
         .replace(/\{s(\d+)\s*\|\|\s*'([^']+)'\}/g, (_, i, d) => stroke[i - 1] || d)
         .replace(/\{sw\}/g, strokeWidth);
 
-      // 编译期只在存在几何重叠的图标上挂了 data-cut 挖除计划（无该属性的图标直接
-      // 原样返回，零开销）；只有用户传入的颜色确实带 alpha 时才现算现用注入 mask，
-      // 避免重叠区透明度叠加变深，不透明色场景与无重叠问题时完全一致。
+      // 只有存在 data-cut 挖除计划且用户传入颜色确实带 alpha 时才现算注入 mask
       return applyOverlapCutIfNeeded(resolved, fill, stroke);
     },
   },

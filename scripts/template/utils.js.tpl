@@ -1,19 +1,14 @@
-// ======================== 透明度重叠：运行时按需挖除（原型） ========================
+// ======================== 透明度重叠：运行时按需挖除 ========================
+// build 时若检测到透明度重叠，只在 <svg> 根标签挂一个 data-cut 挖除计划，不注入
+// <mask>/<defs>；只有用户传入颜色确实带 alpha 时才在此现算 mask，否则零开销。
 //
-// build 时若检测到图层透明度几何重叠，只会在<svg> 根标签上挂一个极小的 data-cut
-// 属性（挖除计划），不会注入任何 <mask>/<defs>，因此 icons.js 里绝大多数图标与
-// 无重叠问题时一样干净。真正的 mask 构建推迟到这里：只有当用户传入的颜色确实带
-// alpha（半透明）时才现算现用，否则直接短路返回，零开销。
+// data-cut 格式：`gTypes:group(;group)*`，group := `path#types`。
+// - gTypes：整体检测出重叠的 paint 类型，'f'/'s'/'fs' 之一。
+// - path：从根 <svg> 到该兄弟组容器的子节点下标链（'.' 连接，根组为空串）。
+// - types：容器每个直接子节点对应一个字符，'f'/'s' 表示单一 fill/stroke 图层，
+//   '.' 为占位（保持下标对齐，结尾多余的 '.' 已裁掉）。
 //
-// data-cut 格式：`gTypes:group(;group)*`，`group := path#types`。
-// - gTypes：本图标整体检测出确实存在几何重叠的 paint 类型，'f'/'s'/'fs' 之一。
-// - path：从根 <svg> 到该兄弟组容器的子节点下标链（用 '.' 连接，根的直接子节点组用
-//   空串表示）。
-// - types：该容器每个直接子节点对应一个字符，'f'/'s' 表示单一 fill/stroke 图层，
-//   '.' 表示不参与挖除的占位（保持下标对齐）；结尾多余的 '.' 已在 build 时裁掉。
-//
-// 挖除关系完全由 types 字符串推导：某个位置若自身类型命中 gTypes，就需要挖掉它
-// 之后所有单一 paint 兄弟（不论 fill/stroke）覆盖的区域——不需要显式存储「谁挖谁」。
+// 挖除规则由 types 推导：命中 gTypes 的位置需挖掉其后所有单一 paint 兄弟覆盖的区域。
 
 const DRAWABLE_TAGS_SET = { circle: 1, ellipse: 1, line: 1, path: 1, polygon: 1, polyline: 1, rect: 1 };
 const MASK_IGNORED_ATTRS_SET = { class: 1, id: 1, mask: 1, opacity: 1, 'fill-opacity': 1, 'stroke-opacity': 1, style: 1 };
@@ -159,9 +154,7 @@ function applyOverlapCutIfNeeded(resolvedSvg, fillColors, strokeColors) {
     if (!container) continue;
     const children = container.children;
 
-    // 从后往前扫描 types：upperAccum 累加「已经过的、当前位置之后的单一 paint 节点」，
-    // 每个命中 gTypes 的位置直接用它作为挖除对象——这正是「挖掉其后所有单一paint
-    // 兄弟」的语义，不需要预先存储具体下标列表。
+    // 从后往前扫描 types，upperAccum 累加当前位置之后的单一 paint 节点作为挖除对象
     const upperAccum = [];
     for (let i = types.length - 1; i >= 0; i--) {
       const char = types[i];

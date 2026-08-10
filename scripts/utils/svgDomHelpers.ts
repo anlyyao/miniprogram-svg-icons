@@ -1,11 +1,9 @@
 /**
  * SVG DOM（xmldom）遍历共享工具。
  *
- * `detectOpacityOverlap.ts` / `opacityOverlap.ts` / `opacityOverlapPlan.ts` 都基于同一套
- * xmldom 节点结构做「取子元素」「取标签名」「判断可见颜色」「收集单一paint 类型」这几类
- * 基础判断，此前三处各自维护一份完全相同的实现；统一抽取到这里，避免同一逻辑分散维护、
- * 未来修改时遗漏或产生细微行为差异（三处的判断结果必须严格一致，否则 build 时的检测/
- * 计划结果会与实际渲染时挖除的图层集合不匹配）。
+ * `detectOpacityOverlap.ts` / `opacityOverlap.ts` / `opacityOverlapPlan.ts` 共用同一套
+ * 「取子元素」「取标签名」「判断可见颜色」「收集单一 paint 类型」基础判断，统一抽取到
+ * 这里避免多处实现产生细微差异。
  */
 
 export type PaintType = 'fill' | 'stroke';

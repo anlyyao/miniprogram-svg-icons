@@ -2,38 +2,23 @@ import { DOMParser } from 'xmldom';
 import { PaintType, SvgElement, getElementChildren, getTagName, getPaintTypes } from './svgDomHelpers';
 
 /**
- * 透明度重叠——运行时按需挖除方案（原型：仅微信平台）
+ * 透明度重叠——运行时按需挖除方案
  *
  * 与 `opacityOverlap.ts`（build 时静态注入 mask+use）不同，这里 build 时只产出一份
- * 极小的「挖除计划」（挖谁、挖除谁的区域），以 `data-cut` 属性挂在 `<svg>` 根节点上，
- * 不改变可见结构、不注入任何 `<mask>`/`<defs>`。真正的 mask 构建推迟到运行时——只有
- * 当用户传入的颜色确实带alpha（半透明）时才现算现用，否则零开销直接渲染原始 SVG。
+ * 极小的「挖除计划」，以 `data-cut` 属性挂在 `<svg>` 根节点上，不注入任何 `<mask>`/
+ * `<defs>`；真正的 mask 构建推迟到运行时，仅当用户颜色确实带 alpha 时才现算现用。
  *
- * 计划基于「已完成颜色模板替换」的最终 SVG 字符串（而非 build 中间产物）计算，确保
- * 这里编号的下标与运行时（`utils.js.tpl`）实际解析到的兄弟结构严格一一对应。
+ * 计划基于「已完成颜色模板替换」的最终 SVG 字符串计算，确保下标与运行时
+ * （`utils.js.tpl`）解析到的兄弟结构一一对应。
  *
  * 格式：`gTypes:group(;group)*`，`group := path#types`。
- * - `gTypes`：本图标整体检测出确实存在几何重叠的 paint 类型，`f`/`s`/`fs` 之一
- *   （即 `detectOpacityOverlapPaintTypes` 的结果，全图共用一份，不按group 重复）。
- * - `path`：从根 `<svg>` 到该兄弟组容器的子节点下标链（用 `.` 连接，根的直接子节点组
- *   用空串）。
- * - `types`：该容器**每个**直接子节点对应一个字符，`f`/`s` 表示该子节点是单一 fill/
- *   stroke 图层，`.` 表示不是单一 paint 图层（占位，不参与挖除，但要保留位置以保证
- *   下标对齐）；结尾多余的 `.` 会被裁掉。
+ * - `gTypes`：整体检测出重叠的 paint 类型，`f`/`s`/`fs` 之一。
+ * - `path`：从根 `<svg>` 到该兄弟组容器的子节点下标链（`.` 连接，根组为空串）。
+ * - `types`：容器每个直接子节点对应一个字符，`f`/`s` 表示单一fill/stroke 图层，
+ *   `.` 为占位（保持下标对齐，结尾多余的 `.` 会被裁掉）。
  *
- * 运行时挖除规则完全由 `types` 推导，不需要显式存储「谁挖谁」：对`types` 从后往前
- * 扫描，用一个累加数组收集「已经过的单一paint 节点」；每遇到一个自身类型命中
- * `gTypes` 且当前累加数组非空的位置，就用整个累加数组（即它之后所有单一paint 兄弟，
- * 不论fill/stroke）作为挖除对象，这与原 `at-upper` 显式列表语义完全等价——因为
- * upper 本来就总是「排在它之后的全部单一paint 兄弟」，无需为每个位置单独存一份。
- *
- * 例：`fs:0#ffss;0.2#ss` 表示：
- *   - 全图检测出 fill 和 stroke 都存在几何重叠；
- *   - svg 第0 个子节点（外层 <g>）内 4 个直接子节点依次是 fill/fill/stroke/stroke，
- *     其中第 0、1 个（fill）分别需挖除其后所有单一paint 兄弟覆盖的区域，第 2 个
- *     （stroke，作为分组自身只含stroke）需挖除第 3 个覆盖的区域；
- *   - 该外层 <g> 的第 2 个子节点（一个内部还有 2 条 stroke 子路径的分组）内，
- *     第 0 个子节点需挖除第 1 个覆盖的区域（同一分组内部的重叠，如 `tape.svg`）。
+ * 挖除规则由 `types` 推导：命中 `gTypes` 的位置需挖掉其后所有单一 paint 兄弟覆盖的
+ * 区域，不需要显式存储「谁挖谁」。
  */
 
 const CONTAINER_SKIP_TAGS = new Set(['defs', 'mask', 'clippath', 'symbol']);

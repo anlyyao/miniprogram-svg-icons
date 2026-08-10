@@ -82,12 +82,6 @@ function hasEffectivePaint(element: SvgElement, paintType: PaintType) {
   return paintType === 'fill';
 }
 
-// 注：此前这里有一个 mergeStrokeLayers，会在检测前手动合并相邻同款描边路径，理由是
-// “与 svgo mergePaths 保持一致”；但传入本模块的 svgString 已跑过 svgo，真正能合并的
-// 路径此时已经合并好了。该手动合并未做 svgo mergePaths 内部的几何相交判断，会把 svgo
-// 特意保留分开的相交路径（如 tape.svg 描边）误合并成一条，导致漏判重叠、运行时半透明色
-// 下描边顶部透明度叠加变深，故直接删除，让检测忠实反映 optimizedContent 的真实结构。
-
 /**
  * 引用了不存在的 clipPath/mask 时元素不会被绘制，检测前需要清掉这类失效引用，
  * 否则整张图都是空白，导致漏判。

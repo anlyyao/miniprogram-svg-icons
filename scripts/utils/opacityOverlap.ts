@@ -25,11 +25,8 @@ import {
  * 处理在「原始（优化后）SVG 字符串」阶段进行，早于模板变量替换（{f1}/{s1}），
  * 此时颜色为真实占位色、绘制顺序完整，处理结果不影响后续的动态填色。
  *
- * 体积优化（核心思路，下方MaskShapeRegistry/buildMasksForGroup 均围绕它展开）：
- * mask 里的挖除形状不再用 cloneNode 把上层路径几何（d）整段复制进去——同一条路径
- * 会在多个下层的 mask 中被复制多份，导致产物体积暴涨。改为按「被多少个 mask 复用」
- * 区分：≥2 个 mask 用到的形状在 <defs> 中只定义一份并赋 id，各处以 <use> 引用；只被
- * 1 个 mask 用到的则直接内联，避免多余的 <use> 间接层。使任意路径几何全图最多存一份。
+ * 体积优化：被 ≥2 个 mask 复用的挖除形状在 <defs> 中只定义一份并赋 id，各处以 <use>
+ * 引用；只被 1 个 mask 用到的直接内联，避免路径几何重复、控制产物体积。
  */
 
 const CONTAINER_SKIP_TAGS = new Set(['defs', 'mask', 'clippath', 'symbol']);
@@ -54,13 +51,9 @@ function parseViewBox(viewBox: string | null): ViewBox {
 
 /**
  * 把 upperNode 复制为「纯黑挖除形状」，供<mask> 内直接内联或注册进 <defs> 供 <use> 复用。
- *
- * 修复说明：paintType 由调用方基于 getPaintTypes(upperNode) 预先判定（此时已保证
- * upperNode 整个子树内只含唯一 paint 类型），因此直接按 paintType 统一涂黑，不应再
- * 逐层检查外层 node 自身的 fill/stroke 属性——此前的实现里，当 upperNode 是 <g> 分组
- * （自身没有 fill/stroke 属性，颜色在其子节点上）时，`node.getAttribute(...)` 恒为
- * null，导致分组内所有子节点被误判为不可见（fill/stroke 均设为 none），使该分组作为
- * 上层图层时挖除完全失效，重叠区仍会出现透明度叠加变深。
+ * paintType 由调用方基于 getPaintTypes(upperNode) 预先判定（子树内只含唯一 paint 类型），
+ * 因此直接按 paintType 统一涂黑即可，不依赖 upperNode 自身的 fill/stroke 属性（<g> 分组
+ * 自身通常没有该属性）。
  */
 function makeMaskShape(node: SvgElement, paintType: PaintType, id: string): SvgElement {
   const clone = node.cloneNode(true);
@@ -138,11 +131,7 @@ class MaskShapeRegistry {
     return this.definitions;
   }
 
-  /**
-   * 若全图最终只有 1 个 mask 引用共享白底（即整张图标只需 1 个 mask），则共享+`<use>`
-   * 反而比直接内联 rect 多一层间接开销。此时从共享定义池中移除白底定义，交由调用方
-   * 把对应 mask 内的 `<use>` 换成内联 rect。
-   */
+  /** 全图只有 1 个 mask 时共享白底反而多一层开销，供调用方判断是否改为内联 rect */
   hasSharedBackground(): boolean {
     return Boolean(this.backgroundId);
   }
@@ -164,12 +153,8 @@ function createUse(doc: SvgElement, refId: string): SvgElement {
 
 /**
  * 为一组兄弟图层生成 mask（共享/内联的取舍见文件头体积优化说明）。
- *
- * 正确性注意：mask 的 maskUnits 必须显式声明为 userSpaceOnUse（SVG 规范默认值是
- * objectBoundingBox，若省略会导致挖除区域被错误裁剪到目标元素自身包围盒，在多层
- * 图标上出现挖除错位）；maskContentUnits 默认即为 userSpaceOnUse 可以省略；
- * x/y/width/height 省略后按 userSpaceOnUse 语境默认取视口的 -10%~120%，足以覆盖
- * 图标可见区域，因此可以省略以压缩属性字节。
+ * maskUnits 必须显式声明为 userSpaceOnUse（默认值 objectBoundingBox 会导致挖除区域
+ * 被错误裁剪到元素自身包围盒）；x/y/width/height 可省略以压缩字节。
  */
 function buildMasksForGroup(
   doc: SvgElement,
@@ -300,9 +285,7 @@ export function processOpacityOverlap(svgString: string, cacheKey: string): stri
     return svgString;
   }
 
-  // 全图只有 1 个 mask 时，白底只被引用一次，且不可能存在被多处复用的共享形状
-  // （usageCount 至少 2 才会走共享），因此把背景 use 换成内联 rect 后该mask 内已
-  // 不含任何 <use>，无需再声明 xlink 命名空间，进一步省去每个 2层图标的固定字节。
+  // 全图只有 1 个 mask 时，把共享背景 use 换成内联 rect，可省去 xlink 命名空间声明
   let needsXlink = true;
   if (masks.length === 1 && registry.hasSharedBackground()) {
     const bgUse = getElementChildren(masks[0])[0];
@@ -325,8 +308,7 @@ export function processOpacityOverlap(svgString: string, cacheKey: string): stri
     root.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
   }
 
-  // 把共享挖除形状与 mask 定义都放进 <defs>（复用已有的或新建），置于最前。
-  // 共享形状需先于 mask 定义，以便 mask 内的 <use> 能正确解析引用。
+  // 共享挖除形状需先于 mask 定义放入 <defs>（复用已有的或新建），以便 <use> 正确解析
   let defs = getElementChildren(root).find((child: SvgElement) => getTagName(child) === 'defs');
   if (!defs) {
     defs = doc.createElement('defs');

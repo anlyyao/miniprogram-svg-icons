@@ -9,10 +9,7 @@ export interface SvgNode {
   $: SvgAttrs;
   /** 节点自身标签名；根节点（<svg>）不设置，由 generateSvg 单独处理 */
   tag?: string;
-  /**
-   * 保留源文件原始文档顺序的子节点数组。此前按标签名分组存储（同名标签聚在一起），
-   * 会打乱与源文件不同的绘制顺序（z-order），已改为有序数组、原样遍历输出。
-   */
+  /** 按源文件原始文档顺序排列的子节点数组，保证绘制顺序（z-order）与源文件一致 */
   children: SvgNode[];
 }
 

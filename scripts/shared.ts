@@ -2,6 +2,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import { parseSvg, generateSvg } from './utils/svgTotemplate';
 import { optimizeSvg } from './utils/svgOptimizer';
+import { mergeAdjacentStrokeOnlyPaths } from './utils/mergeStrokePaths';
 import { processOpacityOverlap } from './utils/opacityOverlap';
 import { detectOpacityOverlapPaintTypes } from './utils/detectOpacityOverlap';
 import { computeOverlapPlanAttr, injectCutAttr } from './utils/opacityOverlapPlan';
@@ -179,14 +180,11 @@ export interface SvgEntry {
 
 /**
  * 从 SVG 目录加载并解析所有图标
- * 流程：读取 SVG -> SVGO 预压缩 -> 解析并生成模板
+ * 流程：读取 SVG -> SVGO 预压缩 -> 合并相邻同款纯描边路径 -> 检测/处理透明度重叠 -> 生成模板
  *
- * 透明度重叠处理策略按平台区分：
- * - 微信（原型验证）：build 时只产出极小的「挖除计划」（`data-cut` 属性），不注入任何
- *   mask/defs；真正的挖除推迟到运行时，仅当用户传入颜色确实带alpha 时才现算现用，
- *   多数不透明色场景零开销。详见 `opacityOverlapPlan.ts` 与 `wechat.js.tpl`。
- * - 其他平台：保持现有的 build 时静态注入 mask+use 方案（`opacityOverlap.ts`），行为
- *   不受本次原型改动影响。
+ * 检测与模板生成必须读同一份「已合并」内容，避免检测端与产物端结构不一致。
+ * 透明度重叠处理按平台区分：微信走运行时按需挖除（`opacityOverlapPlan.ts` + `wechat.js.tpl`），
+ * 其他平台沿用 build 时静态注入 mask（`opacityOverlap.ts`）。
  */
 export function loadSvgs(svgDir: string, platformId?: string): SvgEntry[] {
   if (!fs.existsSync(svgDir)) {
@@ -206,14 +204,14 @@ export function loadSvgs(svgDir: string, platformId?: string): SvgEntry[] {
       const originalContent = fs.readFileSync(filePath, 'utf-8');
       const name = path.basename(file, '.svg');
 
-      // 使用 SVGO 进行预压缩
+      // SVGO 预压缩后合并相邻同款纯描边路径（覆盖 svgo mergePaths 因几何相交拒绝合并的场景）
       const optimizedContent = optimizeSvg(originalContent, file);
+      const mergedContent = mergeAdjacentStrokeOnlyPaths(optimizedContent);
 
       if (useRuntimeCut) {
-        // 原型：基于生成好的最终模板结构计算挖除计划，确保计划中的下标与运行时
-        // （utils.js.tpl）解析到的兄弟结构严格一致，再以 data-cut 属性挂载
-        const templated = generateSvg(parseSvg(optimizedContent), name);
-        const paintTypes = detectOpacityOverlapPaintTypes(optimizedContent, `${brandKey}/${name}`);
+        // 基于最终模板结构计算挖除计划，以 data-cut 属性挂载，实际挖除推迟到运行时
+        const templated = generateSvg(parseSvg(mergedContent), name);
+        const paintTypes = detectOpacityOverlapPaintTypes(mergedContent, `${brandKey}/${name}`);
         const planAttr = computeOverlapPlanAttr(templated, paintTypes);
         icons.push({ name, svg: planAttr ? injectCutAttr(templated, planAttr) : templated });
         continue;
@@ -221,7 +219,7 @@ export function loadSvgs(svgDir: string, platformId?: string): SvgEntry[] {
 
       // 处理透明度重叠：检测到几何重叠时注入 luminance mask 挖除上层覆盖区域，
       // 避免运行时传入半透明色时重叠区透明度叠加变深
-      const overlapProcessed = processOpacityOverlap(optimizedContent, `${brandKey}/${name}`);
+      const overlapProcessed = processOpacityOverlap(mergedContent, `${brandKey}/${name}`);
       icons.push({ name, svg: generateSvg(parseSvg(overlapProcessed), name) });
     } catch (err) {
       console.error(`  ⚠️  处理失败: ${file}`, err instanceof Error ? err.message : String(err));

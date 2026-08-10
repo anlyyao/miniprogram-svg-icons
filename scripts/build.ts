@@ -87,21 +87,24 @@ async function buildIconComponent(
   const iconsDataSource = generateIconsJS(brandsIcons);
 
   // 压缩各文件
-  const [minifiedIconsData, minifiedIconJS, minifiedIconJson, minifiedIconTemplate] = await Promise.all([
-    minifyJS(iconsDataSource, true),
-    minifyJS(templates.iconJSSource),
-    Promise.resolve(minifyJSON(templates.iconJsonTemplate)),
-    Promise.resolve(minifyTemplate(templates.iconTemplateContent)),
-  ]);
+  const [minifiedIconsData, minifiedIconJS, minifiedIconJson, minifiedIconTemplate, minifiedUtilsJS] =
+    await Promise.all([
+      minifyJS(iconsDataSource, true),
+      minifyJS(templates.iconJSSource),
+      Promise.resolve(minifyJSON(templates.iconJsonTemplate)),
+      Promise.resolve(minifyTemplate(templates.iconTemplateContent)),
+      templates.iconUtilsJSSource !== null ? minifyJS(templates.iconUtilsJSSource) : Promise.resolve(null),
+    ]);
 
   await Promise.all([
     fs.writeFile(path.join(iconComponentDir, 'icons.js'), minifiedIconsData),
     fs.writeFile(path.join(iconComponentDir, 'index.js'), minifiedIconJS),
     fs.writeFile(path.join(iconComponentDir, 'index.json'), minifiedIconJson),
     fs.writeFile(path.join(iconComponentDir, tplFileName), minifiedIconTemplate),
+    ...(minifiedUtilsJS !== null ? [fs.writeFile(path.join(iconComponentDir, 'utils.js'), minifiedUtilsJS)] : []),
   ]);
 
-  console.log(`  📦 图标组件（Icon）已生成（包含 icons.js）`);
+  console.log(`  📦 图标组件（Icon）已生成（包含 icons.js${minifiedUtilsJS !== null ? '、utils.js' : ''}）`);
 }
 
 // ======================== 单品牌构建 ========================
@@ -114,10 +117,10 @@ interface BrandBuildResult {
 /**
  * 加载单个品牌的图标数据（从 SVG 直接加载）
  */
-async function buildBrand(brand: BrandInfo): Promise<BrandBuildResult> {
+async function buildBrand(brand: BrandInfo, platformId: string): Promise<BrandBuildResult> {
   console.log(`\n  🎨 品牌: ${brand.name}`);
 
-  const icons = loadAllSvgs(brand);
+  const icons = loadAllSvgs(brand, platformId);
 
   console.log(`  ✅ [${brand.name}] 共加载 ${icons.length} 个图标`);
 
@@ -157,7 +160,7 @@ export async function build(platformId: string = 'wechat'): Promise<BuildResult>
   const brandsIcons: BrandIconsMap = {};
 
   for (const brand of brands) {
-    const result = await buildBrand(brand);
+    const result = await buildBrand(brand, platformId);
     totalIconCount += result.icons.length;
     brandNames.push(result.brand);
     brandsIcons[result.brand] = result.icons;

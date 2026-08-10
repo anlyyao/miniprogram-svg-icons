@@ -49,9 +49,14 @@ async function generateIconComponent(
     fs.writeFile(path.join(iconComponentDir, 'index.js'), templates.iconJSSource),
     fs.writeFile(path.join(iconComponentDir, 'index.json'), finalIconJson),
     fs.writeFile(path.join(iconComponentDir, tplFileName), templates.iconTemplateContent),
+    ...(templates.iconUtilsJSSource !== null
+      ? [fs.writeFile(path.join(iconComponentDir, 'utils.js'), templates.iconUtilsJSSource)]
+      : []),
   ]);
 
-  console.log(`  📦 图标组件（Icon）已生成（包含 icons.js）`);
+  console.log(
+    `  📦 图标组件（Icon）已生成（包含 icons.js${templates.iconUtilsJSSource !== null ? '、utils.js' : ''}）`,
+  );
 }
 
 // ======================== 单品牌生成 ========================
@@ -65,10 +70,14 @@ interface BrandGenerateResult {
 /**
  * 加载单个品牌的图标数据
  */
-async function loadBrandIcons(brand: BrandInfo, platformOutputDir: string): Promise<BrandGenerateResult> {
+async function loadBrandIcons(
+  brand: BrandInfo,
+  platformOutputDir: string,
+  platformId: string,
+): Promise<BrandGenerateResult> {
   console.log(`\n  🎨 品牌: ${brand.name}`);
 
-  const icons = loadAllSvgs(brand);
+  const icons = loadAllSvgs(brand, platformId);
 
   console.log(`  ✅ [${brand.name}] 共加载 ${icons.length} 个图标`);
 
@@ -106,7 +115,7 @@ export async function generate(platformId: string = 'wechat'): Promise<GenerateR
   const brandsIcons: BrandIconsMap = {};
 
   for (const brand of brands) {
-    const result = await loadBrandIcons(brand, platformOutputDir);
+    const result = await loadBrandIcons(brand, platformOutputDir, platformId);
     totalIconCount += result.icons.length;
     brandNames.push(result.brand);
     brandsIcons[result.brand] = result.icons;

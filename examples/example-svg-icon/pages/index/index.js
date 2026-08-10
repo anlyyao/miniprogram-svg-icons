@@ -51,7 +51,18 @@ Page({
     // <use> 引用可视层节点、而非克隆几何）。这里对它们同时赋予半透明的填充色与
     // 描边色：若 mask 正确生效，描边与填充的重叠区域不会出现透明度叠加变深；
     // 若 mask 失效（如<use>兼容性问题），重叠区会明显加深。
-    overlapDemoIcons: ['ability-open', 'abstract', 'accessibility', 'add-circle', 'browse-off', 'robot-2'],
+    overlapDemoIcons: [
+      'rice',
+      'tape',
+      'add',
+      'code-1',
+      'ability-open',
+      'abstract',
+      'accessibility',
+      'add-circle',
+      'browse-off',
+      'robot-2',
+    ],
     // 半透明红色填充 + 半透明蓝色描边，重叠区最易观察是否叠加变深/变色
     demoFillColor: ['rgba(255, 0, 0, 0.34)', 'rgba(237, 28, 230, 1)'],
     demoStrokeColor: ['rgba(0, 0, 255, 0.5)', 'rgba(178, 224, 42, 0.44)'],

@@ -1,5 +1,17 @@
 import { Resvg } from '@resvg/resvg-js';
 import { DOMParser, XMLSerializer } from 'xmldom';
+import {
+  PaintType,
+  PAINT_TYPES,
+  DRAWABLE_TAGS,
+  SvgElement,
+  getElementChildren,
+  getTagName,
+  isVisiblePaint,
+  getPaintTypes,
+} from './svgDomHelpers';
+
+export type { PaintType };
 
 /**
  * 透明度重叠检测（几何重叠版）
@@ -14,13 +26,7 @@ import { DOMParser, XMLSerializer } from 'xmldom';
  * 则判定该图标存在重叠，需要在编译期注入 mask 挖除。
  */
 
-export type PaintType = 'fill' | 'stroke';
-
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
-const ELEMENT_NODE = 1;
-const PAINT_TYPES: PaintType[] = ['fill', 'stroke'];
-
-const DRAWABLE_TAGS = new Set(['circle', 'ellipse', 'line', 'path', 'polygon', 'polyline', 'rect']);
 
 // 这些标签只定义引用内容，不参与实际绘制，改色会破坏 mask/clip 的覆盖范围
 const DEFINITION_TAGS = new Set([
@@ -45,8 +51,6 @@ const COVERAGE_ALPHA = 128;
 // 两层公共覆盖像素数超过该值才判定为真实重叠（滤掉仅边缘相接的情况）
 const MIN_OVERLAP_PIXELS = 12;
 
-type SvgElement = any;
-
 interface OverlapLayer {
   paintType: PaintType;
   paintedElements: Set<SvgElement>;
@@ -55,20 +59,8 @@ interface OverlapLayer {
 // 以「品牌/图标名」为 key，缓存检测结果，供多平台复用
 const detectionCache = new Map<string, PaintType[]>();
 
-function getElementChildren(node: SvgElement): SvgElement[] {
-  return Array.from(node?.childNodes || []).filter((child: SvgElement) => child.nodeType === ELEMENT_NODE);
-}
-
-function getTagName(node: SvgElement): string {
-  return node?.tagName?.toLowerCase?.() || '';
-}
-
 function isDefinition(node: SvgElement) {
   return DEFINITION_TAGS.has(getTagName(node));
-}
-
-function isVisiblePaint(value: string | null) {
-  return Boolean(value) && !['none', 'transparent'].includes(value.trim().toLowerCase());
 }
 
 /**
@@ -90,57 +82,11 @@ function hasEffectivePaint(element: SvgElement, paintType: PaintType) {
   return paintType === 'fill';
 }
 
-function getPaintTypes(node: SvgElement): PaintType[] {
-  const found = new Set<PaintType>();
-
-  const visit = (element: SvgElement) => {
-    PAINT_TYPES.forEach((paintType) => {
-      if (isVisiblePaint(element.getAttribute(paintType))) {
-        found.add(paintType);
-      }
-    });
-    getElementChildren(element).forEach(visit);
-  };
-
-  visit(node);
-  return PAINT_TYPES.filter((paintType) => found.has(paintType));
-}
-
-function getComparableAttrs(element: SvgElement) {
-  return Array.from(element.attributes || [])
-    .map((attr: any) => [attr.name, attr.value])
-    .filter(([name]) => !['d', 'id'].includes(name))
-    .sort(([left], [right]) => left.localeCompare(right));
-}
-
-/**
- * 与产物侧的路径合并（svgo mergePaths）保持一致：相邻且描边属性完全相同的路径
- * 最终会被合成一条复合路径、只描边一次，因此检测时必须同样视为单个图层，否则
- * 会把本会合并的相邻描边误判为多层重叠。
- */
-function mergeStrokeLayers(node: SvgElement) {
-  getElementChildren(node).forEach(mergeStrokeLayers);
-
-  getElementChildren(node).reduce((previous: SvgElement, current: SvgElement) => {
-    const canMerge =
-      getTagName(previous) === 'path' &&
-      getTagName(current) === 'path' &&
-      isVisiblePaint(previous.getAttribute('stroke')) &&
-      previous.getAttribute('stroke') === current.getAttribute('stroke') &&
-      !isVisiblePaint(previous.getAttribute('fill')) &&
-      !isVisiblePaint(current.getAttribute('fill')) &&
-      previous.getAttribute('id') === current.getAttribute('id') &&
-      JSON.stringify(getComparableAttrs(previous)) === JSON.stringify(getComparableAttrs(current));
-
-    if (!canMerge) {
-      return current;
-    }
-
-    previous.setAttribute('d', `${previous.getAttribute('d') || ''} ${current.getAttribute('d') || ''}`.trim());
-    node.removeChild(current);
-    return previous;
-  }, null);
-}
+// 注：此前这里有一个 mergeStrokeLayers，会在检测前手动合并相邻同款描边路径，理由是
+// “与 svgo mergePaths 保持一致”；但传入本模块的 svgString 已跑过 svgo，真正能合并的
+// 路径此时已经合并好了。该手动合并未做 svgo mergePaths 内部的几何相交判断，会把 svgo
+// 特意保留分开的相交路径（如 tape.svg 描边）误合并成一条，导致漏判重叠、运行时半透明色
+// 下描边顶部透明度叠加变深，故直接删除，让检测忠实反映 optimizedContent 的真实结构。
 
 /**
  * 引用了不存在的 clipPath/mask 时元素不会被绘制，检测前需要清掉这类失效引用，
@@ -257,9 +203,6 @@ function detectPaintTypes(svgString: string): PaintType[] {
   if (!root.getAttribute('xmlns')) {
     root.setAttribute('xmlns', SVG_NAMESPACE);
   }
-
-  // 检测前先合并相邻描边路径，避免把最终会合成一条复合路径的相邻描边误判为多层重叠
-  mergeStrokeLayers(root);
 
   const allElements: SvgElement[] = [];
   const paintableElements: SvgElement[] = [];

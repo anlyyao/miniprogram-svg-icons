@@ -3,6 +3,8 @@ import path from 'path';
 import { parseSvg, generateSvg } from './utils/svgTotemplate';
 import { optimizeSvg } from './utils/svgOptimizer';
 import { processOpacityOverlap } from './utils/opacityOverlap';
+import { detectOpacityOverlapPaintTypes } from './utils/detectOpacityOverlap';
+import { computeOverlapPlanAttr, injectCutAttr } from './utils/opacityOverlapPlan';
 
 // ======================== 路径常量 ========================
 
@@ -178,8 +180,15 @@ export interface SvgEntry {
 /**
  * 从 SVG 目录加载并解析所有图标
  * 流程：读取 SVG -> SVGO 预压缩 -> 解析并生成模板
+ *
+ * 透明度重叠处理策略按平台区分：
+ * - 微信（原型验证）：build 时只产出极小的「挖除计划」（`data-cut` 属性），不注入任何
+ *   mask/defs；真正的挖除推迟到运行时，仅当用户传入颜色确实带alpha 时才现算现用，
+ *   多数不透明色场景零开销。详见 `opacityOverlapPlan.ts` 与 `wechat.js.tpl`。
+ * - 其他平台：保持现有的 build 时静态注入 mask+use 方案（`opacityOverlap.ts`），行为
+ *   不受本次原型改动影响。
  */
-export function loadSvgs(svgDir: string): SvgEntry[] {
+export function loadSvgs(svgDir: string, platformId?: string): SvgEntry[] {
   if (!fs.existsSync(svgDir)) {
     throw new Error(`SVG directory not found: ${svgDir}`);
   }
@@ -188,40 +197,34 @@ export function loadSvgs(svgDir: string): SvgEntry[] {
 
   // 用目录名作为 brand 前缀，保证跨品牌同名图标的检测缓存 key 唯一
   const brandKey = path.basename(svgDir);
+  const useRuntimeCut = platformId === 'wechat';
 
-  const rawEntries: { name: string; content: string; file: string }[] = [];
+  const icons: SvgEntry[] = [];
   for (const file of svgFiles) {
     try {
       const filePath = path.join(svgDir, file);
       const originalContent = fs.readFileSync(filePath, 'utf-8');
+      const name = path.basename(file, '.svg');
 
       // 使用 SVGO 进行预压缩
       const optimizedContent = optimizeSvg(originalContent, file);
 
+      if (useRuntimeCut) {
+        // 原型：基于生成好的最终模板结构计算挖除计划，确保计划中的下标与运行时
+        // （utils.js.tpl）解析到的兄弟结构严格一致，再以 data-cut 属性挂载
+        const templated = generateSvg(parseSvg(optimizedContent), name);
+        const paintTypes = detectOpacityOverlapPaintTypes(optimizedContent, `${brandKey}/${name}`);
+        const planAttr = computeOverlapPlanAttr(templated, paintTypes);
+        icons.push({ name, svg: planAttr ? injectCutAttr(templated, planAttr) : templated });
+        continue;
+      }
+
       // 处理透明度重叠：检测到几何重叠时注入 luminance mask 挖除上层覆盖区域，
       // 避免运行时传入半透明色时重叠区透明度叠加变深
-      const name = path.basename(file, '.svg');
       const overlapProcessed = processOpacityOverlap(optimizedContent, `${brandKey}/${name}`);
-
-      rawEntries.push({
-        name,
-        content: overlapProcessed,
-        file,
-      });
+      icons.push({ name, svg: generateSvg(parseSvg(overlapProcessed), name) });
     } catch (err) {
-      console.error(`  ⚠️  读取失败: ${file}`, err instanceof Error ? err.message : String(err));
-    }
-  }
-
-  const icons: SvgEntry[] = [];
-  for (const entry of rawEntries) {
-    try {
-      icons.push({
-        name: entry.name,
-        svg: generateSvg(parseSvg(entry.content), entry.name),
-      });
-    } catch (err) {
-      console.error(`  ⚠️  解析失败: ${entry.file}`, err instanceof Error ? err.message : String(err));
+      console.error(`  ⚠️  处理失败: ${file}`, err instanceof Error ? err.message : String(err));
     }
   }
 
@@ -231,13 +234,13 @@ export function loadSvgs(svgDir: string): SvgEntry[] {
 /**
  * 加载品牌的所有图标，并打印日志
  */
-export function loadAllSvgs(brand: BrandInfo): SvgEntry[] {
+export function loadAllSvgs(brand: BrandInfo, platformId?: string): SvgEntry[] {
   console.log(`📂 读取 SVG 图标: ${brand.svgDir}`);
 
   const svgFiles = fs.readdirSync(brand.svgDir).filter((f) => f.endsWith('.svg'));
   console.log(`📄 发现 ${svgFiles.length} 个 SVG 文件`);
 
-  const icons = loadSvgs(brand.svgDir);
+  const icons = loadSvgs(brand.svgDir, platformId);
 
   if (icons.length < svgFiles.length) {
     const missing = svgFiles.length - icons.length;
@@ -254,6 +257,8 @@ export interface PlatformTemplates {
   iconJsonTemplate: string;
   iconTemplateContent: string;
   iconJSSource: string;
+  /** 运行时按需挖除等工具函数模块源码；componentStyle 为 'wechat' 风格的平台才需要（index.js 会 require('./utils')） */
+  iconUtilsJSSource: string | null;
 }
 
 /** 读取模板文件 */
@@ -270,6 +275,8 @@ export function generatePlatformTemplates(platform: PlatformConfig): PlatformTem
     iconJsonTemplate: readTemplate('icon.json.tpl'),
     iconTemplateContent: readTemplate('icon.tpl'),
     iconJSSource: readTemplate(jsTplFile).replace(/\{\{EXTRA_REPLACE\}\}/g, extraReplace),
+    // wechat.js.tpl 内部会 require('./utils')，需同步生成 utils.js；alipay.js.tpl 不依赖它
+    iconUtilsJSSource: platform.componentStyle === 'alipay' ? null : readTemplate('utils.js.tpl'),
   };
 }
 

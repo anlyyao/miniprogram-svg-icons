@@ -1,5 +1,15 @@
 import { DOMParser, XMLSerializer } from 'xmldom';
-import { detectOpacityOverlapPaintTypes, PaintType } from './detectOpacityOverlap';
+import { detectOpacityOverlapPaintTypes } from './detectOpacityOverlap';
+import {
+  PaintType,
+  DRAWABLE_TAGS,
+  ELEMENT_NODE,
+  SvgElement,
+  getElementChildren,
+  getTagName,
+  isVisiblePaint,
+  getPaintTypes,
+} from './svgDomHelpers';
 
 /**
  * 透明度重叠 mask 挖除
@@ -15,45 +25,23 @@ import { detectOpacityOverlapPaintTypes, PaintType } from './detectOpacityOverla
  * 处理在「原始（优化后）SVG 字符串」阶段进行，早于模板变量替换（{f1}/{s1}），
  * 此时颜色为真实占位色、绘制顺序完整，处理结果不影响后续的动态填色。
  *
- * 体积优化：mask 里的挖除形状不再用 cloneNode 把上层路径几何（d）整段复制进去
- * ——这会让同一条路径数据在多个下层的 mask 中被复制多份，导致产物体积暴涨。改为
- * 把每个上层图层克隆为「纯黑挖除形状」在 <defs> 中只定义一份并赋 id，mask 内部
- * 及共享白底 rect 均用 <use> 引用，使任意路径几何全图只存一份。产物是完整的独立
- * SVG 文档，同文档内 <use> 引用 <defs> 中的 id 是标准 SVG 能力，渲染无需运行时配合。
+ * 体积优化（核心思路，下方MaskShapeRegistry/buildMasksForGroup 均围绕它展开）：
+ * mask 里的挖除形状不再用 cloneNode 把上层路径几何（d）整段复制进去——同一条路径
+ * 会在多个下层的 mask 中被复制多份，导致产物体积暴涨。改为按「被多少个 mask 复用」
+ * 区分：≥2 个 mask 用到的形状在 <defs> 中只定义一份并赋 id，各处以 <use> 引用；只被
+ * 1 个 mask 用到的则直接内联，避免多余的 <use> 间接层。使任意路径几何全图最多存一份。
  */
-
-const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
-const ELEMENT_NODE = 1;
-const PAINT_TYPES: PaintType[] = ['fill', 'stroke'];
-
-const DRAWABLE_TAGS = new Set(['circle', 'ellipse', 'line', 'path', 'polygon', 'polyline', 'rect']);
 
 const CONTAINER_SKIP_TAGS = new Set(['defs', 'mask', 'clippath', 'symbol']);
 
 // mask 形状不需要保留这些属性，否则挖除区域本身会带透明度或被mask 干扰，挖不干净
 const MASK_IGNORED_ATTRS = new Set(['class', 'id', 'mask', 'opacity', 'fill-opacity', 'stroke-opacity', 'style']);
 
-const OPACITY_ATTRS = ['opacity', 'fill-opacity', 'stroke-opacity'];
-
-type SvgElement = any;
-
 interface ViewBox {
   x: string;
   y: string;
   width: string;
   height: string;
-}
-
-function getElementChildren(node: SvgElement): SvgElement[] {
-  return Array.from(node?.childNodes || []).filter((child: SvgElement) => child.nodeType === ELEMENT_NODE);
-}
-
-function getTagName(node: SvgElement): string {
-  return node?.tagName?.toLowerCase?.() || '';
-}
-
-function isVisiblePaint(value: string | null) {
-  return Boolean(value) && !['none', 'transparent'].includes(value.trim().toLowerCase());
 }
 
 function parseViewBox(viewBox: string | null): ViewBox {
@@ -64,26 +52,15 @@ function parseViewBox(viewBox: string | null): ViewBox {
   return { x: '0', y: '0', width: '24', height: '24' };
 }
 
-function getPaintTypes(node: SvgElement): PaintType[] {
-  const found = new Set<PaintType>();
-
-  const visit = (element: SvgElement) => {
-    PAINT_TYPES.forEach((paintType) => {
-      if (isVisiblePaint(element.getAttribute(paintType))) {
-        found.add(paintType);
-      }
-    });
-    getElementChildren(element).forEach(visit);
-  };
-
-  visit(node);
-  return PAINT_TYPES.filter((paintType) => found.has(paintType));
-}
-
 /**
- * 把 upperNode 复制为「纯黑挖除形状」：清除颜色/透明度等属性，几何形状按对应
- * paint 类型填成纯黑（luminance mask 中黑色=挖除）。生成的节点会被赋予 id 并只在
- * <defs> 中定义一份，供各 mask 通过 <use> 复用，避免路径几何（d）被重复内联。
+ * 把 upperNode 复制为「纯黑挖除形状」，供<mask> 内直接内联或注册进 <defs> 供 <use> 复用。
+ *
+ * 修复说明：paintType 由调用方基于 getPaintTypes(upperNode) 预先判定（此时已保证
+ * upperNode 整个子树内只含唯一 paint 类型），因此直接按 paintType 统一涂黑，不应再
+ * 逐层检查外层 node 自身的 fill/stroke 属性——此前的实现里，当 upperNode 是 <g> 分组
+ * （自身没有 fill/stroke 属性，颜色在其子节点上）时，`node.getAttribute(...)` 恒为
+ * null，导致分组内所有子节点被误判为不可见（fill/stroke 均设为 none），使该分组作为
+ * 上层图层时挖除完全失效，重叠区仍会出现透明度叠加变深。
  */
 function makeMaskShape(node: SvgElement, paintType: PaintType, id: string): SvgElement {
   const clone = node.cloneNode(true);
@@ -99,11 +76,8 @@ function makeMaskShape(node: SvgElement, paintType: PaintType, id: string): SvgE
     });
 
     if (DRAWABLE_TAGS.has(getTagName(element))) {
-      element.setAttribute('fill', paintType === 'fill' && isVisiblePaint(node.getAttribute('fill')) ? '#000' : 'none');
-      element.setAttribute(
-        'stroke',
-        paintType === 'stroke' && isVisiblePaint(node.getAttribute('stroke')) ? '#000' : 'none',
-      );
+      element.setAttribute('fill', paintType === 'fill' ? '#000' : 'none');
+      element.setAttribute('stroke', paintType === 'stroke' ? '#000' : 'none');
     }
 
     // 仅在提供 id 时，为根节点写 id 供 <use> 引用；内联形状无需 id
@@ -118,11 +92,7 @@ function makeMaskShape(node: SvgElement, paintType: PaintType, id: string): SvgE
   return clone;
 }
 
-/**
- * 共享定义池：把「白底 rect」与「被多个 mask 复用的挖除形状」在 <defs> 中只定义一份
- * 并赋 id，供各 mask 通过 <use> 引用；只被单个 mask 使用的形状则直接内联，避免多余的
- * <use> 间接层。使同一条路径几何最多只出现一次。
- */
+/** 共享定义池：管理白底 rect 与被 ≥2 个 mask 复用的挖除形状（见文件头体积优化说明） */
 class MaskShapeRegistry {
   private readonly doc: SvgElement;
   readonly viewBox: ViewBox;
@@ -193,20 +163,13 @@ function createUse(doc: SvgElement, refId: string): SvgElement {
 }
 
 /**
- * 为一组兄弟图层生成 mask。
+ * 为一组兄弟图层生成 mask（共享/内联的取舍见文件头体积优化说明）。
  *
- * 体积优化的两条准则：
- * 1. 白底矩形全图共享，各 mask 仅用 <use> 引用（省去每个 mask 内重复的 rect 及其坐标）。
- * 2. 上层挖除形状按「被多少个下层 mask 使用」区分：
- *    - 被 ≥2 个 mask 使用（3+ 层图标里靠上的图层）：注册到 <defs> 一次，各处 <use> 引用，
- *      消除路径几何 d 的重复内联；
- *    - 只被 1 个 mask 使用（如 2 层图标、或最底层下方唯一的上层）：直接内联进该 mask，
- *      避免 <use> 间接层带来的额外字节。
- * 3. mask 的 maskUnits 必须显式声明为 userSpaceOnUse（SVG 规范默认值是
- *    objectBoundingBox，若省略会导致挖除区域被错误裁剪到目标元素自身包围盒，
- *    在多层图标上出现挖除错位）；maskContentUnits 默认即为 userSpaceOnUse 可以省略，
- *    x/y/width/height 省略后按 userSpaceOnUse 语境默认取视口的 -10%~120%，足以覆盖
- *    图标可见区域，因此可以省略以压缩属性字节。
+ * 正确性注意：mask 的 maskUnits 必须显式声明为 userSpaceOnUse（SVG 规范默认值是
+ * objectBoundingBox，若省略会导致挖除区域被错误裁剪到目标元素自身包围盒，在多层
+ * 图标上出现挖除错位）；maskContentUnits 默认即为 userSpaceOnUse 可以省略；
+ * x/y/width/height 省略后按 userSpaceOnUse 语境默认取视口的 -10%~120%，足以覆盖
+ * 图标可见区域，因此可以省略以压缩属性字节。
  */
 function buildMasksForGroup(
   doc: SvgElement,
@@ -374,5 +337,3 @@ export function processOpacityOverlap(svgString: string, cacheKey: string): stri
 
   return new XMLSerializer().serializeToString(doc);
 }
-
-export { OPACITY_ATTRS };

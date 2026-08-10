@@ -7,7 +7,13 @@ export interface SvgAttrs {
 
 export interface SvgNode {
   $: SvgAttrs;
-  children: Record<string, SvgNode[]>;
+  /** 节点自身标签名；根节点（<svg>）不设置，由 generateSvg 单独处理 */
+  tag?: string;
+  /**
+   * 保留源文件原始文档顺序的子节点数组。此前按标签名分组存储（同名标签聚在一起），
+   * 会打乱与源文件不同的绘制顺序（z-order），已改为有序数组、原样遍历输出。
+   */
+  children: SvgNode[];
 }
 
 const CONTEXT_IDS = ['fill1', 'fill2', 'stroke1', 'stroke2'] as const;
@@ -22,7 +28,7 @@ const SPECIFIED_ICONS_SET = new Set(specifiedIcons);
 const domParser = new DOMParser();
 
 function convertXmlNodeToObject(node: Element): SvgNode {
-  const obj: SvgNode = { $: {}, children: {} };
+  const obj: SvgNode = { $: {}, children: [] };
 
   if (node.attributes) {
     for (let i = 0; i < node.attributes.length; i++) {
@@ -36,8 +42,9 @@ function convertXmlNodeToObject(node: Element): SvgNode {
       const child = node.childNodes[i] as Element;
       if (child.nodeType !== 1) continue;
 
-      const tag = child.nodeName.toLowerCase();
-      (obj.children[tag] ??= []).push(convertXmlNodeToObject(child));
+      const childObj = convertXmlNodeToObject(child);
+      childObj.tag = child.nodeName.toLowerCase();
+      obj.children.push(childObj);
     }
   }
 
@@ -117,17 +124,13 @@ function serializeRaw(node: SvgNode, tag: string): string {
     .map(([k, v]) => ` ${k}="${v}"`)
     .join('');
 
-  const hasChildren = Object.keys(node.children).length > 0;
-  if (!hasChildren) {
+  if (!node.children.length) {
     return `<${tag}${attrs} />`;
   }
 
   let inner = '';
-  for (const [childTag, children] of Object.entries(node.children)) {
-    if (!children) continue;
-    for (const child of children) {
-      inner += serializeRaw(child, childTag);
-    }
+  for (const child of node.children) {
+    inner += serializeRaw(child, child.tag!);
   }
   return `<${tag}${attrs}>${inner}</${tag}>`;
 }
@@ -148,34 +151,28 @@ export function parseSvg(svgContent: string): SvgNode {
   return convertXmlNodeToObject(root);
 }
 
-function generateChildrenTemplate(
-  childrenMap: Record<string, SvgNode[]>,
-  isSpecified: boolean,
-  parentId?: string,
-): string {
+function generateChildrenTemplate(children: SvgNode[], isSpecified: boolean, parentId?: string): string {
   let tpl = '';
 
-  for (const [tag, children] of Object.entries(childrenMap)) {
-    if (!children) continue;
+  for (const node of children) {
+    const tag = node.tag!;
 
-    for (const node of children) {
-      // defs/mask 等定义类子树原样输出，不做颜色归一化
-      if (RAW_OUTPUT_TAGS.has(tag)) {
-        tpl += serializeRaw(node, tag);
-        continue;
-      }
+    // defs/mask 等定义类子树原样输出，不做颜色归一化
+    if (RAW_OUTPUT_TAGS.has(tag)) {
+      tpl += serializeRaw(node, tag);
+      continue;
+    }
 
-      const currentId = node.$.id;
-      const contextId = CONTEXT_ID_SET.has(currentId) ? currentId : parentId;
+    const currentId = node.$.id;
+    const contextId = CONTEXT_ID_SET.has(currentId) ? currentId : parentId;
 
-      const hasChildren = Object.keys(node.children).length > 0;
-      const attrs = buildAttrString(node, isSpecified, parentId);
+    const hasChildren = node.children.length > 0;
+    const attrs = buildAttrString(node, isSpecified, parentId);
 
-      if (hasChildren) {
-        tpl += `<${tag}${attrs}>${generateChildrenTemplate(node.children, isSpecified, contextId)}</${tag}>`;
-      } else {
-        tpl += `<${tag}${attrs} />`;
-      }
+    if (hasChildren) {
+      tpl += `<${tag}${attrs}>${generateChildrenTemplate(node.children, isSpecified, contextId)}</${tag}>`;
+    } else {
+      tpl += `<${tag}${attrs} />`;
     }
   }
 

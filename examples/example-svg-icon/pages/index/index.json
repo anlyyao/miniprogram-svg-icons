@@ -1,4 +1,7 @@
 {
+  "renderer": "skyline",
+  "componentFramework": "glass-easel",
+  "disableScroll": true,
   "usingComponents": {
     "t-icon": "@mp-svg-icons/wechat/icon",
     "t-popup": "tdesign-miniprogram/popup/popup",

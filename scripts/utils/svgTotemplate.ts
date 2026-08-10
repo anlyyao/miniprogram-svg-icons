@@ -7,18 +7,25 @@ export interface SvgAttrs {
 
 export interface SvgNode {
   $: SvgAttrs;
-  children: Record<string, SvgNode[]>;
+  /** 节点自身标签名；根节点（<svg>）不设置，由 generateSvg 单独处理 */
+  tag?: string;
+  /** 按源文件原始文档顺序排列的子节点数组，保证绘制顺序（z-order）与源文件一致 */
+  children: SvgNode[];
 }
 
 const CONTEXT_IDS = ['fill1', 'fill2', 'stroke1', 'stroke2'] as const;
 const CONTEXT_ID_SET = new Set<string>(CONTEXT_IDS);
+
+// 这些子树仅作定义/挖除用途（如透明度重叠 mask），其颜色是固定的 #000/#fff，
+// 不能被 normalizeColor 替换成 {f1}/{s1} 等动态变量，需原样输出。
+const RAW_OUTPUT_TAGS = new Set(['defs', 'mask', 'clippath', 'symbol']);
 
 const SPECIFIED_ICONS_SET = new Set(specifiedIcons);
 
 const domParser = new DOMParser();
 
 function convertXmlNodeToObject(node: Element): SvgNode {
-  const obj: SvgNode = { $: {}, children: {} };
+  const obj: SvgNode = { $: {}, children: [] };
 
   if (node.attributes) {
     for (let i = 0; i < node.attributes.length; i++) {
@@ -32,8 +39,9 @@ function convertXmlNodeToObject(node: Element): SvgNode {
       const child = node.childNodes[i] as Element;
       if (child.nodeType !== 1) continue;
 
-      const tag = child.nodeName.toLowerCase();
-      (obj.children[tag] ??= []).push(convertXmlNodeToObject(child));
+      const childObj = convertXmlNodeToObject(child);
+      childObj.tag = child.nodeName.toLowerCase();
+      obj.children.push(childObj);
     }
   }
 
@@ -104,6 +112,26 @@ function buildAttrString(node: SvgNode, isSpecified: boolean, parentId?: string)
     .join('');
 }
 
+/**
+ * 原样序列化子树（保留 id、不做颜色归一化），用于 defs/mask 等定义类节点：
+ * 其颜色固定为 #000/#fff，若被 normalizeColor 替换成动态变量会破坏 mask 挖除。
+ */
+function serializeRaw(node: SvgNode, tag: string): string {
+  const attrs = Object.entries(node.$)
+    .map(([k, v]) => ` ${k}="${v}"`)
+    .join('');
+
+  if (!node.children.length) {
+    return `<${tag}${attrs} />`;
+  }
+
+  let inner = '';
+  for (const child of node.children) {
+    inner += serializeRaw(child, child.tag!);
+  }
+  return `<${tag}${attrs}>${inner}</${tag}>`;
+}
+
 export function parseSvg(svgContent: string): SvgNode {
   const xmlDoc = domParser.parseFromString(svgContent, 'image/svg+xml');
 
@@ -120,28 +148,28 @@ export function parseSvg(svgContent: string): SvgNode {
   return convertXmlNodeToObject(root);
 }
 
-function generateChildrenTemplate(
-  childrenMap: Record<string, SvgNode[]>,
-  isSpecified: boolean,
-  parentId?: string,
-): string {
+function generateChildrenTemplate(children: SvgNode[], isSpecified: boolean, parentId?: string): string {
   let tpl = '';
 
-  for (const [tag, children] of Object.entries(childrenMap)) {
-    if (!children) continue;
+  for (const node of children) {
+    const tag = node.tag!;
 
-    for (const node of children) {
-      const currentId = node.$.id;
-      const contextId = CONTEXT_ID_SET.has(currentId) ? currentId : parentId;
+    // defs/mask 等定义类子树原样输出，不做颜色归一化
+    if (RAW_OUTPUT_TAGS.has(tag)) {
+      tpl += serializeRaw(node, tag);
+      continue;
+    }
 
-      const hasChildren = Object.keys(node.children).length > 0;
-      const attrs = buildAttrString(node, isSpecified, parentId);
+    const currentId = node.$.id;
+    const contextId = CONTEXT_ID_SET.has(currentId) ? currentId : parentId;
 
-      if (hasChildren) {
-        tpl += `<${tag}${attrs}>${generateChildrenTemplate(node.children, isSpecified, contextId)}</${tag}>`;
-      } else {
-        tpl += `<${tag}${attrs} />`;
-      }
+    const hasChildren = node.children.length > 0;
+    const attrs = buildAttrString(node, isSpecified, parentId);
+
+    if (hasChildren) {
+      tpl += `<${tag}${attrs}>${generateChildrenTemplate(node.children, isSpecified, contextId)}</${tag}>`;
+    } else {
+      tpl += `<${tag}${attrs} />`;
     }
   }
 

@@ -166,7 +166,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "ℹ️ 无变化，跳过提交"
           else
-            git commit -m "docs(changelog): compose changelog & clear stash for release [skip ci]"
+            git commit -m "docs(changelog): compose changelog & clear stash for release"
             git push origin HEAD:${{ github.head_ref }}
           fi
 

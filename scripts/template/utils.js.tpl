@@ -71,7 +71,7 @@ function setAttr(node, key, value) {
   node.attrs[key] = value;
 }
 
-// 判断颜色字符串是否带alpha<1（rgb()/hex 已在 hex2rgb 阶段归一化，只有 rgba() 需要关心）
+// 判断颜色字符串是否带 alpha<1（rgb()/hex 已在 hex2rgb 阶段归一化，只有 rgba() 需要关心）
 function hasAlpha(color) {
   if (typeof color !== 'string') return false;
   const match = /rgba\(\s*[\d.]+\s*,\s*[\d.]+\s*,\s*[\d.]+\s*,\s*([\d.]+)\s*\)/.exec(color);
@@ -121,7 +121,7 @@ function applyOverlapCutIfNeeded(resolvedSvg, fillColors, strokeColors) {
   const plan = cutMatch[1];
   const colonIdx = plan.indexOf(':');
   const gTypes = plan.slice(0, colonIdx);
-  //全图检测出的重叠类型里，同时命中「本次真的传入了alpha 颜色」才需要现算 mask
+  // 全图检测出的重叠类型里，同时命中「本次真的传入了 alpha 颜色」才需要现算 mask
   const fillEligible = needsFill && gTypes.indexOf('f') !== -1;
   const strokeEligible = needsStroke && gTypes.indexOf('s') !== -1;
   if (!fillEligible && !strokeEligible) return cleaned;

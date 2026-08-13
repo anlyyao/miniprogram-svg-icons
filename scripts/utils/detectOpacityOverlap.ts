@@ -18,7 +18,7 @@ export type { PaintType };
  *
  * 与桌面端（tdesign-icons）不同，小程序图标的颜色是运行时通过 {f1}/{f2}/{s1}
  * 动态注入的，源 SVG 中的 fill/stroke 只是不透明占位色（white/black）。因此
- * 编译期无法用「rgba(0,0,0,0.5) 采样alpha 叠加」判断，只能判断「图层几何是否
+ * 编译期无法用「rgba(0,0,0,0.5) 采样 alpha 叠加」判断，只能判断「图层几何是否
  * 重叠」——一旦用户运行时传入半透明色，这些几何重叠区就会出现透明度叠加变深。
  *
  * 检测原理：把每个候选图层单独用不透明黑重绘、其余隐藏，栅格化后取覆盖掩码
@@ -114,7 +114,7 @@ function collectPaintedElements(layer: SvgElement, paintType: PaintType) {
 }
 
 /**
- * 收集同一父节点下按绘制顺序排列的单一paint 图层。fill 和 stroke 也可能互相
+ * 收集同一父节点下按绘制顺序排列的单一 paint 图层。fill 和 stroke 也可能互相
  * 重叠（例如 support），因此不能按 paint 类型拆开检测。
  */
 function collectOverlapLayerGroups(root: SvgElement): OverlapLayer[][] {
@@ -270,11 +270,4 @@ export function detectOpacityOverlapPaintTypes(svgString: string, cacheKey: stri
 
   detectionCache.set(cacheKey, paintTypes);
   return paintTypes;
-}
-
-export function getOpacityOverlapDetections() {
-  return Array.from(detectionCache.entries())
-    .filter(([, paintTypes]) => paintTypes.length)
-    .map(([cacheKey, paintTypes]) => ({ cacheKey, paintTypes }))
-    .sort((left, right) => left.cacheKey.localeCompare(right.cacheKey));
 }

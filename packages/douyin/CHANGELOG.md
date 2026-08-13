@@ -3,6 +3,12 @@ title: 更新日志
 docClass: timeline
 ---
 
+## 🌈 0.0.4 `2026-08-13`
+
+### 🚀 Features
+
+- 透明度重叠挖除流程从编译期静态 `mask` 注入，改成编译期使用 `data-cut` 标记，运行时处理 @anlyyao ([#51](https://github.com/anlyyao/miniprogram-svg-icons/pull/51))
+
 ## 🌈 0.0.3 `2026-08-10`
 
 ### 🚀 Features

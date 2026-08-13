@@ -52,7 +52,7 @@ Component({
       if (hex[0] !== '#') return hex;
 
       let h = hex.slice(1);
-      // 3/4 位简写补全为6/8 位
+      // 3/4 位简写补全为 6/8 位
       if (h.length === 3 || h.length === 4) h = h.replace(/(.)/g, '$1$1');
 
       if (h.length !== 6 && h.length !== 8) return hex;

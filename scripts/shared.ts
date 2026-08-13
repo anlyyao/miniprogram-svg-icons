@@ -32,6 +32,12 @@ export interface PlatformConfig {
   styleExt: string;
   /** 组件 API 风格：wechat（properties/observers）或 alipay（props/didMount/didUpdate） */
   componentStyle: ComponentAPIStyle;
+  /**
+   * 是否走运行时按需挖除透明度重叠：
+   * - true：build 只存 `data-cut` 挖除计划，组件运行时按需现算 mask（需生成 utils.js）。
+   * - false：build 时静态注入 mask+use。
+   */
+  useRuntimeCut: boolean;
   /** svgDataUri 编码时是否需要额外的 .replace(/"/g, "'") */
   escapeQuotes: boolean;
 }
@@ -43,6 +49,7 @@ export const PLATFORMS: Record<string, PlatformConfig> = {
     templateExt: '.wxml',
     styleExt: '.wxss',
     componentStyle: 'wechat',
+    useRuntimeCut: true,
     escapeQuotes: false,
   },
   alipay: {
@@ -51,6 +58,7 @@ export const PLATFORMS: Record<string, PlatformConfig> = {
     templateExt: '.axml',
     styleExt: '.acss',
     componentStyle: 'alipay',
+    useRuntimeCut: true,
     escapeQuotes: false,
   },
   kuaishou: {
@@ -59,6 +67,7 @@ export const PLATFORMS: Record<string, PlatformConfig> = {
     templateExt: '.ksml',
     styleExt: '.css',
     componentStyle: 'wechat',
+    useRuntimeCut: true,
     escapeQuotes: false,
   },
   xiaohongshu: {
@@ -67,6 +76,7 @@ export const PLATFORMS: Record<string, PlatformConfig> = {
     templateExt: '.xhsml',
     styleExt: '.css',
     componentStyle: 'wechat',
+    useRuntimeCut: true,
     escapeQuotes: false,
   },
   douyin: {
@@ -75,6 +85,7 @@ export const PLATFORMS: Record<string, PlatformConfig> = {
     templateExt: '.ttml',
     styleExt: '.ttss',
     componentStyle: 'wechat',
+    useRuntimeCut: true,
     escapeQuotes: true,
   },
   baidu: {
@@ -83,6 +94,7 @@ export const PLATFORMS: Record<string, PlatformConfig> = {
     templateExt: '.swan',
     styleExt: '.css',
     componentStyle: 'wechat',
+    useRuntimeCut: true,
     escapeQuotes: true,
   },
   jd: {
@@ -91,6 +103,7 @@ export const PLATFORMS: Record<string, PlatformConfig> = {
     templateExt: '.jxml',
     styleExt: '.jxss',
     componentStyle: 'wechat',
+    useRuntimeCut: true,
     escapeQuotes: false,
   },
 };
@@ -182,9 +195,8 @@ export interface SvgEntry {
  * 从 SVG 目录加载并解析所有图标
  * 流程：读取 SVG -> SVGO 预压缩 -> 合并相邻同款纯描边路径 -> 检测/处理透明度重叠 -> 生成模板
  *
- * 检测与模板生成必须读同一份「已合并」内容，避免检测端与产物端结构不一致。
- * 透明度重叠处理按平台区分：微信走运行时按需挖除（`opacityOverlapPlan.ts` + `wechat.js.tpl`），
- * 其他平台沿用 build 时静态注入 mask（`opacityOverlap.ts`）。
+ * 检测与模板生成读同一份「已合并」内容，避免检测端与产物端结构不一致。
+ * 透明度重叠按 useRuntimeCut 区分：true 时存 `data-cut` 计划、运行时挖除；false 时 build 静态注入 mask。
  */
 export function loadSvgs(svgDir: string, platformId?: string): SvgEntry[] {
   if (!fs.existsSync(svgDir)) {
@@ -195,7 +207,8 @@ export function loadSvgs(svgDir: string, platformId?: string): SvgEntry[] {
 
   // 用目录名作为 brand 前缀，保证跨品牌同名图标的检测缓存 key 唯一
   const brandKey = path.basename(svgDir);
-  const useRuntimeCut = platformId === 'wechat';
+  // 找不到平台配置时保守回退到 build 时静态注入
+  const useRuntimeCut = Boolean(platformId && PLATFORMS[platformId]?.useRuntimeCut);
 
   const icons: SvgEntry[] = [];
   for (const file of svgFiles) {
@@ -255,7 +268,7 @@ export interface PlatformTemplates {
   iconJsonTemplate: string;
   iconTemplateContent: string;
   iconJSSource: string;
-  /** 运行时按需挖除等工具函数模块源码；componentStyle 为 'wechat' 风格的平台才需要（index.js 会 require('./utils')） */
+  /** 运行时按需挖除等工具函数模块源码；useRuntimeCut 为 true 的平台才需要（index.js 会 require('./utils')） */
   iconUtilsJSSource: string | null;
 }
 
@@ -273,8 +286,8 @@ export function generatePlatformTemplates(platform: PlatformConfig): PlatformTem
     iconJsonTemplate: readTemplate('icon.json.tpl'),
     iconTemplateContent: readTemplate('icon.tpl'),
     iconJSSource: readTemplate(jsTplFile).replace(/\{\{EXTRA_REPLACE\}\}/g, extraReplace),
-    // wechat.js.tpl 内部会 require('./utils')，需同步生成 utils.js；alipay.js.tpl 不依赖它
-    iconUtilsJSSource: platform.componentStyle === 'alipay' ? null : readTemplate('utils.js.tpl'),
+    // 走运行时挖除的平台，其 *.js.tpl 内部会 require('./utils')，需同步生成 utils.js
+    iconUtilsJSSource: platform.useRuntimeCut ? readTemplate('utils.js.tpl') : null,
   };
 }
 

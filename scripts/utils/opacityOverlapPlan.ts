@@ -5,20 +5,11 @@ import { PaintType, SvgElement, getElementChildren, getTagName, getPaintTypes } 
  * 透明度重叠——运行时按需挖除方案
  *
  * 与 `opacityOverlap.ts`（build 时静态注入 mask+use）不同，这里 build 时只产出一份
- * 极小的「挖除计划」，以 `data-cut` 属性挂在 `<svg>` 根节点上，不注入任何 `<mask>`/
- * `<defs>`；真正的 mask 构建推迟到运行时，仅当用户颜色确实带 alpha 时才现算现用。
+ * 极小的「挖除计划」，以 `data-cut` 属性挂在 `<svg>` 根节点上；真正的 mask 构建推迟到
+ * 运行时，仅当用户颜色确实带 alpha 时才现算现用。
  *
  * 计划基于「已完成颜色模板替换」的最终 SVG 字符串计算，确保下标与运行时
- * （`utils.js.tpl`）解析到的兄弟结构一一对应。
- *
- * 格式：`gTypes:group(;group)*`，`group := path#types`。
- * - `gTypes`：整体检测出重叠的 paint 类型，`f`/`s`/`fs` 之一。
- * - `path`：从根 `<svg>` 到该兄弟组容器的子节点下标链（`.` 连接，根组为空串）。
- * - `types`：容器每个直接子节点对应一个字符，`f`/`s` 表示单一fill/stroke 图层，
- *   `.` 为占位（保持下标对齐，结尾多余的 `.` 会被裁掉）。
- *
- * 挖除规则由 `types` 推导：命中 `gTypes` 的位置需挖掉其后所有单一 paint 兄弟覆盖的
- * 区域，不需要显式存储「谁挖谁」。
+ * （`utils.js.tpl`）解析到的兄弟结构一一对应。data-cut 格式说明见 `utils.js.tpl` 头部。
  */
 
 const CONTAINER_SKIP_TAGS = new Set(['defs', 'mask', 'clippath', 'symbol']);

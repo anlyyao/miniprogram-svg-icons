@@ -1,4 +1,5 @@
 const iconsMap = require("./icons");
+const { applyOverlapCutIfNeeded } = require("./utils");
 
 Component({
   props: {
@@ -56,8 +57,6 @@ Component({
 
     // 归一化颜色为 SVG 可识别的形式，并保留透明度（alpha）。
     // 支持 #rgb / #rgba / #rrggbb / #rrggbbaa / rgb() / rgba() 及颜色关键字。
-    // 编译期已对重叠图层注入 mask，使各层互不叠加，因此这里直接把 alpha 保留在
-    // 各自颜色里即可正确渲染，重叠区不会出现透明度累加变深。
     hex2rgb(hex) {
       if (typeof hex !== 'string') return hex;
       if (hex[0] !== '#') return hex;
@@ -80,10 +79,13 @@ Component({
       if (!svgContent) return '';
       const fill = [].concat(fillColors || []);
       const stroke = [].concat(strokeColors || []);
-      return svgContent
+      const resolved = svgContent
         .replace(/\{f(\d+)\s*\|\|\s*'([^']+)'\}/g, (_, i, d) => fill[i - 1] || d)
         .replace(/\{s(\d+)\s*\|\|\s*'([^']+)'\}/g, (_, i, d) => stroke[i - 1] || d)
         .replace(/\{sw\}/g, strokeWidth);
+
+      // 只有存在 data-cut 挖除计划且用户传入颜色确实带 alpha 时才现算注入 mask
+      return applyOverlapCutIfNeeded(resolved, fill, stroke);
     },
   },
 });

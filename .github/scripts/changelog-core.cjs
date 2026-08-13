@@ -269,6 +269,15 @@ function readVersionNotes(root, pkg, version) {
   return null;
 }
 
+function readVersionDate(root, pkg, version) {
+  const file = path.join(resolveRoot(root), PACKAGES_DIR, pkg.dir, 'CHANGELOG.md');
+  if (!fs.existsSync(file)) return null;
+  const raw = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
+  const head = new RegExp(`^##\\s+🌈\\s+${escapeRegExp(version)}\\s+\`([^\`]+)\``, 'm');
+  const matched = head.exec(raw);
+  return matched ? matched[1].trim() : null;
+}
+
 /** 将某个版本的变更写入 packages/<pkg>/CHANGELOG.md。同名版本会覆盖而非重复追加。 */
 function updateChangelogFile(root, pkg, version, notes) {
   const file = path.join(resolveRoot(root), PACKAGES_DIR, pkg.dir, 'CHANGELOG.md');
@@ -351,6 +360,7 @@ module.exports = {
   listPackages,
   parsePullRequestBody,
   readStash,
+  readVersionDate,
   readVersionNotes,
   renderSections,
   resolveRoot,

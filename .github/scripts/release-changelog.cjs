@@ -84,6 +84,7 @@ function applyRelease({ root, published = [] } = {}) {
 
     // 优先从已合成的 CHANGELOG.md 回读；兜底：仍有残留暂存则据其渲染
     let notes = core0.readVersionNotes(root, pkg, info.version);
+    const date = core0.readVersionDate(root, pkg, info.version) || core0.today();
     if (!notes) {
       const entries = core0.readStash(root, pkg.dir);
       notes = entries.length
@@ -99,6 +100,7 @@ function applyRelease({ root, published = [] } = {}) {
       name: pkg.name,
       dir: pkg.dir,
       version: info.version,
+      date,
       notes,
       file: `${core0.PACKAGES_DIR}/${pkg.dir}/CHANGELOG.md`,
       prerelease: info.version.includes('-'),
@@ -109,19 +111,19 @@ function applyRelease({ root, published = [] } = {}) {
 }
 
 /** 创建或更新 GitHub Release */
-async function createReleases({ github, context, core, releases = [], prNumber }) {
+async function createReleases({ github, context, core, releases = [] }) {
   const { owner, repo } = context.repo;
   const created = [];
 
   for (const item of releases) {
+    const changelogUrl = `https://github.com/${owner}/${repo}/commits/${item.tag}`;
     const body = [
-      item.notes,
-      '',
-      prNumber ? `> 发布自 #${prNumber}` : '',
-      `> npm: https://www.npmjs.com/package/${item.name}/v/${item.version}`,
+      `## 🌈 ${item.version} \`${item.date}\``,
+      String(item.notes || '').trim(),
+      `**Full Changelog**: ${changelogUrl}`,
     ]
-      .filter(Boolean)
-      .join('\n');
+      .filter((seg) => seg && seg.length)
+      .join('\n\n');
 
     const payload = {
       owner,

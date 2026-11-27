@@ -1,5 +1,5 @@
 // 自动生成的图标清单文件，请勿手动修改
-// Generated at: 2026-04-09T18:34:45.191Z
+// Generated at: 2026-11-27T12:31:38.940Z
 
 export interface BrandManifest {
   brand: string;
@@ -16,7 +16,7 @@ export const manifest: IconManifest = {
   outline: [
     {
       brand: 'tdesign',
-      count: 1330,
+      count: 1338,
       icons: [
         'ability-open',
         'abstract',
@@ -271,6 +271,7 @@ export const manifest: IconManifest = {
         'chat-poll',
         'chat-setting',
         'check',
+        'check-1',
         'check-circle',
         'check-double',
         'check-rectangle',
@@ -431,6 +432,7 @@ export const manifest: IconManifest = {
         'discount-list',
         'dissatisfaction',
         'divide',
+        'divider-1',
         'dividers',
         'dividers-1',
         'document-location',
@@ -699,6 +701,7 @@ export const manifest: IconManifest = {
         'jump-off',
         'key',
         'keyboard',
+        'keyboard-1',
         'korean-rectangle',
         'laptop',
         'layers',
@@ -1020,6 +1023,7 @@ export const manifest: IconManifest = {
         'relativity',
         'remote-wave',
         'remove',
+        'remove-1',
         'rename',
         'replay',
         'rice',
@@ -1058,6 +1062,7 @@ export const manifest: IconManifest = {
         'search-error',
         'secured',
         'send',
+        'send-1',
         'send-cancel',
         'sensors',
         'sensors-1',
@@ -1112,6 +1117,7 @@ export const manifest: IconManifest = {
         'speechless',
         'speechless-1',
         'star',
+        'star-1',
         'statue-of-jesus',
         'sticky-note',
         'stop',
@@ -1163,6 +1169,7 @@ export const manifest: IconManifest = {
         'table-2',
         'table-add',
         'table-split',
+        'tablet',
         'tag',
         'tag-state',
         'tangerinr',
@@ -1322,6 +1329,7 @@ export const manifest: IconManifest = {
         'view-module',
         'view-organization',
         'visual-recognition',
+        'voice-wave',
         'wallet',
         'watch',
         'watermelon',
@@ -1354,7 +1362,7 @@ export const manifest: IconManifest = {
   filled: [
     {
       brand: 'tdesign',
-      count: 1017,
+      count: 1020,
       icons: [
         'abstract-filled',
         'accessibility-filled',
@@ -2138,6 +2146,7 @@ export const manifest: IconManifest = {
         'search-error-filled',
         'search-filled',
         'secured-filled',
+        'send-1-filled',
         'send-cancel-filled',
         'send-filled',
         'sequence-filled',
@@ -2180,6 +2189,7 @@ export const manifest: IconManifest = {
         'sound-up-filled',
         'speechless-1-filled',
         'speechless-filled',
+        'star-1-filled',
         'star-filled',
         'statue-of-jesus-filled',
         'sticky-note-filled',
@@ -2222,6 +2232,7 @@ export const manifest: IconManifest = {
         'table-add-filled',
         'table-filled',
         'table-split-filled',
+        'tablet-filled',
         'tag-filled',
         'tag-state-filled',
         'tangerinr-filled',
@@ -2378,6 +2389,6 @@ export const manifest: IconManifest = {
   ],
 };
 
-export const outlineCount = 1330;
-export const filledCount = 1017;
-export const totalCount = 2347;
+export const outlineCount = 1338;
+export const filledCount = 1020;
+export const totalCount = 2358;

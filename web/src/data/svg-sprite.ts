@@ -1,5 +1,5 @@
 // 自动生成的 SVG Sprite 文件，请勿手动修改
-// Generated at: 2026-04-09T18:34:45.192Z
+// Generated at: 2026-11-27T12:31:38.943Z
 
 export const outlineSvgSprite = `<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;visibility:hidden">
 <symbol id="icon-tdesign-ability-open" viewBox="0 0 24 24" fill="none">
@@ -1846,9 +1846,12 @@ export const outlineSvgSprite = `<svg xmlns="http://www.w3.org/2000/svg" style="
 </symbol>
 <symbol id="icon-tdesign-chat" viewBox="0 0 24 24" fill="none">
 <g id="chat" xmlns="http://www.w3.org/2000/svg">
-<path id="fill1" d="M2.5 3H21.5V17H6.5L2.5 20.5V3Z" fill="var(--svg-fill-color-1, transparent)"/>
-<path id="stroke1" d="M2.5 3H21.5V17H6.5L2.5 20.5V3Z" stroke="var(--svg-stroke-color-1, currentColor)" stroke-width="var(--svg-stroke-width, 2)" stroke-linecap="square"/>
+<path id="fill1" d="M2.5 4H21.5V19H6.5L2.5 22V4Z" fill="var(--svg-fill-color-1, transparent)"/>
+<path id="stroke1" d="M2.5 4H21.5V19H6.5L2.5 22V4Z" stroke="var(--svg-stroke-color-1, currentColor)" stroke-width="var(--svg-stroke-width, 2)" stroke-linecap="square"/>
 </g>
+</symbol>
+<symbol id="icon-tdesign-check-1" viewBox="0 0 24 24" fill="none">
+    <path d="M21.6157 7.91232L11.3862 18.1418C11.0581 18.4699 10.6129 18.6544 10.1489 18.6545C9.6848 18.6545 9.23883 18.47 8.91064 18.1418L2.67529 11.9065L5.1499 9.43185L10.1479 14.4289L19.1411 5.43771L21.6157 7.91232Z" fill="var(--svg-stroke-color-1, currentColor)" xmlns="http://www.w3.org/2000/svg"/>
 </symbol>
 <symbol id="icon-tdesign-check-circle" viewBox="0 0 24 24" fill="none">
 <g id="check-circle" xmlns="http://www.w3.org/2000/svg">
@@ -3051,6 +3054,12 @@ export const outlineSvgSprite = `<svg xmlns="http://www.w3.org/2000/svg" style="
 <symbol id="icon-tdesign-divide" viewBox="0 0 24 24" fill="none">
 <g id="divide" xmlns="http://www.w3.org/2000/svg">
 <path id="stroke1" d="M16.5 12H7.5M12.0039 16.0039H12V16H12.0039V16.0039ZM12.0039 8.00391L12 8.00391V8L12.0039 8V8.00391Z" stroke="var(--svg-stroke-color-1, currentColor)" stroke-width="var(--svg-stroke-width, 2)" stroke-linecap="square"/>
+</g>
+</symbol>
+<symbol id="icon-tdesign-divider-1" viewBox="0 0 24 24" fill="none">
+<g id="divider-1" xmlns="http://www.w3.org/2000/svg">
+<path id="stroke1" d="M3 12H21" stroke="var(--svg-stroke-color-1, currentColor)" stroke-width="var(--svg-stroke-width, 2)" stroke-linecap="square"/>
+<path id="stroke2" d="M3 19H6M10.5 19H13.4966M18 19H21M3 5H6M10.5 5H13.4966M18 5H21" stroke="var(--svg-stroke-color-2, currentColor)" stroke-width="var(--svg-stroke-width, 2)" stroke-linecap="square"/>
 </g>
 </symbol>
 <symbol id="icon-tdesign-dividers-1" viewBox="0 0 24 24" fill="none">
@@ -4976,6 +4985,19 @@ export const outlineSvgSprite = `<svg xmlns="http://www.w3.org/2000/svg" style="
 <g id="key" xmlns="http://www.w3.org/2000/svg">
 <path id="fill1" d="M11.5355 15.5355C9.58291 17.4882 6.41709 17.4882 4.46447 15.5355C2.51184 13.5829 2.51184 10.4171 4.46447 8.46447C6.41709 6.51184 9.58291 6.51184 11.5355 8.46447C13.4882 10.4171 13.4882 13.5829 11.5355 15.5355Z" fill="var(--svg-fill-color-1, transparent)"/>
 <path id="stroke1" d="M14 12H21M16.5 14.9985V12M19.5 14V12M11.5355 15.5355C9.58291 17.4882 6.41709 17.4882 4.46447 15.5355C2.51184 13.5829 2.51184 10.4171 4.46447 8.46447C6.41709 6.51184 9.58291 6.51184 11.5355 8.46447C13.4882 10.4171 13.4882 13.5829 11.5355 15.5355Z" stroke="var(--svg-stroke-color-1, currentColor)" stroke-width="var(--svg-stroke-width, 2)" stroke-linecap="square"/>
+</g>
+</symbol>
+<symbol id="icon-tdesign-keyboard-1" viewBox="0 0 24 24" fill="none">
+<g id="keyboard-1" xmlns="http://www.w3.org/2000/svg">
+<g id="stroke1">
+<path d="M4.9996 5C5.55206 5 5.99985 5.44782 6 5.9996C6 6.55185 5.55183 7 4.9996 7C4.44786 6.99992 4 6.55222 4 5.9996C4.00015 5.44745 4.44763 5.00008 4.9996 5Z" stroke="var(--svg-stroke-color-1, currentColor)" stroke-width="var(--svg-stroke-width, 2)" stroke-linecap="square" id="stroke1"/>
+<path d="M4.9996 11C5.55206 11 5.99985 11.4478 6 11.9996C6 12.5519 5.55183 13 4.9996 13C4.44786 12.9999 4 12.5522 4 11.9996C4.00015 11.4475 4.44763 11.0001 4.9996 11Z" stroke="var(--svg-stroke-color-1, currentColor)" stroke-width="var(--svg-stroke-width, 2)" stroke-linecap="square" id="stroke1"/>
+<path d="M11.9996 5C12.5521 5 12.9998 5.44782 13 5.9996C13 6.55185 12.5518 7 11.9996 7C11.4479 6.99992 11 6.55222 11 5.9996C11.0002 5.44745 11.4476 5.00008 11.9996 5Z" stroke="var(--svg-stroke-color-1, currentColor)" stroke-width="var(--svg-stroke-width, 2)" stroke-linecap="square" id="stroke1"/>
+<path d="M11.9996 11C12.5521 11 12.9998 11.4478 13 11.9996C13 12.5519 12.5518 13 11.9996 13C11.4479 12.9999 11 12.5522 11 11.9996C11.0002 11.4475 11.4476 11.0001 11.9996 11Z" stroke="var(--svg-stroke-color-1, currentColor)" stroke-width="var(--svg-stroke-width, 2)" stroke-linecap="square" id="stroke1"/>
+<path d="M18.9996 5C19.5521 5 19.9998 5.44782 20 5.9996C20 6.55185 19.5518 7 18.9996 7C18.4479 6.99992 18 6.55222 18 5.9996C18.0002 5.44745 18.4476 5.00008 18.9996 5Z" stroke="var(--svg-stroke-color-1, currentColor)" stroke-width="var(--svg-stroke-width, 2)" stroke-linecap="square" id="stroke1"/>
+<path d="M18.9996 11C19.5521 11 19.9998 11.4478 20 11.9996C20 12.5519 19.5518 13 18.9996 13C18.4479 12.9999 18 12.5522 18 11.9996C18.0002 11.4475 18.4476 11.0001 18.9996 11Z" stroke="var(--svg-stroke-color-1, currentColor)" stroke-width="var(--svg-stroke-width, 2)" stroke-linecap="square" id="stroke1"/>
+</g>
+<path id="stroke2" d="M6 19H18" stroke="var(--svg-stroke-color-2, currentColor)" stroke-width="var(--svg-stroke-width, 2)" stroke-linecap="square"/>
 </g>
 </symbol>
 <symbol id="icon-tdesign-keyboard" viewBox="0 0 24 24" fill="none">
@@ -7285,6 +7307,9 @@ export const outlineSvgSprite = `<svg xmlns="http://www.w3.org/2000/svg" style="
         <path id="stroke2" d="M2.73633 7.07193C4.69159 4.02153 8.11167 2 12.0039 2C15.8961 2 19.3162 4.02153 21.2715 7.07193M6.9375 8.75479C8.00401 7.09093 9.8695 5.98828 11.9925 5.98828C14.1156 5.98828 15.9811 7.09093 17.0476 8.75479" stroke="var(--svg-stroke-color-2, currentColor)" stroke-width="var(--svg-stroke-width, 2)" stroke-linecap="square"/>
     </g>
 </symbol>
+<symbol id="icon-tdesign-remove-1" viewBox="0 0 24 24" fill="none">
+    <path d="M20.75 10.25V13.75H3.25V10.25H20.75Z" fill="var(--svg-stroke-color-1, currentColor)" xmlns="http://www.w3.org/2000/svg"/>
+</symbol>
 <symbol id="icon-tdesign-remove" viewBox="0 0 24 24" fill="none">
 <g id="remove" xmlns="http://www.w3.org/2000/svg">
 <path id="stroke1" d="M19 12L5 12" stroke="var(--svg-stroke-color-1, currentColor)" stroke-width="var(--svg-stroke-width, 2)" stroke-linecap="square"/>
@@ -7561,6 +7586,12 @@ export const outlineSvgSprite = `<svg xmlns="http://www.w3.org/2000/svg" style="
 <path id="fill1" fill-rule="evenodd" clip-rule="evenodd" d="M3 4.65V12C3 19.35 12 22.5 12 22.5C12 22.5 21 19.35 21 12V4.65L12 1.5L3 4.65Z" fill="var(--svg-fill-color-1, transparent)"/>
 <path id="stroke1" fill-rule="evenodd" clip-rule="evenodd" d="M3 4.65V12C3 19.35 12 22.5 12 22.5C12 22.5 21 19.35 21 12V4.65L12 1.5L3 4.65Z" stroke="var(--svg-stroke-color-1, currentColor)" stroke-width="var(--svg-stroke-width, 2)" stroke-linecap="square"/>
 <path id="stroke2" d="M8.17285 11.1716L11.0013 14L16.6581 8.34314" stroke="var(--svg-stroke-color-2, currentColor)" stroke-width="var(--svg-stroke-width, 2)" stroke-linecap="square"/>
+</g>
+</symbol>
+<symbol id="icon-tdesign-send-1" viewBox="0 0 24 24" fill="none">
+<g id="send-1" xmlns="http://www.w3.org/2000/svg">
+<path id="fill1" d="M2.52002 10.1116L20.52 3.47998L13.8884 21.48L10.1073 13.8927L2.52002 10.1116Z" fill="var(--svg-fill-color-1, transparent)"/>
+<path id="stroke1" d="M10.1073 13.8927L13.8884 21.48L20.52 3.47998L2.52002 10.1116L10.1073 13.8927ZM10.1073 13.8927L12.5821 11.4179" stroke="var(--svg-stroke-color-1, currentColor)" stroke-width="var(--svg-stroke-width, 2)" stroke-linecap="square"/>
 </g>
 </symbol>
 <symbol id="icon-tdesign-send-cancel" viewBox="0 0 24 24" fill="none">
@@ -7965,6 +7996,12 @@ export const outlineSvgSprite = `<svg xmlns="http://www.w3.org/2000/svg" style="
 <path id="fill1" d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" fill="var(--svg-fill-color-1, transparent)"/>
 <path id="stroke1" d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="var(--svg-stroke-color-1, currentColor)" stroke-width="var(--svg-stroke-width, 2)" stroke-linecap="square"/>
 <path id="stroke2" d="M17 10H15M9 10H7M14 15H10" stroke="var(--svg-stroke-color-2, currentColor)" stroke-width="var(--svg-stroke-width, 2)" stroke-linecap="square"/>
+</g>
+</symbol>
+<symbol id="icon-tdesign-star-1" viewBox="0 0 24 24" fill="none">
+<g id="star-1" xmlns="http://www.w3.org/2000/svg">
+<path id="fill1" d="M12 3L15.2292 8.52274L21.5 9.87539L17.225 14.6413L17.8713 21L12 18.4227L6.12868 21L6.775 14.6413L2.5 9.87539L8.77077 8.52274L12 3Z" fill="var(--svg-fill-color-1, transparent)"/>
+<path id="stroke1" d="M12 3L15.2292 8.52274L21.5 9.87539L17.225 14.6413L17.8713 21L12 18.4227L6.12868 21L6.775 14.6413L2.5 9.87539L8.77077 8.52274L12 3Z" stroke="var(--svg-stroke-color-1, currentColor)" stroke-width="var(--svg-stroke-width, 2)" stroke-linecap="square"/>
 </g>
 </symbol>
 <symbol id="icon-tdesign-star" viewBox="0 0 24 24" fill="none">
@@ -8384,6 +8421,15 @@ export const outlineSvgSprite = `<svg xmlns="http://www.w3.org/2000/svg" style="
 <path id="stroke1" d="M3 21H9M3 21H21M3 21V7M9 21H15M9 21V14M15 21H21M15 21V14M21 21V7M21 7H15M21 7V3H3V7M21 7H3M15 7H9M15 7V14M9 7H3M9 7V14M3 14H9M9 14H15M15 14H21" stroke="var(--svg-stroke-color-1, currentColor)" stroke-width="var(--svg-stroke-width, 2)" stroke-linecap="square"/>
 </g>
 </symbol>
+<symbol id="icon-tdesign-tablet" viewBox="0 0 24 24" fill="none">
+<g id="tablet" xmlns="http://www.w3.org/2000/svg">
+<g id="fill1">
+<path d="M4 2H20V22H4V2Z" fill="var(--svg-fill-color-1, transparent)" id="fill1"/>
+</g>
+<path id="stroke1" d="M4 2H20V22H4V2Z" stroke="var(--svg-stroke-color-1, currentColor)" stroke-width="var(--svg-stroke-width, 2)" stroke-linecap="square"/>
+<path id="stroke2" d="M14 6H10M12 18H12.0039V18.0039H12V18Z" stroke="var(--svg-stroke-color-2, currentColor)" stroke-width="var(--svg-stroke-width, 2)" stroke-linecap="square"/>
+</g>
+</symbol>
 <symbol id="icon-tdesign-tag-state" viewBox="0 0 24 24" fill="none">
 <g id="tag-state" xmlns="http://www.w3.org/2000/svg">
 <path id="fill1" d="M23 4L1 4L1 20L23 20L23 4Z" fill="var(--svg-fill-color-1, transparent)"/>
@@ -8678,9 +8724,9 @@ export const outlineSvgSprite = `<svg xmlns="http://www.w3.org/2000/svg" style="
 </symbol>
 <symbol id="icon-tdesign-thumb-up-2" viewBox="0 0 24 24" fill="none">
 <g id="thumb-up-2" xmlns="http://www.w3.org/2000/svg">
-<path id="fill1" d="M7.5 11.1L11.1 3L11.9538 3.28461C13.0563 3.65211 13.8 4.68389 13.8 5.84605V9.3H18.6688C19.8945 9.3 20.8319 10.3926 20.6455 11.6041L19.4609 19.3041C19.3108 20.2798 18.4713 21 17.4842 21H7.5V11.1Z" fill="var(--svg-fill-color-1, transparent)"/>
+<path id="fill1" d="M7.5 11.1L11.1 2.5L12.0279 2.78461C13.2262 3.15211 14.0344 4.18389 14.0344 5.34605V9.30002H19.3259C20.6581 9.30002 21.6768 10.3926 21.4743 11.6041L20.1868 19.3041C20.0237 20.2798 19.1113 21 18.0384 21H7.5V11.1Z" fill="var(--svg-fill-color-1, transparent)"/>
 <path id="fill2" d="M7.5 11.0996V20.9996H3V11.0996H7.5Z" fill="var(--svg-fill-color-2, transparent)"/>
-<path id="stroke1" d="M7.5 11.1V21M7.5 11.1L11.1 3L11.9538 3.28461C13.0563 3.65211 13.8 4.68389 13.8 5.84605V9.3H18.6688C19.8945 9.3 20.8319 10.3926 20.6455 11.6041L19.4609 19.3041C19.3108 20.2798 18.4713 21 17.4842 21H7.5M7.5 11.1H3V21H7.5" stroke="var(--svg-stroke-color-1, currentColor)" stroke-width="var(--svg-stroke-width, 2)" stroke-linecap="square"/>
+<path id="stroke1" d="M7.5 11.1V21M7.5 11.1L11.1 2.5L12.0279 2.78461C13.2262 3.15211 14.0344 4.18389 14.0344 5.34605V9.30002H19.3259C20.6581 9.30002 21.6768 10.3926 21.4743 11.6041L20.1868 19.3041C20.0237 20.2798 19.1113 21 18.0384 21H7.5M7.5 11.1H3V21H7.5" stroke="var(--svg-stroke-color-1, currentColor)" stroke-width="var(--svg-stroke-width, 2)" stroke-linecap="square"/>
 </g>
 </symbol>
 <symbol id="icon-tdesign-thumb-up" viewBox="0 0 24 24" fill="none">
@@ -9104,7 +9150,7 @@ export const outlineSvgSprite = `<svg xmlns="http://www.w3.org/2000/svg" style="
 <symbol id="icon-tdesign-usb" viewBox="0 0 24 24" fill="none">
     <g id="usb" xmlns="http://www.w3.org/2000/svg">
         <path id="fill1" d="M3 12H21V21H3V12Z" fill="var(--svg-fill-color-1, transparent)"/>
-        <path id="fill1_2" d="M5 3H19V12H5V3Z" fill="var(--svg-fill-color-1, transparent)"/>
+        <path id="fill2" d="M5 3H19V12H5V3Z" fill="var(--svg-fill-color-2, transparent)"/>
         <g id="stroke1">
             <path d="M3 12H21V21H3V12Z" stroke="var(--svg-stroke-color-1, currentColor)" stroke-width="var(--svg-stroke-width, 2)" id="stroke1"/>
             <path d="M19 12H5V3H19V12Z" stroke="var(--svg-stroke-color-1, currentColor)" stroke-width="var(--svg-stroke-width, 2)" id="stroke1"/>
@@ -9616,6 +9662,11 @@ export const outlineSvgSprite = `<svg xmlns="http://www.w3.org/2000/svg" style="
         <path id="stroke1" d="M21 11V3H3V21H16M12.5 13.5L9 10L3.5 15.5M17.75 8.25C17.75 9.35457 16.8546 10.25 15.75 10.25C14.6454 10.25 13.75 9.35457 13.75 8.25C13.75 7.14543 14.6454 6.25 15.75 6.25C16.8546 6.25 17.75 7.14543 17.75 8.25Z" stroke="var(--svg-stroke-color-1, currentColor)" stroke-width="var(--svg-stroke-width, 2)" stroke-linecap="square"/>
         <path id="stroke2" d="M20 15V22M20 15H17M20 15H23" stroke="var(--svg-stroke-color-2, currentColor)" stroke-width="var(--svg-stroke-width, 2)" stroke-linecap="square"/>
     </g>
+</symbol>
+<symbol id="icon-tdesign-voice-wave" viewBox="0 0 24 24" fill="none">
+<g id="voice-wave" xmlns="http://www.w3.org/2000/svg">
+<path id="stroke1" d="M15.5 3.5293C17.6629 5.69969 19 8.69362 19 11.9998C19 15.306 17.6629 18.3 15.5 20.4704M11 7.52759C12.2275 8.62623 13 10.2228 13 11.9998C13 13.7768 12.2275 15.3734 11 16.472M5.9996 10.9998C6.55206 10.9998 6.99985 11.4476 7 11.9994C7 12.5516 6.55183 12.9998 5.9996 12.9998C5.44786 12.9997 5 12.552 5 11.9994C5.00015 11.4472 5.44763 10.9998 5.9996 10.9998Z" stroke="var(--svg-stroke-color-1, currentColor)" stroke-width="var(--svg-stroke-width, 2)" stroke-linecap="square"/>
+</g>
 </symbol>
 <symbol id="icon-tdesign-wallet" viewBox="0 0 24 24" fill="none">
 <g id="wallet" xmlns="http://www.w3.org/2000/svg">
@@ -10490,7 +10541,9 @@ export const filledSvgSprite = `<svg xmlns="http://www.w3.org/2000/svg" style="p
     <path d="M22.5 2V18H6.87574L1.5 22.7038V2H22.5ZM13 11V6H11V11H13ZM13.0039 12H11V14.0039H13.0039V12Z" fill="var(--svg-fill-color-1, currentColor)" xmlns="http://www.w3.org/2000/svg"/>
 </symbol>
 <symbol id="icon-tdesign-chat-filled" viewBox="0 0 24 24">
-    <path d="M1.5 2H22.5V18H6.87574L1.5 22.7038V2Z" fill="var(--svg-fill-color-1, currentColor)" xmlns="http://www.w3.org/2000/svg"/>
+
+<path d="M22.5 3V20H6.83301L1.5 24V3H22.5Z" fill="var(--svg-fill-color-1, currentColor)" xmlns="http://www.w3.org/2000/svg"/>
+
 </symbol>
 <symbol id="icon-tdesign-chat-heart-filled" viewBox="0 0 24 24">
     <path d="M22.5 2H1.5V22.7038L6.87574 18H22.5V2ZM8.28788 6.55546C9.30471 5.53862 10.9197 5.48455 12.0002 6.39325C13.0806 5.48455 14.6957 5.53862 15.7125 6.55546C16.7864 7.6294 16.7864 9.3706 15.7125 10.4445L12.0002 14.1569L8.28788 10.4445C7.21394 9.3706 7.21394 7.6294 8.28788 6.55546Z" fill="var(--svg-fill-color-1, currentColor)" xmlns="http://www.w3.org/2000/svg"/>
@@ -12730,6 +12783,11 @@ export const filledSvgSprite = `<svg xmlns="http://www.w3.org/2000/svg" style="p
 <symbol id="icon-tdesign-secured-filled" viewBox="0 0 24 24">
     <path d="M22 3.94055L12 0.440552L2 3.94055V12C2 16.1271 4.53351 19.0117 6.89576 20.8031C8.08675 21.7063 9.27184 22.3623 10.1566 22.7924C10.6002 23.008 10.9717 23.1685 11.2352 23.2761C11.3671 23.33 11.4722 23.3707 11.546 23.3985C11.6592 23.4412 11.7735 23.4808 11.8878 23.5205C11.9252 23.5335 11.9626 23.5464 12 23.5595C12.0379 23.5463 12.0757 23.5331 12.1136 23.52C12.2275 23.4805 12.3413 23.441 12.454 23.3985C12.5278 23.3707 12.6329 23.33 12.7648 23.2761C13.0283 23.1685 13.3998 23.008 13.8434 22.7924C14.7282 22.3623 15.9133 21.7063 17.1042 20.8031C19.4665 19.0117 22 16.1271 22 12V3.94055ZM11.0014 15.4142L6.75879 11.1716L8.173 9.75738L11.0014 12.5858L16.6583 6.92896L18.0725 8.34317L11.0014 15.4142Z" fill="var(--svg-fill-color-1, currentColor)" xmlns="http://www.w3.org/2000/svg"/>
 </symbol>
+<symbol id="icon-tdesign-send-1-filled" viewBox="0 0 24 24">
+
+<path d="M14.0244 23.9961L9.8291 15.5801L13.9951 11.415L12.5801 10.001L8.41504 14.165L0 9.97168L22.2061 1.79004L14.0244 23.9961Z" fill="var(--svg-fill-color-1, currentColor)" xmlns="http://www.w3.org/2000/svg"/>
+
+</symbol>
 <symbol id="icon-tdesign-send-cancel-filled" viewBox="0 0 24 24">
     <path d="M24.0029 12.0001L0.291992 1.66455L3.58686 11H11.0005V13H3.5869L0.291992 22.3356L12.8617 16.8565C13.7475 14.3198 16.1612 12.5 19 12.5C19.9274 12.5 20.8094 12.6942 21.6076 13.0442L24.0029 12.0001Z" fill="var(--svg-fill-color-1, currentColor)" xmlns="http://www.w3.org/2000/svg"/>
     <path d="M21.8308 14.7573L19.0024 17.5858L16.174 14.7573L14.7598 16.1715L17.5882 19L14.7598 21.8284L16.174 23.2426L19.0024 20.4142L21.8308 23.2426L23.245 21.8284L20.4166 19L23.245 16.1715L21.8308 14.7573Z" fill="var(--svg-fill-color-1, currentColor)" xmlns="http://www.w3.org/2000/svg"/>
@@ -12893,6 +12951,11 @@ export const filledSvgSprite = `<svg xmlns="http://www.w3.org/2000/svg" style="p
 <symbol id="icon-tdesign-speechless-filled" viewBox="0 0 24 24">
     <path d="M12 23C5.92487 23 1 18.0751 1 12C1 5.92487 5.92487 1 12 1C18.0751 1 23 5.92487 23 12C23 18.0751 18.0751 23 12 23ZM10 9H6V11H10V9ZM18 9H14V11H18V9ZM15 16V14H9V16H15Z" fill="var(--svg-fill-color-1, currentColor)" xmlns="http://www.w3.org/2000/svg"/>
 </symbol>
+<symbol id="icon-tdesign-star-1-filled" viewBox="0 0 24 24">
+
+<path d="M15.8701 7.6377L12 1.01855L8.12891 7.6377L0.605469 9.26074L5.73535 14.9795L4.95996 22.6045L12 19.5146L19.04 22.6045L18.2637 14.9795L23.3945 9.26074L15.8701 7.6377Z" fill="var(--svg-fill-color-1, currentColor)" xmlns="http://www.w3.org/2000/svg"/>
+
+</symbol>
 <symbol id="icon-tdesign-star-filled" viewBox="0 0 24 24">
 <path d="M12.0012 0.63031L14.9039 8.98087L23.7427 9.16099L16.6978 14.502L19.2579 22.9639L12.0012 17.9143L4.74461 22.9639L7.30465 14.502L0.259766 9.16099L9.09859 8.98087L12.0012 0.63031Z" fill="var(--svg-fill-color-1, currentColor)" xmlns="http://www.w3.org/2000/svg"/>
 </symbol>
@@ -13050,6 +13113,13 @@ export const filledSvgSprite = `<svg xmlns="http://www.w3.org/2000/svg" style="p
 <symbol id="icon-tdesign-table-split-filled" viewBox="0 0 24 24">
     <path d="M22 2V22H2V2H22ZM4 6H11V4H4V6ZM13 6H20V4H13V6ZM13.002 10.75H10.998V12.7539H13.002V10.75ZM7.00195 13.75H4.99805V15.7539H7.00195V13.75ZM10.002 13.75H7.99805V15.7539H10.002V13.75ZM13.002 13.75H10.998V15.7539H13.002V13.75ZM16.002 13.75H13.998V15.7539H16.002V13.75ZM19.002 13.75H16.998V15.7539H19.002V13.75ZM13.002 16.75H10.998V18.7539H13.002V16.75Z" fill="var(--svg-fill-color-1, currentColor)" xmlns="http://www.w3.org/2000/svg"/>
 </symbol>
+<symbol id="icon-tdesign-tablet-filled" viewBox="0 0 24 24">
+
+
+<path d="M21 23H3V1H21V23ZM11 17V19.0039H13.0039V17H11ZM9 5V7H15V5H9Z" fill="var(--svg-fill-color-1, currentColor)" xmlns="http://www.w3.org/2000/svg"/>
+
+
+</symbol>
 <symbol id="icon-tdesign-tag-filled" viewBox="0 0 24 24">
     <path d="M0.978516 13.1206L10.878 23.0201L20.9999 12.9145L21 2.99805L11.1002 3.01525L0.978516 13.1206ZM14.9961 9.00382V7H16.9999L17.0001 9.00399L14.9961 9.00382Z" fill="var(--svg-fill-color-1, currentColor)" xmlns="http://www.w3.org/2000/svg"/>
 </symbol>
@@ -13166,8 +13236,12 @@ export const filledSvgSprite = `<svg xmlns="http://www.w3.org/2000/svg" style="p
     <path d="M10.5549 1.76416L12.27 2.33587C13.7809 2.83949 14.8 4.2534 14.8 5.84599V8.29995H18.6688C20.5074 8.29995 21.9135 9.93884 21.6339 11.7561L20.4493 19.4561C20.2241 20.9196 18.9649 21.9999 17.4842 21.9999H3V10.0999H6.85013L10.5549 1.76416Z" fill="var(--svg-fill-color-1, currentColor)" xmlns="http://www.w3.org/2000/svg"/>
 </symbol>
 <symbol id="icon-tdesign-thumb-up-2-filled" viewBox="0 0 24 24">
-    <path d="M12.2697 2.33587L10.5546 1.76416L6.85015 10.0999V21.9999H17.4838C18.9645 21.9999 20.2238 20.9196 20.4489 19.4561L21.6336 11.7561C21.9131 9.93884 20.5071 8.29995 18.6684 8.29995H14.7997V5.84599C14.7997 4.2534 13.7806 2.83949 12.2697 2.33587Z" fill="var(--svg-fill-color-1, currentColor)" xmlns="http://www.w3.org/2000/svg"/>
-    <path d="M1.99976 10.0999V21.9999H4.84976L4.84943 10.0999H1.99976Z" fill="var(--svg-fill-color-1, currentColor)" xmlns="http://www.w3.org/2000/svg"/>
+
+
+<path d="M1.99976 10.1V22H4.84976L4.84943 10.1H1.99976Z" fill="var(--svg-fill-color-1, currentColor)" xmlns="http://www.w3.org/2000/svg"/>
+<path d="M15.0341 8.2998H19.3261C21.1756 8.29996 22.7813 9.85301 22.4609 11.7695L21.1728 19.4688C20.9194 20.9843 19.5383 22 18.038 22H6.83578V10.096L10.5273 1.27832L12.3212 1.82812C13.8944 2.31061 15.034 3.69898 15.0341 5.3457V8.2998Z" fill="var(--svg-fill-color-1, currentColor)" xmlns="http://www.w3.org/2000/svg"/>
+
+
 </symbol>
 <symbol id="icon-tdesign-thumb-up-filled" viewBox="0 0 24 24">
     <path d="M12.1578 1.59573C14.0866 1.91719 15.5002 3.58595 15.5002 5.54131L15.5002 7.99992L20.8198 7.99992C22.0557 7.99992 22.9958 9.10966 22.7926 10.3287L21.1259 20.3287C20.9652 21.2931 20.1308 21.9999 19.1531 21.9999H7.00024L7.00025 10.8021L10.8789 1.38257L12.1578 1.59573Z" fill="var(--svg-fill-color-1, currentColor)" xmlns="http://www.w3.org/2000/svg"/>

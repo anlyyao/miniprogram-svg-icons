@@ -6,7 +6,7 @@ import { DOMParser, XMLSerializer } from '@xmldom/xmldom';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const resourcesDir = path.resolve(__dirname, '../../resources');
+const resourcesDir = path.resolve(__dirname, '../../../resources');
 const outputDir = path.resolve(__dirname, '../src/data');
 
 interface BrandManifest {

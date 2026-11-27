@@ -197,6 +197,11 @@ miniprogram-svg-icons/
 │   ├── xiaohongshu/              #   Xiaohongshu mini program component
 │   ├── jd/                       #   JD mini program component
 │   └── utils/                    #   Utilities (including tree-shaking CLI)
+├── apps/                         # Applications (sites / tools)
+│   └── web/                      #   SVG icon preview site (Vite + Vue)
+├── examples/                     # Mini program examples
+│   ├── example-svg-icon/         #   Icon component example
+│   └── example-utils/            #   Utilities example
 ├── dist/                         # Release output (compressed)
 ├── package.json                  # Monorepo root configuration
 └── pnpm-workspace.yaml           # pnpm workspace configuration

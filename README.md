@@ -197,6 +197,11 @@ miniprogram-svg-icons/
 │   ├── xiaohongshu/              #   小红书小程序组件
 │   ├── jd/                       #   京东小程序组件
 │   └── utils/                    #   工具集（含裁剪 CLI）
+├── apps/                         # 应用（站点 / 工具）
+│   └── web/                      #   SVG 图标预览站（Vite + Vue）
+├── examples/                     # 小程序示例
+│   ├── example-svg-icon/         #   图标组件示例
+│   └── example-utils/            #   工具集示例
 ├── dist/                         # 发布产物（压缩）
 ├── package.json                  # Monorepo 根配置
 └── pnpm-workspace.yaml           # pnpm 工作区配置

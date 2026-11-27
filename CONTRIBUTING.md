@@ -145,6 +145,11 @@ miniprogram-svg-icons/
 │   ├── xiaohongshu/              #   小红书
 │   ├── jd/                       #   京东
 │   └── utils/                    #   裁剪工具
+├── apps/                         # 应用（站点 / 工具）
+│   └── web/                      #   SVG 图标预览站
+├── examples/                     # 小程序示例
+│   ├── example-svg-icon/         #   图标组件示例
+│   └── example-utils/            #   工具集示例
 ├── docs/                         # 文档
 ├── package.json                  # 根配置
 └── pnpm-workspace.yaml           # 工作区配置

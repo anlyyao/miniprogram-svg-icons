@@ -38,7 +38,7 @@ jobs:
 
       - run: pnpm run generate
 
-      - run: pnpm -C web run build
+      - run: pnpm -C apps/web run build
         env:
           DEPLOY_DOMAIN: ${{ needs.preview-context.outputs.svg_icons_domain }}
 

@@ -23,7 +23,7 @@ export default defineConfig({
     }),
   ],
   build: {
-    outDir: '../dist/web',
+    outDir: '../../dist/web',
   },
   base: process.env.DEPLOY_DOMAIN ? '/' : '/miniprogram-svg-icons/',
   server: {

@@ -3,6 +3,16 @@ title: 更新日志
 docClass: timeline
 ---
 
+## 🌈 0.0.4 `2026-11-27`
+
+### 🚀 Features
+
+- 新增 `check-1.svg`，`remove-1`，`tablet-filled` 和 `tablet` 图标资源 @anlyyao ([#54](https://github.com/anlyyao/miniprogram-svg-icons/pull/54))
+
+### 🐞 Bug Fixes
+
+- 修复 `usb` 图标资源的图层 ID 错误，导致该图标在深色模式下渲染错误 @anlyyao ([#54](https://github.com/anlyyao/miniprogram-svg-icons/pull/54))
+
 ## 🌈 0.0.3 `2026-08-10`
 
 ### 🚀 Features
